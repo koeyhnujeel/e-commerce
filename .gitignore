@@ -228,5 +228,6 @@ gradle-app.setting
 *.hprof
 
 application-local.yml
+AGENTS.md
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,intellij,kotlin,gradle
