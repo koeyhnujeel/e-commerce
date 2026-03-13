@@ -69,4 +69,42 @@ class EmailVerificationTest {
 
         exception.errorCode shouldBe ErrorCode.EXPIRED_VERIFICATION_CODE
     }
+
+    @Test
+    fun `인증이 완료되지 않았으면 예외를 던진다`() {
+        val verification =
+            EmailVerification.issue(
+                email = Email("member@example.com"),
+                purpose = VerificationPurpose.SIGNUP,
+                code = "123 456",
+                issuedAt = LocalDateTime.of(2026, 3, 13, 10, 0),
+                expiresAt = LocalDateTime.of(2026, 3, 13, 10, 5),
+            )
+
+        val exception =
+            shouldThrow<BusinessException> {
+                verification.assertVerified()
+            }
+
+        exception.errorCode shouldBe ErrorCode.EMAIL_NOT_VERIFIED
+    }
+
+    @Test
+    fun `인증이 완료됐으면 검증을 통과한다`() {
+        val verification =
+            EmailVerification.issue(
+                email = Email("member@example.com"),
+                purpose = VerificationPurpose.SIGNUP,
+                code = "123 456",
+                issuedAt = LocalDateTime.of(2026, 3, 13, 10, 0),
+                expiresAt = LocalDateTime.of(2026, 3, 13, 10, 5),
+            )
+
+        verification.verify(
+            code = "123 456",
+            verifiedAt = LocalDateTime.of(2026, 3, 13, 10, 3),
+        )
+
+        verification.assertVerified()
+    }
 }

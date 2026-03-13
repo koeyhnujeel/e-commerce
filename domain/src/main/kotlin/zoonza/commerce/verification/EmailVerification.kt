@@ -72,6 +72,12 @@ class EmailVerification private constructor(
         this.verifiedAt = verifiedAt
     }
 
+    fun assertVerified() {
+        if (verifiedAt == null) {
+            throw BusinessException(ErrorCode.EMAIL_NOT_VERIFIED)
+        }
+    }
+
     private fun validateCode(code: String) {
         if (this.code != code) {
             throw BusinessException(ErrorCode.INVALID_VERIFICATION_CODE)

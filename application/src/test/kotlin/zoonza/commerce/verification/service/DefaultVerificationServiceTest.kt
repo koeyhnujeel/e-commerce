@@ -179,4 +179,51 @@ class DefaultVerificationServiceTest {
         verify(exactly = 0) { verificationRepository.save(any()) }
         verification.verifiedAt shouldBe null
     }
+
+    @Test
+    fun `인증 완료된 이메일이면 가입 검증을 통과한다`() {
+        val email = Email("member@example.com")
+        val purpose = VerificationPurpose.SIGNUP
+        val verification =
+            EmailVerification.issue(
+                email = email,
+                purpose = purpose,
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(1),
+                expiresAt = LocalDateTime.now().plusMinutes(4),
+            )
+
+        verification.verify("123 456", LocalDateTime.now())
+        every { verificationRepository.findByEmailAndPurpose(email, purpose) } returns verification
+
+        verificationService.assertVerifiedEmail(email, purpose)
+
+        verify(exactly = 1) { verificationRepository.findByEmailAndPurpose(email, purpose) }
+        verify(exactly = 0) { verificationRepository.save(any()) }
+    }
+
+    @Test
+    fun `인증 완료되지 않은 이메일이면 가입 검증에서 예외를 던진다`() {
+        val email = Email("member@example.com")
+        val purpose = VerificationPurpose.SIGNUP
+        val verification =
+            EmailVerification.issue(
+                email = email,
+                purpose = purpose,
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(1),
+                expiresAt = LocalDateTime.now().plusMinutes(4),
+            )
+
+        every { verificationRepository.findByEmailAndPurpose(email, purpose) } returns verification
+
+        val exception =
+            io.kotest.assertions.throwables.shouldThrow<BusinessException> {
+                verificationService.assertVerifiedEmail(email, purpose)
+            }
+
+        exception.errorCode shouldBe ErrorCode.EMAIL_NOT_VERIFIED
+        verify(exactly = 1) { verificationRepository.findByEmailAndPurpose(email, purpose) }
+        verify(exactly = 0) { verificationRepository.save(any()) }
+    }
 }

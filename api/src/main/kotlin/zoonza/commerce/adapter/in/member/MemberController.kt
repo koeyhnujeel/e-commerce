@@ -6,8 +6,11 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import zoonza.commerce.adapter.`in`.member.request.SendSignupEmailVerificationCodeRequest
+import zoonza.commerce.adapter.`in`.member.request.SignupMemberRequest
 import zoonza.commerce.adapter.`in`.member.request.VerifySignupEmailVerificationCodeRequest
+import zoonza.commerce.adapter.`in`.member.response.SignupMemberResponse
 import zoonza.commerce.adapter.`in`.response.ApiResponse
+import zoonza.commerce.member.dto.SignUpCommand
 import zoonza.commerce.member.port.`in`.MemberService
 
 @RestController
@@ -34,5 +37,22 @@ class MemberController(
         )
 
         return ApiResponse.success()
+    }
+
+    @PostMapping("/signup")
+    fun signUp(
+        @Valid @RequestBody request: SignupMemberRequest,
+    ): ApiResponse<SignupMemberResponse> {
+        val memberId =
+            memberService.signUp(
+                SignUpCommand(
+                    email = request.email,
+                    password = request.password,
+                    name = request.name,
+                    phoneNumber = request.phoneNumber,
+                ),
+            )
+
+        return ApiResponse.success(SignupMemberResponse(id = memberId))
     }
 }

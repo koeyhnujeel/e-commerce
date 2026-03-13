@@ -11,4 +11,9 @@ interface VerificationService {
         purpose: VerificationPurpose,
         code: String,
     )
+
+    fun assertVerifiedEmail(
+        email: Email,
+        purpose: VerificationPurpose,
+    )
 }

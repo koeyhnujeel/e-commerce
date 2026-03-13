@@ -57,6 +57,18 @@ class DefaultVerificationService(
         verificationRepository.save(verification)
     }
 
+    @Transactional(readOnly = true)
+    override fun assertVerifiedEmail(
+        email: Email,
+        purpose: VerificationPurpose,
+    ) {
+        val verification =
+            verificationRepository.findByEmailAndPurpose(email, purpose)
+                ?: throw BusinessException(ErrorCode.EMAIL_NOT_VERIFIED)
+
+        verification.assertVerified()
+    }
+
     private fun generateVerificationCode(): String {
         val code = SecureRandom().nextInt(999_999) + 1
         return String.format(Locale.ROOT, "%03d %03d", code / 1_000, code % 1_000)
