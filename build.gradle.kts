@@ -1,4 +1,6 @@
+import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 plugins {
 	kotlin("jvm") version "1.9.25" apply false
@@ -22,6 +24,14 @@ allprojects {
 }
 
 subprojects {
+	pluginManager.withPlugin("io.spring.dependency-management") {
+		extensions.configure<DependencyManagementExtension> {
+			imports {
+				mavenBom(SpringBootPlugin.BOM_COORDINATES)
+			}
+		}
+	}
+
 	pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
 		extensions.configure<KotlinJvmProjectExtension> {
 			jvmToolchain(21)
