@@ -28,7 +28,7 @@ class DefaultVerificationService(
 
         val verification =
             verificationRepository.findByEmailAndPurpose(email, purpose)
-                ?.apply { renew(code, issuedAt, expiresAt) }
+                ?.also { it.renew(code, issuedAt, expiresAt) }
                 ?: EmailVerification.issue(
                     email = email,
                     purpose = purpose,
