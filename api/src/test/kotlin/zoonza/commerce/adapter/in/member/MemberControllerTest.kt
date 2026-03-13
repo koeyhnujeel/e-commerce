@@ -20,10 +20,12 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.adapter.`in`.member.request.SendSignupEmailVerificationCodeRequest
+import zoonza.commerce.adapter.`in`.member.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.adapter.out.persistence.member.MemberJapRepository
 import zoonza.commerce.adapter.out.persistence.verification.EmailVerificationJpaRepository
 import zoonza.commerce.common.Email
 import zoonza.commerce.member.Member
+import zoonza.commerce.verification.EmailVerification
 import zoonza.commerce.support.MySqlTestContainerConfig
 import zoonza.commerce.verification.VerificationPurpose
 import zoonza.commerce.verification.port.out.VerificationCodeSender
@@ -127,6 +129,132 @@ class MemberControllerTest {
         verificationCodeSender.sentCodes.shouldHaveSize(0)
     }
 
+    @Test
+    fun `회원가입 이메일 인증 코드 검증에 성공한다`() {
+        val request = VerifySignupEmailVerificationCodeRequest(email = "member@example.com", code = "123 456")
+        insertVerification(
+            email = request.email,
+            code = request.code,
+            issuedAt = LocalDateTime.now().minusMinutes(1),
+            expiresAt = LocalDateTime.now().plusMinutes(4),
+        )
+
+        mockMvc
+            .post("/api/members/signup/email-verifications/verify") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(request)
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data") { doesNotExist() }
+                jsonPath("$.error") { doesNotExist() }
+            }
+
+        val verification =
+            emailVerificationJpaRepository.findByEmailAddressAndPurpose(
+                request.email,
+                VerificationPurpose.SIGNUP,
+            )
+
+        verification.shouldNotBeNull()
+        verification.verifiedAt.shouldNotBeNull()
+    }
+
+    @Test
+    fun `이메일 인증 요청이 없으면 찾을 수 없다는 응답을 반환한다`() {
+        val request = VerifySignupEmailVerificationCodeRequest(email = "member@example.com", code = "123 456")
+
+        mockMvc
+            .post("/api/members/signup/email-verifications/verify") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(request)
+            }.andExpect {
+                status { isNotFound() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("NOT_FOUND") }
+                jsonPath("$.error.message") { value("이메일 인증 요청을 찾을 수 없습니다.") }
+            }
+    }
+
+    @Test
+    fun `인증 코드가 다르면 잘못된 요청 응답을 반환한다`() {
+        val request = VerifySignupEmailVerificationCodeRequest(email = "member@example.com", code = "654 321")
+        insertVerification(
+            email = request.email,
+            code = "123 456",
+            issuedAt = LocalDateTime.now().minusMinutes(1),
+            expiresAt = LocalDateTime.now().plusMinutes(4),
+        )
+
+        mockMvc
+            .post("/api/members/signup/email-verifications/verify") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(request)
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("BAD_REQUEST") }
+                jsonPath("$.error.message") { value("인증 코드가 올바르지 않습니다.") }
+            }
+
+        val verification =
+            emailVerificationJpaRepository.findByEmailAddressAndPurpose(
+                request.email,
+                VerificationPurpose.SIGNUP,
+            )
+
+        verification.shouldNotBeNull()
+        verification.verifiedAt.shouldBeNull()
+    }
+
+    @Test
+    fun `인증 코드가 만료되면 잘못된 요청 응답을 반환한다`() {
+        val request = VerifySignupEmailVerificationCodeRequest(email = "member@example.com", code = "123 456")
+        insertVerification(
+            email = request.email,
+            code = request.code,
+            issuedAt = LocalDateTime.now().minusMinutes(10),
+            expiresAt = LocalDateTime.now().minusMinutes(5),
+        )
+
+        mockMvc
+            .post("/api/members/signup/email-verifications/verify") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(request)
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("BAD_REQUEST") }
+                jsonPath("$.error.message") { value("인증 코드가 만료되었습니다.") }
+            }
+
+        val verification =
+            emailVerificationJpaRepository.findByEmailAddressAndPurpose(
+                request.email,
+                VerificationPurpose.SIGNUP,
+            )
+
+        verification.shouldNotBeNull()
+        verification.verifiedAt.shouldBeNull()
+    }
+
+    @Test
+    fun `인증 코드 형식이 올바르지 않으면 잘못된 요청 응답을 반환한다`() {
+        val request = VerifySignupEmailVerificationCodeRequest(email = "member@example.com", code = "123456")
+
+        mockMvc
+            .post("/api/members/signup/email-verifications/verify") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(request)
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("BAD_REQUEST") }
+            }
+
+        emailVerificationJpaRepository.count() shouldBe 0
+    }
+
     private fun insertMember(email: String) {
         memberJpaRepository.save(
             Member.create(
@@ -136,6 +264,23 @@ class MemberControllerTest {
                 nickname = "tester-${System.nanoTime()}",
                 phoneNumber = "0101234${(1000..9999).random()}",
                 registeredAt = LocalDateTime.now(),
+            ),
+        )
+    }
+
+    private fun insertVerification(
+        email: String,
+        code: String,
+        issuedAt: LocalDateTime,
+        expiresAt: LocalDateTime,
+    ) {
+        emailVerificationJpaRepository.save(
+            EmailVerification.issue(
+                email = Email(email),
+                purpose = VerificationPurpose.SIGNUP,
+                code = code,
+                issuedAt = issuedAt,
+                expiresAt = expiresAt,
             ),
         )
     }

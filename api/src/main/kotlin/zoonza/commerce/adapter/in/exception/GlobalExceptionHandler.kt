@@ -15,6 +15,9 @@ class GlobalExceptionHandler {
         mapOf(
             ErrorCode.INVALID_INPUT_VALUE to HttpStatus.BAD_REQUEST,
             ErrorCode.DUPLICATE_EMAIL to HttpStatus.CONFLICT,
+            ErrorCode.EMAIL_VERIFICATION_NOT_FOUND to HttpStatus.NOT_FOUND,
+            ErrorCode.INVALID_VERIFICATION_CODE to HttpStatus.BAD_REQUEST,
+            ErrorCode.EXPIRED_VERIFICATION_CODE to HttpStatus.BAD_REQUEST,
         )
 
     @ExceptionHandler(BusinessException::class)

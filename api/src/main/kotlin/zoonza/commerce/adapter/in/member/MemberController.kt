@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import zoonza.commerce.adapter.`in`.member.request.SendSignupEmailVerificationCodeRequest
+import zoonza.commerce.adapter.`in`.member.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.adapter.`in`.response.ApiResponse
 import zoonza.commerce.member.port.`in`.MemberService
 
@@ -19,6 +20,18 @@ class MemberController(
         @Valid @RequestBody request: SendSignupEmailVerificationCodeRequest,
     ): ApiResponse<Nothing> {
         memberService.sendSignupEmailVerificationCode(request.email)
+
+        return ApiResponse.success()
+    }
+
+    @PostMapping("/signup/email-verifications/verify")
+    fun verifySignupEmailVerificationCode(
+        @Valid @RequestBody request: VerifySignupEmailVerificationCodeRequest,
+    ): ApiResponse<Nothing> {
+        memberService.verifySignupEmailCode(
+            email = request.email,
+            code = request.code,
+        )
 
         return ApiResponse.success()
     }

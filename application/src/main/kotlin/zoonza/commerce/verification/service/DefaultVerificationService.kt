@@ -3,6 +3,8 @@ package zoonza.commerce.verification.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.common.Email
+import zoonza.commerce.exception.BusinessException
+import zoonza.commerce.exception.ErrorCode
 import zoonza.commerce.verification.EmailVerification
 import zoonza.commerce.verification.VerificationPurpose
 import zoonza.commerce.verification.port.`in`.VerificationService
@@ -39,6 +41,20 @@ class DefaultVerificationService(
 
         verificationRepository.save(verification)
         verificationCodeSender.sendVerificationCode(email, purpose, code)
+    }
+
+    @Transactional
+    override fun verifyEmailVerification(
+        email: Email,
+        purpose: VerificationPurpose,
+        code: String,
+    ) {
+        val verification =
+            verificationRepository.findByEmailAndPurpose(email, purpose)
+                ?: throw BusinessException(ErrorCode.EMAIL_VERIFICATION_NOT_FOUND)
+
+        verification.verify(code, LocalDateTime.now())
+        verificationRepository.save(verification)
     }
 
     private fun generateVerificationCode(): String {

@@ -53,4 +53,29 @@ class DefaultMemberServiceTest {
             verificationService.issueEmailVerification(any(), any())
         }
     }
+
+    @Test
+    fun `회원가입 이메일 인증 코드 검증을 verification 서비스에 위임한다`() {
+        val email = "member@example.com"
+        val emailAddress = Email(email)
+        val code = "123 456"
+
+        every {
+            verificationService.verifyEmailVerification(
+                email = emailAddress,
+                purpose = VerificationPurpose.SIGNUP,
+                code = code,
+            )
+        } just Runs
+
+        memberService.verifySignupEmailCode(email, code)
+
+        verify(exactly = 1) {
+            verificationService.verifyEmailVerification(
+                email = emailAddress,
+                purpose = VerificationPurpose.SIGNUP,
+                code = code,
+            )
+        }
+    }
 }

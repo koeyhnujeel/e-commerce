@@ -1,9 +1,12 @@
 package zoonza.commerce.verification.service
 
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.*
 import zoonza.commerce.common.Email
+import zoonza.commerce.exception.BusinessException
+import zoonza.commerce.exception.ErrorCode
 import zoonza.commerce.verification.EmailVerification
 import zoonza.commerce.verification.VerificationPurpose
 import zoonza.commerce.verification.port.out.VerificationCodeSender
@@ -82,6 +85,98 @@ class DefaultVerificationServiceTest {
         verification.issuedAt.isAfter(previousIssuedAt).shouldBeTrue()
         verification.expiresAt.isAfter(previousExpiresAt).shouldBeTrue()
         verification.expiresAt shouldBe verification.issuedAt.plusMinutes(5)
+        verification.verifiedAt shouldBe null
+    }
+
+    @Test
+    fun `인증 코드가 일치하면 인증 완료로 저장한다`() {
+        val email = Email("member@example.com")
+        val purpose = VerificationPurpose.SIGNUP
+        val verification =
+            EmailVerification.issue(
+                email = email,
+                purpose = purpose,
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(1),
+                expiresAt = LocalDateTime.now().plusMinutes(4),
+            )
+
+        every { verificationRepository.findByEmailAndPurpose(email, purpose) } returns verification
+        every { verificationRepository.save(verification) } returns verification
+
+        verificationService.verifyEmailVerification(email, purpose, "123 456")
+
+        verify(exactly = 1) { verificationRepository.findByEmailAndPurpose(email, purpose) }
+        verify(exactly = 1) { verificationRepository.save(verification) }
+        verification.verifiedAt.shouldNotBeNull()
+    }
+
+    @Test
+    fun `인증 요청이 없으면 예외를 던진다`() {
+        val email = Email("member@example.com")
+        val purpose = VerificationPurpose.SIGNUP
+
+        every { verificationRepository.findByEmailAndPurpose(email, purpose) } returns null
+
+        val exception =
+            io.kotest.assertions.throwables.shouldThrow<BusinessException> {
+                verificationService.verifyEmailVerification(email, purpose, "123 456")
+            }
+
+        exception.errorCode shouldBe ErrorCode.EMAIL_VERIFICATION_NOT_FOUND
+        verify(exactly = 1) { verificationRepository.findByEmailAndPurpose(email, purpose) }
+        verify(exactly = 0) { verificationRepository.save(any()) }
+    }
+
+    @Test
+    fun `인증 코드가 다르면 예외를 던진다`() {
+        val email = Email("member@example.com")
+        val purpose = VerificationPurpose.SIGNUP
+        val verification =
+            EmailVerification.issue(
+                email = email,
+                purpose = purpose,
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(1),
+                expiresAt = LocalDateTime.now().plusMinutes(4),
+            )
+
+        every { verificationRepository.findByEmailAndPurpose(email, purpose) } returns verification
+
+        val exception =
+            io.kotest.assertions.throwables.shouldThrow<BusinessException> {
+                verificationService.verifyEmailVerification(email, purpose, "654 321")
+            }
+
+        exception.errorCode shouldBe ErrorCode.INVALID_VERIFICATION_CODE
+        verify(exactly = 1) { verificationRepository.findByEmailAndPurpose(email, purpose) }
+        verify(exactly = 0) { verificationRepository.save(any()) }
+        verification.verifiedAt shouldBe null
+    }
+
+    @Test
+    fun `인증 코드가 만료되면 예외를 던진다`() {
+        val email = Email("member@example.com")
+        val purpose = VerificationPurpose.SIGNUP
+        val verification =
+            EmailVerification.issue(
+                email = email,
+                purpose = purpose,
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(10),
+                expiresAt = LocalDateTime.now().minusMinutes(5),
+            )
+
+        every { verificationRepository.findByEmailAndPurpose(email, purpose) } returns verification
+
+        val exception =
+            io.kotest.assertions.throwables.shouldThrow<BusinessException> {
+                verificationService.verifyEmailVerification(email, purpose, "123 456")
+            }
+
+        exception.errorCode shouldBe ErrorCode.EXPIRED_VERIFICATION_CODE
+        verify(exactly = 1) { verificationRepository.findByEmailAndPurpose(email, purpose) }
+        verify(exactly = 0) { verificationRepository.save(any()) }
         verification.verifiedAt shouldBe null
     }
 }

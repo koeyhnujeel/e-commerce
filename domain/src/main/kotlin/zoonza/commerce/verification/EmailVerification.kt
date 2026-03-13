@@ -11,6 +11,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import zoonza.commerce.common.Email
+import zoonza.commerce.exception.BusinessException
+import zoonza.commerce.exception.ErrorCode
 import java.time.LocalDateTime
 
 @Entity
@@ -54,6 +56,32 @@ class EmailVerification private constructor(
         this.issuedAt = issuedAt
         this.expiresAt = expiresAt
         this.verifiedAt = null
+    }
+
+    fun verify(
+        code: String,
+        verifiedAt: LocalDateTime,
+    ) {
+        validateCode(code)
+
+        if (this.verifiedAt != null) {
+            return
+        }
+
+        validateNotExpired(verifiedAt)
+        this.verifiedAt = verifiedAt
+    }
+
+    private fun validateCode(code: String) {
+        if (this.code != code) {
+            throw BusinessException(ErrorCode.INVALID_VERIFICATION_CODE)
+        }
+    }
+
+    private fun validateNotExpired(verifiedAt: LocalDateTime) {
+        if (verifiedAt.isAfter(expiresAt)) {
+            throw BusinessException(ErrorCode.EXPIRED_VERIFICATION_CODE)
+        }
     }
 
     companion object {

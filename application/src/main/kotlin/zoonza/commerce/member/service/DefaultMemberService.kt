@@ -25,4 +25,13 @@ class DefaultMemberService(
 
         verificationService.issueEmailVerification(emailAddress, VerificationPurpose.SIGNUP)
     }
+
+    @Transactional
+    override fun verifySignupEmailCode(email: String, code: String) {
+        verificationService.verifyEmailVerification(
+            email = Email(email),
+            purpose = VerificationPurpose.SIGNUP,
+            code = code,
+        )
+    }
 }
