@@ -14,6 +14,7 @@ class GlobalExceptionHandler {
     private val statusMap: Map<ErrorCode, HttpStatus> =
         mapOf(
             ErrorCode.INVALID_INPUT_VALUE to HttpStatus.BAD_REQUEST,
+            ErrorCode.DUPLICATE_EMAIL to HttpStatus.CONFLICT,
         )
 
     @ExceptionHandler(BusinessException::class)
