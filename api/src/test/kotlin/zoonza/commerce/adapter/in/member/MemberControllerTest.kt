@@ -267,7 +267,7 @@ class MemberControllerTest {
         val request =
             SignupMemberRequest(
                 email = "member@example.com",
-                password = "password123!",
+                password = "Password123!",
                 name = "홍길동",
                 phoneNumber = "01012345678",
             )
@@ -306,7 +306,7 @@ class MemberControllerTest {
         val request =
             SignupMemberRequest(
                 email = "member@example.com",
-                password = "password123!",
+                password = "Password123!",
                 name = "홍길동",
                 phoneNumber = "01012345678",
             )
@@ -336,7 +336,7 @@ class MemberControllerTest {
         val request =
             SignupMemberRequest(
                 email = "member@example.com",
-                password = "password123!",
+                password = "Password123!",
                 name = "홍길동",
                 phoneNumber = "01012345678",
             )
@@ -366,7 +366,7 @@ class MemberControllerTest {
         val request =
             SignupMemberRequest(
                 email = "member@example.com",
-                password = "password123!",
+                password = "Password123!",
                 name = "홍길동",
                 phoneNumber = "01012345678",
             )
@@ -408,6 +408,33 @@ class MemberControllerTest {
                 jsonPath("$.success") { value(false) }
                 jsonPath("$.error.code") { value("BAD_REQUEST") }
             }
+    }
+
+    @Test
+    fun `회원가입 시 비밀번호 형식이 올바르지 않으면 잘못된 요청 응답을 반환한다`() {
+        val request =
+            SignupMemberRequest(
+                email = "member@example.com",
+                password = "password123!",
+                name = "홍길동",
+                phoneNumber = "01012345678",
+            )
+
+        mockMvc
+            .post("/api/members/signup") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(request)
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("BAD_REQUEST") }
+                jsonPath("$.error.errors[0].field") { value("password") }
+                jsonPath("$.error.errors[0].reason") {
+                    value("비밀번호는 영어 대문자, 소문자, 숫자, 특수문자를 각각 하나 이상 포함해야 합니다.")
+                }
+            }
+
+        memberJpaRepository.findByEmailAddress(request.email).shouldBeNull()
     }
 
     private fun insertMember(
