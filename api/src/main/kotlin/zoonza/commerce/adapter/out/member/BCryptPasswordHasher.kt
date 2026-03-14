@@ -11,4 +11,11 @@ class BCryptPasswordHasher : PasswordHasher {
     override fun hash(rawPassword: String): String {
         return passwordEncoder.encode(rawPassword)
     }
+
+    override fun matches(
+        rawPassword: String,
+        passwordHash: String,
+    ): Boolean {
+        return passwordEncoder.matches(rawPassword, passwordHash)
+    }
 }

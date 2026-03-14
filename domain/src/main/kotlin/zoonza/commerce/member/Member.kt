@@ -32,12 +32,20 @@ class Member private constructor(
     @Column(unique = true, nullable = false)
     val phoneNumber: String,
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50, columnDefinition = "VARCHAR(50) NOT NULL DEFAULT 'CUSTOMER'")
+    val role: Role = Role.CUSTOMER,
+
     @Column(nullable = false)
     val registeredAt: LocalDateTime,
 
     @Column
-    var lastLoginAt: LocalDateTime?,
+    var lastLoginAt: LocalDateTime? = null,
 ) {
+    fun recordLogin(lastLoginAt: LocalDateTime) {
+        this.lastLoginAt = lastLoginAt
+    }
+
     companion object {
         fun create(
             email: Email,
@@ -45,6 +53,7 @@ class Member private constructor(
             name: String,
             nickname: String,
             phoneNumber: String,
+            role: Role = Role.CUSTOMER,
             registeredAt: LocalDateTime,
             lastLoginAt: LocalDateTime? = null,
         ): Member {
@@ -54,6 +63,7 @@ class Member private constructor(
                 name = name,
                 nickname = nickname,
                 phoneNumber = phoneNumber,
+                role = role,
                 registeredAt = registeredAt,
                 lastLoginAt = lastLoginAt,
             )

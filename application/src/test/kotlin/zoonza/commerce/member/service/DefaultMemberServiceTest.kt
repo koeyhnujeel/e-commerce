@@ -7,6 +7,7 @@ import zoonza.commerce.common.Email
 import zoonza.commerce.exception.BusinessException
 import zoonza.commerce.exception.ErrorCode
 import zoonza.commerce.member.Member
+import zoonza.commerce.member.Role
 import zoonza.commerce.member.dto.SignupCommand
 import zoonza.commerce.member.port.out.MemberRepository
 import zoonza.commerce.member.port.out.NicknameGenerator
@@ -147,6 +148,7 @@ class DefaultMemberServiceTest {
         memberSlot.captured.name shouldBe name
         memberSlot.captured.nickname shouldBe nickname
         memberSlot.captured.phoneNumber shouldBe phoneNumber
+        memberSlot.captured.role shouldBe Role.CUSTOMER
     }
 
     @Test

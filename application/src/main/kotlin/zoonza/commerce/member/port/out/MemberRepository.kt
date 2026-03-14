@@ -10,5 +10,9 @@ interface MemberRepository {
 
     fun existsByNickname(nickname: String): Boolean
 
+    fun findByEmail(email: Email): Member?
+
+    fun findById(id: Long): Member?
+
     fun save(member: Member): Member
 }

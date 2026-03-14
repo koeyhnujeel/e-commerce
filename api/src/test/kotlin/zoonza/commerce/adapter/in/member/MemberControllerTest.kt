@@ -27,6 +27,7 @@ import zoonza.commerce.adapter.out.persistence.member.MemberJapRepository
 import zoonza.commerce.adapter.out.persistence.verification.EmailVerificationJpaRepository
 import zoonza.commerce.common.Email
 import zoonza.commerce.member.Member
+import zoonza.commerce.member.Role
 import zoonza.commerce.member.port.out.NicknameGenerator
 import zoonza.commerce.verification.EmailVerification
 import zoonza.commerce.support.MySqlTestContainerConfig
@@ -297,6 +298,7 @@ class MemberControllerTest {
         member.name shouldBe request.name
         member.phoneNumber shouldBe request.phoneNumber
         member.nickname shouldBe "반짝이는판다1"
+        member.role shouldBe Role.CUSTOMER
         (member.passwordHash == request.password) shouldBe false
         BCryptPasswordEncoder().matches(request.password, member.passwordHash) shouldBe true
     }
