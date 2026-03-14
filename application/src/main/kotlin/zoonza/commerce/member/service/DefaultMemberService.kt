@@ -6,7 +6,7 @@ import zoonza.commerce.common.Email
 import zoonza.commerce.exception.BusinessException
 import zoonza.commerce.exception.ErrorCode
 import zoonza.commerce.member.Member
-import zoonza.commerce.member.dto.SignUpCommand
+import zoonza.commerce.member.dto.SignupCommand
 import zoonza.commerce.member.port.`in`.MemberService
 import zoonza.commerce.member.port.out.MemberRepository
 import zoonza.commerce.member.port.out.NicknameGenerator
@@ -43,7 +43,7 @@ class DefaultMemberService(
     }
 
     @Transactional
-    override fun signUp(command: SignUpCommand): Long {
+    override fun signup(command: SignupCommand): Long {
         val emailAddress = Email(command.email)
 
         if (memberRepository.existsByEmail(emailAddress)) {

@@ -1,6 +1,6 @@
 package zoonza.commerce.member.dto
 
-data class SignUpCommand(
+data class SignupCommand(
     val email: String,
     val password: String,
     val name: String,

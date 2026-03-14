@@ -7,7 +7,7 @@ import zoonza.commerce.common.Email
 import zoonza.commerce.exception.BusinessException
 import zoonza.commerce.exception.ErrorCode
 import zoonza.commerce.member.Member
-import zoonza.commerce.member.dto.SignUpCommand
+import zoonza.commerce.member.dto.SignupCommand
 import zoonza.commerce.member.port.out.MemberRepository
 import zoonza.commerce.member.port.out.NicknameGenerator
 import zoonza.commerce.member.port.out.PasswordHasher
@@ -101,7 +101,7 @@ class DefaultMemberServiceTest {
         val nickname = "반짝이는판다1"
         val memberSlot = slot<Member>()
         val command =
-            SignUpCommand(
+            SignupCommand(
                 email = email,
                 password = password,
                 name = name,
@@ -129,7 +129,7 @@ class DefaultMemberServiceTest {
             }
         }
 
-        val memberId = memberService.signUp(command)
+        val memberId = memberService.signup(command)
 
         memberId shouldBe 0L
         verify(exactly = 1) { memberRepository.existsByEmail(emailAddress) }
@@ -158,8 +158,8 @@ class DefaultMemberServiceTest {
 
         val exception =
             shouldThrow<BusinessException> {
-                memberService.signUp(
-                    SignUpCommand(
+                memberService.signup(
+                    SignupCommand(
                         email = email,
                         password = "password123!",
                         name = "홍길동",
@@ -185,8 +185,8 @@ class DefaultMemberServiceTest {
 
         val exception =
             shouldThrow<BusinessException> {
-                memberService.signUp(
-                    SignUpCommand(
+                memberService.signup(
+                    SignupCommand(
                         email = email,
                         password = "password123!",
                         name = "홍길동",
@@ -215,8 +215,8 @@ class DefaultMemberServiceTest {
 
         val exception =
             shouldThrow<BusinessException> {
-                memberService.signUp(
-                    SignUpCommand(
+                memberService.signup(
+                    SignupCommand(
                         email = email,
                         password = "password123!",
                         name = "홍길동",
@@ -252,8 +252,8 @@ class DefaultMemberServiceTest {
         every { memberRepository.save(any()) } answers { firstArg() }
 
         val memberId =
-            memberService.signUp(
-                SignUpCommand(
+            memberService.signup(
+                SignupCommand(
                     email = email,
                     password = password,
                     name = "홍길동",

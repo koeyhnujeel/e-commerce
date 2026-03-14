@@ -1,13 +1,11 @@
 package zoonza.commerce.member.port.`in`
 
-import zoonza.commerce.member.dto.SignUpCommand
+import zoonza.commerce.member.dto.SignupCommand
 
 interface MemberService {
     fun sendSignupEmailVerificationCode(email: String)
 
     fun verifySignupEmailCode(email: String, code: String)
 
-    fun signUp(command: SignUpCommand): Long
-
-//    fun checkPhoneNumberAvailability(phoneNumber: String)
+    fun signup(command: SignupCommand): Long
 }

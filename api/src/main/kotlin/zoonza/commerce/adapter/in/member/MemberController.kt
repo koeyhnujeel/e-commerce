@@ -10,7 +10,7 @@ import zoonza.commerce.adapter.`in`.member.request.SignupMemberRequest
 import zoonza.commerce.adapter.`in`.member.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.adapter.`in`.member.response.SignupMemberResponse
 import zoonza.commerce.adapter.`in`.response.ApiResponse
-import zoonza.commerce.member.dto.SignUpCommand
+import zoonza.commerce.member.dto.SignupCommand
 import zoonza.commerce.member.port.`in`.MemberService
 
 @RestController
@@ -44,8 +44,8 @@ class MemberController(
         @Valid @RequestBody request: SignupMemberRequest,
     ): ApiResponse<SignupMemberResponse> {
         val memberId =
-            memberService.signUp(
-                SignUpCommand(
+            memberService.signup(
+                SignupCommand(
                     email = request.email,
                     password = request.password,
                     name = request.name,
