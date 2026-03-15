@@ -49,6 +49,7 @@ class JwtAuthenticationFilter(
     private fun authenticate(
         accessToken: String,
     ) {
+        tokenProvider.validateAccessToken(accessToken)
         val claims = tokenProvider.parseAccessToken(accessToken)
         val principal =
             AuthenticatedMember(
@@ -72,7 +73,9 @@ class JwtAuthenticationFilter(
         exception: AuthException,
     ) {
         SecurityContextHolder.clearContext()
+
         request.setAttribute(RestAuthenticationEntryPoint.AUTH_ERROR_CODE_ATTRIBUTE, exception.errorCode)
+
         restAuthenticationEntryPoint.commence(
             request,
             response,

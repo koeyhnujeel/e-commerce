@@ -161,6 +161,7 @@ class DefaultAuthServiceTest {
         val newAccessToken = issuedToken("new-access-token")
         val newRefreshToken = issuedToken("new-refresh-token")
 
+        every { tokenProvider.validateRefreshToken(oldRefreshToken.token) } just runs
         every { tokenProvider.parseRefreshToken(oldRefreshToken.token) } returns RefreshTokenClaims(member.id)
         every { refreshTokenRepository.findByMemberId(member.id) } returns oldRefreshToken
         every { memberRepository.findById(member.id) } returns member
@@ -189,6 +190,7 @@ class DefaultAuthServiceTest {
                 expiresAt = LocalDateTime.now().plusDays(1),
             )
 
+        every { tokenProvider.validateRefreshToken("presented-refresh-token") } just runs
         every { tokenProvider.parseRefreshToken("presented-refresh-token") } returns RefreshTokenClaims(member.id)
         every { refreshTokenRepository.findByMemberId(member.id) } returns storedRefreshToken
 
@@ -204,7 +206,7 @@ class DefaultAuthServiceTest {
 
     @Test
     fun `refresh 토큰 검증에서 만료 예외가 발생하면 그대로 전파한다`() {
-        every { tokenProvider.parseRefreshToken("expired-refresh-token") } throws AuthException(ErrorCode.EXPIRED_TOKEN)
+        every { tokenProvider.validateRefreshToken("expired-refresh-token") } throws AuthException(ErrorCode.EXPIRED_TOKEN)
 
         val exception =
             shouldThrow<AuthException> {
@@ -213,6 +215,7 @@ class DefaultAuthServiceTest {
 
         exception.errorCode shouldBe ErrorCode.EXPIRED_TOKEN
         verify(exactly = 0) { refreshTokenRepository.findByMemberId(any()) }
+        verify(exactly = 0) { tokenProvider.parseRefreshToken(any()) }
     }
 
     private fun createMember(role: Role = Role.CUSTOMER): Member {

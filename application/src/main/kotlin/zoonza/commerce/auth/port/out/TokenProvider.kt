@@ -14,6 +14,10 @@ interface TokenProvider {
 
     fun generateRefreshToken(memberId: Long): IssuedToken
 
+    fun validateAccessToken(token: String)
+
+    fun validateRefreshToken(token: String)
+
     fun parseAccessToken(token: String): AccessTokenClaims
 
     fun parseRefreshToken(token: String): RefreshTokenClaims

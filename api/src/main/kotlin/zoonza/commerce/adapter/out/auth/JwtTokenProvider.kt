@@ -1,5 +1,6 @@
 package zoonza.commerce.adapter.out.auth
 
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
@@ -31,6 +32,14 @@ class JwtTokenProvider(
     @Value("\${jwt.refresh-expiration-ms}")
     private val refreshExpirationMs: Long,
 ) : TokenProvider {
+    companion object {
+        private const val CLAIM_EMAIL = "email"
+        private const val CLAIM_ROLE = "role"
+        private const val CLAIM_TYPE = "type"
+        private const val ACCESS_TOKEN_TYPE = "access"
+        private const val REFRESH_TOKEN_TYPE = "refresh"
+    }
+
     private val secretKey: SecretKey = createSecretKey(secret)
     private val parser = Jwts.parser().verifyWith(secretKey).build()
 
@@ -59,58 +68,41 @@ class JwtTokenProvider(
         )
     }
 
-    override fun parseAccessToken(token: String): AccessTokenClaims {
-        try {
-            val claims = parser.parseSignedClaims(token).payload
+    override fun validateAccessToken(token: String) {
+        validateToken(token, ACCESS_TOKEN_TYPE) { claims ->
+            claims.subject?.toLongOrNull()
+                ?: throw AuthException(ErrorCode.INVALID_TOKEN)
 
-            if (claims[CLAIM_TYPE]?.toString() != ACCESS_TOKEN_TYPE) {
-                throw AuthException(ErrorCode.INVALID_TOKEN)
-            }
+            claims[CLAIM_EMAIL]?.toString()
+                ?: throw AuthException(ErrorCode.INVALID_TOKEN)
 
-            val memberId =
-                claims.subject?.toLongOrNull()
-                    ?: throw AuthException(ErrorCode.INVALID_TOKEN)
-            val email =
-                claims[CLAIM_EMAIL]?.toString()
-                    ?: throw AuthException(ErrorCode.INVALID_TOKEN)
-            val role =
-                claims[CLAIM_ROLE]?.toString()?.let(Role::valueOf)
-                    ?: throw AuthException(ErrorCode.INVALID_TOKEN)
-
-            return AccessTokenClaims(
-                memberId = memberId,
-                email = email,
-                role = role,
-            )
-        } catch (_: ExpiredJwtException) {
-            throw AuthException(ErrorCode.EXPIRED_TOKEN)
-        } catch (_: IllegalArgumentException) {
-            throw AuthException(ErrorCode.INVALID_TOKEN)
-        } catch (_: JwtException) {
-            throw AuthException(ErrorCode.INVALID_TOKEN)
+            claims[CLAIM_ROLE]?.toString()
+                ?.let(Role::valueOf)
+                ?: throw AuthException(ErrorCode.INVALID_TOKEN)
         }
     }
 
-    override fun parseRefreshToken(token: String): RefreshTokenClaims {
-        try {
-            val claims = parser.parseSignedClaims(token).payload
-
-            if (claims[CLAIM_TYPE]?.toString() != REFRESH_TOKEN_TYPE) {
-                throw AuthException(ErrorCode.INVALID_TOKEN)
-            }
-
-            val memberId =
-                claims.subject?.toLongOrNull()
-                    ?: throw AuthException(ErrorCode.INVALID_TOKEN)
-
-            return RefreshTokenClaims(memberId = memberId)
-        } catch (_: ExpiredJwtException) {
-            throw AuthException(ErrorCode.EXPIRED_TOKEN)
-        } catch (_: IllegalArgumentException) {
-            throw AuthException(ErrorCode.INVALID_TOKEN)
-        } catch (_: JwtException) {
-            throw AuthException(ErrorCode.INVALID_TOKEN)
+    override fun validateRefreshToken(token: String) {
+        validateToken(token, REFRESH_TOKEN_TYPE) { claims ->
+            claims.subject?.toLongOrNull()
+                ?: throw AuthException(ErrorCode.INVALID_TOKEN)
         }
+    }
+
+    override fun parseAccessToken(token: String): AccessTokenClaims {
+        val claims = parser.parseSignedClaims(token).payload
+
+        return AccessTokenClaims(
+            memberId = claims.subject.toLong(),
+            email = claims[CLAIM_EMAIL].toString(),
+            role = Role.valueOf(claims[CLAIM_ROLE].toString()),
+        )
+    }
+
+    override fun parseRefreshToken(token: String): RefreshTokenClaims {
+        val claims = parser.parseSignedClaims(token).payload
+
+        return RefreshTokenClaims(memberId = claims.subject.toLong())
     }
 
     private fun generateToken(
@@ -139,6 +131,28 @@ class JwtTokenProvider(
         )
     }
 
+    private fun validateToken(
+        token: String,
+        expectedType: String,
+        claimsValidator: (Claims) -> Unit,
+    ) {
+        try {
+            val claims = parser.parseSignedClaims(token).payload
+
+            if (claims[CLAIM_TYPE]?.toString() != expectedType) {
+                throw AuthException(ErrorCode.INVALID_TOKEN)
+            }
+
+            claimsValidator(claims)
+        } catch (_: ExpiredJwtException) {
+            throw AuthException(ErrorCode.EXPIRED_TOKEN)
+        } catch (_: IllegalArgumentException) {
+            throw AuthException(ErrorCode.INVALID_TOKEN)
+        } catch (_: JwtException) {
+            throw AuthException(ErrorCode.INVALID_TOKEN)
+        }
+    }
+
     private fun Instant.toLocalDateTime(): LocalDateTime {
         return LocalDateTime.ofInstant(this, ZoneId.systemDefault())
     }
@@ -150,13 +164,5 @@ class JwtTokenProvider(
                 .digest(secret.toByteArray(StandardCharsets.UTF_8))
 
         return Keys.hmacShaKeyFor(keyBytes)
-    }
-
-    companion object {
-        private const val CLAIM_EMAIL = "email"
-        private const val CLAIM_ROLE = "role"
-        private const val CLAIM_TYPE = "type"
-        private const val ACCESS_TOKEN_TYPE = "access"
-        private const val REFRESH_TOKEN_TYPE = "refresh"
     }
 }

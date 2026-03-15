@@ -33,6 +33,7 @@ class JwtTokenProviderTest {
     fun `access 토큰을 파싱하면 회원 정보와 역할을 얻을 수 있다`() {
         val accessToken = tokenProvider.generateAccessToken(1L, "member@example.com", Role.SELLER)
 
+        tokenProvider.validateAccessToken(accessToken.token)
         val claims = tokenProvider.parseAccessToken(accessToken.token)
 
         claims shouldBe AccessTokenClaims(1L, "member@example.com", Role.SELLER)
@@ -42,56 +43,57 @@ class JwtTokenProviderTest {
     fun `refresh 토큰을 파싱하면 회원 식별자를 얻을 수 있다`() {
         val refreshToken = tokenProvider.generateRefreshToken(1L)
 
+        tokenProvider.validateRefreshToken(refreshToken.token)
         val claims = tokenProvider.parseRefreshToken(refreshToken.token)
 
         claims.memberId shouldBe 1L
     }
 
     @Test
-    fun `access 토큰을 refresh 토큰으로 파싱하면 예외를 던진다`() {
+    fun `access 토큰을 refresh 토큰으로 검증하면 예외를 던진다`() {
         val accessToken = tokenProvider.generateAccessToken(1L, "member@example.com", Role.CUSTOMER)
 
         val exception =
             shouldThrow<AuthException> {
-                tokenProvider.parseRefreshToken(accessToken.token)
+                tokenProvider.validateRefreshToken(accessToken.token)
             }
 
         exception.errorCode shouldBe ErrorCode.INVALID_TOKEN
     }
 
     @Test
-    fun `refresh 토큰을 access 토큰으로 파싱하면 예외를 던진다`() {
+    fun `refresh 토큰을 access 토큰으로 검증하면 예외를 던진다`() {
         val refreshToken = tokenProvider.generateRefreshToken(1L)
 
         val exception =
             shouldThrow<AuthException> {
-                tokenProvider.parseAccessToken(refreshToken.token)
+                tokenProvider.validateAccessToken(refreshToken.token)
             }
 
         exception.errorCode shouldBe ErrorCode.INVALID_TOKEN
     }
 
     @Test
-    fun `서명이 다른 refresh 토큰을 파싱하면 예외를 던진다`() {
+    fun `서명이 다른 refresh 토큰을 검증하면 예외를 던진다`() {
         val otherTokenProvider = JwtTokenProvider("other-secret", 600_000, 1_200_000)
         val refreshToken = otherTokenProvider.generateRefreshToken(1L)
 
         val exception =
             shouldThrow<AuthException> {
-                tokenProvider.parseRefreshToken(refreshToken.token)
+                tokenProvider.validateRefreshToken(refreshToken.token)
             }
 
         exception.errorCode shouldBe ErrorCode.INVALID_TOKEN
     }
 
     @Test
-    fun `만료된 refresh 토큰을 파싱하면 예외를 던진다`() {
+    fun `만료된 refresh 토큰을 검증하면 예외를 던진다`() {
         val expiredTokenProvider = JwtTokenProvider(secret, 600_000, -1)
         val refreshToken = expiredTokenProvider.generateRefreshToken(1L)
 
         val exception =
             shouldThrow<AuthException> {
-                expiredTokenProvider.parseRefreshToken(refreshToken.token)
+                expiredTokenProvider.validateRefreshToken(refreshToken.token)
             }
 
         exception.errorCode shouldBe ErrorCode.EXPIRED_TOKEN

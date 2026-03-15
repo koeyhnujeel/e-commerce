@@ -26,8 +26,7 @@ class DefaultAuthService(
 ) : AuthService {
     @Transactional
     override fun login(command: LoginCommand): LoginResult {
-        val member =
-            memberRepository.findByEmail(Email(command.email))
+        val member = memberRepository.findByEmail(Email(command.email))
                 ?: throw AuthException(ErrorCode.INVALID_CREDENTIALS)
 
         if (!passwordHasher.matches(command.password, member.passwordHash)) {
@@ -37,8 +36,7 @@ class DefaultAuthService(
         member.recordLogin(LocalDateTime.now())
         memberRepository.save(member)
 
-        val accessToken =
-            tokenProvider.generateAccessToken(
+        val accessToken = tokenProvider.generateAccessToken(
                 memberId = member.id,
                 email = member.email.address,
                 role = member.role,
@@ -60,21 +58,21 @@ class DefaultAuthService(
 
     @Transactional
     override fun reissueAccessToken(refreshToken: String): ReissueTokenResult {
+        tokenProvider.validateRefreshToken(refreshToken)
+
         val claims = tokenProvider.parseRefreshToken(refreshToken)
-        val storedRefreshToken =
-            refreshTokenRepository.findByMemberId(claims.memberId)
+
+        val storedRefreshToken = refreshTokenRepository.findByMemberId(claims.memberId)
                 ?: throw AuthException(ErrorCode.INVALID_TOKEN)
 
         if (storedRefreshToken.token != refreshToken) {
             throw AuthException(ErrorCode.INVALID_TOKEN)
         }
 
-        val member =
-            memberRepository.findById(claims.memberId)
+        val member = memberRepository.findById(claims.memberId)
                 ?: throw AuthException(ErrorCode.INVALID_TOKEN)
 
-        val accessToken =
-            tokenProvider.generateAccessToken(
+        val accessToken = tokenProvider.generateAccessToken(
                 memberId = member.id,
                 email = member.email.address,
                 role = member.role,
@@ -104,7 +102,9 @@ class DefaultAuthService(
                 issuedAt = issuedRefreshToken.issuedAt,
                 expiresAt = issuedRefreshToken.expiresAt,
             )
+
             refreshTokenRepository.save(existingRefreshToken)
+
             return issuedRefreshToken
         }
 
