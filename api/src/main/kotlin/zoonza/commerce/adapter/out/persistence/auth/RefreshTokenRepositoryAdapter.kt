@@ -19,4 +19,8 @@ class RefreshTokenRepositoryAdapter(
     override fun deleteByMemberId(memberId: Long) {
         refreshTokenJpaRepository.deleteByMemberId(memberId)
     }
+
+    override fun deleteByToken(token: String) {
+        refreshTokenJpaRepository.deleteByToken(token)
+    }
 }

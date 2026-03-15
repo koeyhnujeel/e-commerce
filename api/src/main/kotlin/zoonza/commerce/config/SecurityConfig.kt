@@ -26,6 +26,7 @@ class SecurityConfig(
                     .requestMatchers(
                         "/error",
                         "/api/auth/login",
+                        "/api/auth/logout",
                         "/api/auth/refresh",
                         "/api/members/signup",
                         "/api/members/signup/**",

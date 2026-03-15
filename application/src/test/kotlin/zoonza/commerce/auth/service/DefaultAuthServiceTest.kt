@@ -218,6 +218,26 @@ class DefaultAuthServiceTest {
         verify(exactly = 0) { tokenProvider.parseRefreshToken(any()) }
     }
 
+    @Test
+    fun `로그아웃 시 refresh 토큰이 있으면 토큰 값으로 삭제한다`() {
+        every { refreshTokenRepository.deleteByToken("refresh-token") } just runs
+
+        authService.logout("refresh-token")
+
+        verify(exactly = 1) { refreshTokenRepository.deleteByToken("refresh-token") }
+        verify(exactly = 0) { tokenProvider.validateRefreshToken(any()) }
+        verify(exactly = 0) { tokenProvider.parseRefreshToken(any()) }
+    }
+
+    @Test
+    fun `로그아웃 시 refresh 토큰이 없으면 아무것도 삭제하지 않는다`() {
+        authService.logout(null)
+
+        verify(exactly = 0) { refreshTokenRepository.deleteByToken(any()) }
+        verify(exactly = 0) { tokenProvider.validateRefreshToken(any()) }
+        verify(exactly = 0) { tokenProvider.parseRefreshToken(any()) }
+    }
+
     private fun createMember(role: Role = Role.CUSTOMER): Member {
         return Member.create(
             email = Email("member@example.com"),

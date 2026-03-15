@@ -8,4 +8,6 @@ interface AuthService {
     fun login(command: LoginCommand): LoginResult
 
     fun reissueAccessToken(refreshToken: String): ReissueTokenResult
+
+    fun logout(refreshToken: String?)
 }

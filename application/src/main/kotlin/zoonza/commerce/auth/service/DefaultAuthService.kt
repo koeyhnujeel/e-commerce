@@ -92,6 +92,15 @@ class DefaultAuthService(
         )
     }
 
+    @Transactional
+    override fun logout(refreshToken: String?) {
+        if (refreshToken == null) {
+            return
+        }
+
+        refreshTokenRepository.deleteByToken(refreshToken)
+    }
+
     private fun issueOrRotateRefreshToken(memberId: Long): IssuedToken {
         val issuedRefreshToken = tokenProvider.generateRefreshToken(memberId)
         val existingRefreshToken = refreshTokenRepository.findByMemberId(memberId)

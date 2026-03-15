@@ -21,10 +21,11 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
     companion object {
         private const val BEARER_PREFIX = "Bearer "
+        private val EXCLUDED_URIS = setOf("/api/auth/refresh", "/api/auth/logout")
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        return request.requestURI == "/api/auth/refresh"
+        return request.requestURI in EXCLUDED_URIS
     }
 
     override fun doFilterInternal(

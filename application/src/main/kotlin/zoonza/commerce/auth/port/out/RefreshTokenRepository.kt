@@ -8,4 +8,6 @@ interface RefreshTokenRepository {
     fun save(refreshToken: RefreshToken): RefreshToken
 
     fun deleteByMemberId(memberId: Long)
+
+    fun deleteByToken(token: String)
 }

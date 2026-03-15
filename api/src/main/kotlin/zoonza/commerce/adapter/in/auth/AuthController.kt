@@ -27,8 +27,7 @@ class AuthController(
         @Valid @RequestBody request: LoginRequest,
         response: HttpServletResponse,
     ): ApiResponse<AuthTokenResponse> {
-        val result =
-            authService.login(
+        val result = authService.login(
                 LoginCommand(
                     email = request.email,
                     password = request.password,
@@ -51,8 +50,7 @@ class AuthController(
         refreshToken: String?,
         response: HttpServletResponse,
     ): ApiResponse<AuthTokenResponse> {
-        val result =
-            authService.reissueAccessToken(
+        val result = authService.reissueAccessToken(
                 refreshToken ?: throw AuthException(ErrorCode.UNAUTHORIZED),
             )
 
@@ -62,5 +60,21 @@ class AuthController(
         )
 
         return ApiResponse.success(AuthTokenResponse(accessToken = result.accessToken))
+    }
+
+    @PostMapping("/logout")
+    fun logout(
+        @CookieValue(name = RefreshTokenCookieManager.REFRESH_TOKEN_COOKIE_NAME, required = false)
+        refreshToken: String?,
+        response: HttpServletResponse,
+    ): ApiResponse<Nothing> {
+        authService.logout(refreshToken)
+
+        response.addHeader(
+            HttpHeaders.SET_COOKIE,
+            refreshTokenCookieManager.expire().toString(),
+        )
+
+        return ApiResponse.success()
     }
 }

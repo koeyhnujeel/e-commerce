@@ -206,6 +206,87 @@ class AuthControllerTest {
     }
 
     @Test
+    fun `로그아웃 시 refresh 토큰을 삭제하고 refreshToken 쿠키 삭제 응답을 반환한다`() {
+        val member = insertMember(rawPassword = "Password123!")
+        val refreshToken = tokenProvider.generateRefreshToken(member.id)
+        refreshTokenJpaRepository.save(
+            RefreshToken.issue(
+                memberId = member.id,
+                token = refreshToken.token,
+                issuedAt = refreshToken.issuedAt,
+                expiresAt = refreshToken.expiresAt,
+            ),
+        )
+
+        val result =
+            mockMvc
+                .post("/api/auth/logout") {
+                    cookie(Cookie(RefreshTokenCookieManager.REFRESH_TOKEN_COOKIE_NAME, refreshToken.token))
+                }.andExpect {
+                    status { isOk() }
+                    jsonPath("$.success") { value(true) }
+                    jsonPath("$.data") { doesNotExist() }
+                    jsonPath("$.error") { doesNotExist() }
+                }.andReturn()
+
+        val setCookie = result.response.getHeader("Set-Cookie")
+
+        setCookie.shouldNotBeNull()
+        setCookie.contains("Max-Age=0") shouldBe true
+        refreshTokenJpaRepository.findByMemberId(member.id).shouldBeNull()
+    }
+
+    @Test
+    fun `로그아웃 시 refresh 토큰이 없어도 refreshToken 쿠키 삭제 응답을 반환한다`() {
+        val result =
+            mockMvc
+                .post("/api/auth/logout")
+                .andExpect {
+                    status { isOk() }
+                    jsonPath("$.success") { value(true) }
+                    jsonPath("$.data") { doesNotExist() }
+                    jsonPath("$.error") { doesNotExist() }
+                }.andReturn()
+
+        val setCookie = result.response.getHeader("Set-Cookie")
+
+        setCookie.shouldNotBeNull()
+        setCookie.contains("Max-Age=0") shouldBe true
+    }
+
+    @Test
+    fun `로그아웃 시 잘못된 Authorization 헤더가 있어도 refresh 토큰을 삭제한다`() {
+        val member = insertMember(rawPassword = "Password123!")
+        val refreshToken = tokenProvider.generateRefreshToken(member.id)
+        refreshTokenJpaRepository.save(
+            RefreshToken.issue(
+                memberId = member.id,
+                token = refreshToken.token,
+                issuedAt = refreshToken.issuedAt,
+                expiresAt = refreshToken.expiresAt,
+            ),
+        )
+
+        val result =
+            mockMvc
+                .post("/api/auth/logout") {
+                    cookie(Cookie(RefreshTokenCookieManager.REFRESH_TOKEN_COOKIE_NAME, refreshToken.token))
+                    header("Authorization", "Bearer invalid-access-token")
+                }.andExpect {
+                    status { isOk() }
+                    jsonPath("$.success") { value(true) }
+                    jsonPath("$.data") { doesNotExist() }
+                    jsonPath("$.error") { doesNotExist() }
+                }.andReturn()
+
+        val setCookie = result.response.getHeader("Set-Cookie")
+
+        setCookie.shouldNotBeNull()
+        setCookie.contains("Max-Age=0") shouldBe true
+        refreshTokenJpaRepository.findByMemberId(member.id).shouldBeNull()
+    }
+
+    @Test
     fun `DB에 저장된 refresh 토큰이 없으면 인증 실패 응답과 refreshToken 쿠키 삭제 응답을 반환한다`() {
         val member = insertMember(rawPassword = "Password123!")
         val refreshToken = tokenProvider.generateRefreshToken(member.id)
