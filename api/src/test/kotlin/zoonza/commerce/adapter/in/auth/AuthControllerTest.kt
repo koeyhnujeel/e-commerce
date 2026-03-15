@@ -85,7 +85,7 @@ class AuthControllerTest {
     }
 
     @Test
-    fun `로그인 유지가 선택되지 않으면 기존 refresh 토큰을 제거하고 쿠키를 만료시킨다`() {
+    fun `로그인 유지가 선택되지 않으면 기존 refresh 토큰을 제거하고 refreshToken 쿠키 삭제 응답을 반환한다`() {
         val member = insertMember(rawPassword = "Password123!")
         val refreshToken = tokenProvider.generateRefreshToken(member.id)
         refreshTokenJpaRepository.save(
@@ -119,6 +119,36 @@ class AuthControllerTest {
         setCookie.shouldNotBeNull()
         setCookie.contains("Max-Age=0") shouldBe true
         refreshTokenJpaRepository.findByMemberId(member.id).shouldBeNull()
+    }
+
+    @Test
+    fun `로그인 유지가 선택되지 않으면 refresh 토큰 없이 로그인하고 refreshToken 쿠키 삭제 응답을 반환한다`() {
+        val member = insertMember(rawPassword = "Password123!")
+        val request =
+            LoginRequest(
+                email = member.email.address,
+                password = "Password123!",
+                rememberMe = false,
+            )
+
+        val result =
+            mockMvc
+                .post("/api/auth/login") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isOk() }
+                    jsonPath("$.success") { value(true) }
+                    jsonPath("$.data.accessToken") { exists() }
+                }.andReturn()
+
+        val setCookie = result.response.getHeader("Set-Cookie")
+        val updatedMember = memberJpaRepository.findById(member.id).orElseThrow()
+
+        setCookie.shouldNotBeNull()
+        setCookie.contains("Max-Age=0") shouldBe true
+        refreshTokenJpaRepository.findByMemberId(member.id).shouldBeNull()
+        updatedMember.lastLoginAt.shouldNotBeNull()
     }
 
     @Test
@@ -176,7 +206,7 @@ class AuthControllerTest {
     }
 
     @Test
-    fun `DB에 저장된 refresh 토큰이 없으면 인증 실패 응답과 만료 쿠키를 반환한다`() {
+    fun `DB에 저장된 refresh 토큰이 없으면 인증 실패 응답과 refreshToken 쿠키 삭제 응답을 반환한다`() {
         val member = insertMember(rawPassword = "Password123!")
         val refreshToken = tokenProvider.generateRefreshToken(member.id)
 
