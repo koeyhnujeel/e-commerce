@@ -174,6 +174,54 @@ class AuthControllerTest {
     }
 
     @Test
+    fun `로그인 요청의 이메일 형식이 올바르지 않으면 한국어 검증 메시지를 반환한다`() {
+        val request =
+            LoginRequest(
+                email = "invalid-email",
+                password = "Password123!",
+                rememberMe = false,
+            )
+
+        val result =
+            mockMvc
+                .post("/api/auth/login") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.success") { value(false) }
+                    jsonPath("$.error.code") { value("BAD_REQUEST") }
+                }.andReturn()
+
+        extractFieldErrors(result.response.contentAsString)["email"] shouldBe
+            listOf("이메일 형식이 올바르지 않습니다.")
+    }
+
+    @Test
+    fun `로그인 요청의 비밀번호가 비어 있으면 한국어 검증 메시지를 반환한다`() {
+        val request =
+            LoginRequest(
+                email = "member@example.com",
+                password = "",
+                rememberMe = false,
+            )
+
+        val result =
+            mockMvc
+                .post("/api/auth/login") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.success") { value(false) }
+                    jsonPath("$.error.code") { value("BAD_REQUEST") }
+                }.andReturn()
+
+        extractFieldErrors(result.response.contentAsString)["password"] shouldBe
+            listOf("비밀번호는 필수입니다.")
+    }
+
+    @Test
     fun `refresh 토큰이 유효하면 access 토큰과 refresh 쿠키를 모두 재발급한다`() {
         val member = insertMember(rawPassword = "Password123!", role = Role.SELLER)
         val oldRefreshToken = tokenProvider.generateRefreshToken(member.id)
@@ -328,5 +376,16 @@ class AuthControllerTest {
 
     private fun extractRefreshTokenValue(setCookie: String): String {
         return setCookie.substringAfter("refreshToken=").substringBefore(";")
+    }
+
+    private fun extractFieldErrors(content: String): Map<String, List<String>> {
+        return objectMapper
+            .readTree(content)
+            .path("error")
+            .path("errors")
+            .associateBy(
+                { it.path("field").asText() },
+                { listOf(it.path("reason").asText()) },
+            )
     }
 }

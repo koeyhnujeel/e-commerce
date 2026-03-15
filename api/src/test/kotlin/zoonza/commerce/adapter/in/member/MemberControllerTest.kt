@@ -123,15 +123,19 @@ class MemberControllerTest {
     fun `이메일 형식이 올바르지 않으면 잘못된 요청 응답을 반환한다`() {
         val request = SendSignupEmailVerificationCodeRequest(email = "invalid-email")
 
-        mockMvc
-            .post("/api/members/signup/email-verifications") {
-                contentType = MediaType.APPLICATION_JSON
-                content = objectMapper.writeValueAsString(request)
-            }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.success") { value(false) }
-                jsonPath("$.error.code") { value("BAD_REQUEST") }
-            }
+        val result =
+            mockMvc
+                .post("/api/members/signup/email-verifications") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.success") { value(false) }
+                    jsonPath("$.error.code") { value("BAD_REQUEST") }
+                }.andReturn()
+
+        extractFieldErrors(result.response.contentAsString)["email"] shouldBe
+            listOf("이메일 형식이 올바르지 않습니다.")
 
         emailVerificationJpaRepository.count() shouldBe 0
         verificationCodeSender.sentCodes.shouldHaveSize(0)
@@ -250,15 +254,19 @@ class MemberControllerTest {
     fun `인증 코드 형식이 올바르지 않으면 잘못된 요청 응답을 반환한다`() {
         val request = VerifySignupEmailVerificationCodeRequest(email = "member@example.com", code = "123456")
 
-        mockMvc
-            .post("/api/members/signup/email-verifications/verify") {
-                contentType = MediaType.APPLICATION_JSON
-                content = objectMapper.writeValueAsString(request)
-            }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.success") { value(false) }
-                jsonPath("$.error.code") { value("BAD_REQUEST") }
-            }
+        val result =
+            mockMvc
+                .post("/api/members/signup/email-verifications/verify") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.success") { value(false) }
+                    jsonPath("$.error.code") { value("BAD_REQUEST") }
+                }.andReturn()
+
+        extractFieldErrors(result.response.contentAsString)["code"] shouldBe
+            listOf("인증 코드는 123 456 형식이어야 합니다.")
 
         emailVerificationJpaRepository.count() shouldBe 0
     }
@@ -392,24 +400,30 @@ class MemberControllerTest {
     }
 
     @Test
-    fun `회원가입 요청 값이 비어 있으면 잘못된 요청 응답을 반환한다`() {
+    fun `회원가입 요청의 필수값이 비어 있으면 한국어 검증 메시지를 반환한다`() {
         val request =
             SignupMemberRequest(
                 email = "member@example.com",
-                password = "",
+                password = "Password123!",
                 name = "",
                 phoneNumber = "",
             )
 
-        mockMvc
-            .post("/api/members/signup") {
-                contentType = MediaType.APPLICATION_JSON
-                content = objectMapper.writeValueAsString(request)
-            }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.success") { value(false) }
-                jsonPath("$.error.code") { value("BAD_REQUEST") }
-            }
+        val result =
+            mockMvc
+                .post("/api/members/signup") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.success") { value(false) }
+                    jsonPath("$.error.code") { value("BAD_REQUEST") }
+                }.andReturn()
+
+        val fieldErrors = extractFieldErrors(result.response.contentAsString)
+
+        fieldErrors["name"] shouldBe listOf("이름은 필수입니다.")
+        fieldErrors["phoneNumber"] shouldBe listOf("휴대폰 번호는 필수입니다.")
     }
 
     @Test
@@ -476,6 +490,17 @@ class MemberControllerTest {
         }
 
         emailVerificationJpaRepository.save(verification)
+    }
+
+    private fun extractFieldErrors(content: String): Map<String, List<String>> {
+        return objectMapper
+            .readTree(content)
+            .path("error")
+            .path("errors")
+            .associateBy(
+                { it.path("field").asText() },
+                { listOf(it.path("reason").asText()) },
+            )
     }
 
     @TestConfiguration
