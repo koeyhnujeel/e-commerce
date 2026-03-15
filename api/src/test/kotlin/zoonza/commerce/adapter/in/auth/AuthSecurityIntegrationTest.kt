@@ -58,6 +58,19 @@ class AuthSecurityIntegrationTest {
     }
 
     @Test
+    fun `Bearer prefix가 아닌 Authorization 헤더는 무시하고 인증 필요 응답을 반환한다`() {
+        mockMvc
+            .get("/api/test/authenticated") {
+                header("Authorization", "Basic invalid-token")
+            }.andExpect {
+                status { isUnauthorized() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("UNAUTHORIZED") }
+                jsonPath("$.error.message") { value("인증이 필요합니다.") }
+            }
+    }
+
+    @Test
     fun `잘못된 access 토큰이면 인증 실패 응답을 반환한다`() {
         val accessToken = tokenProvider.generateAccessToken(1L, "member@example.com", Role.CUSTOMER)
 
