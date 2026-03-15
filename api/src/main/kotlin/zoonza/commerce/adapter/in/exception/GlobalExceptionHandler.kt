@@ -26,6 +26,7 @@ class GlobalExceptionHandler(
             ErrorCode.EMAIL_NOT_VERIFIED to HttpStatus.BAD_REQUEST,
             ErrorCode.INVALID_VERIFICATION_CODE to HttpStatus.BAD_REQUEST,
             ErrorCode.EXPIRED_VERIFICATION_CODE to HttpStatus.BAD_REQUEST,
+            ErrorCode.PRODUCT_NOT_FOUND to HttpStatus.NOT_FOUND,
         )
 
     @ExceptionHandler(BusinessException::class)

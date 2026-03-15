@@ -12,6 +12,7 @@ enum class ErrorCode(
     EMAIL_NOT_VERIFIED("BAD_REQUEST", "이메일 인증이 완료되지 않았습니다."),
     INVALID_VERIFICATION_CODE("BAD_REQUEST", "인증 코드가 올바르지 않습니다."),
     EXPIRED_VERIFICATION_CODE("BAD_REQUEST", "인증 코드가 만료되었습니다."),
+    PRODUCT_NOT_FOUND("NOT_FOUND", "상품을 찾을 수 없습니다."),
     INVALID_TOKEN("UNAUTHORIZED", "인증 토큰이 올바르지 않습니다."),
     EXPIRED_TOKEN("UNAUTHORIZED", "인증 토큰이 만료되었습니다."),
     UNAUTHORIZED("UNAUTHORIZED", "인증이 필요합니다."),
