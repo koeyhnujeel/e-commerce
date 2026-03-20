@@ -1,8 +1,8 @@
-package zoonza.commerce.adapter.`in`.exception
+package zoonza.commerce.common
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.validation.BindingResult
-import zoonza.commerce.exception.ErrorCode
+import zoonza.commerce.shared.ErrorCode
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorResponse(

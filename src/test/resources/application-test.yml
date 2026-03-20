@@ -14,6 +14,6 @@ spring:
     password: test-password
 
 jwt:
-  secret: test-secret
+  secret: test-secret-key-test-secret-key-123456
   access-expiration-ms: 600000
   refresh-expiration-ms: 1200000

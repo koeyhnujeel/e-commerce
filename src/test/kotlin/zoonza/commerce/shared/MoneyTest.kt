@@ -1,22 +1,22 @@
-package zoonza.commerce.common
+package zoonza.commerce.shared
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
-import kotlin.test.Test
+import org.junit.jupiter.api.Test
 
 class MoneyTest {
     @Test
-    fun `금액이 0 이상이면 생성한다`() {
-        val money = Money(39_000L)
+    fun `0 이상의 금액을 생성한다`() {
+        val money = Money(10_000)
 
-        money.amount shouldBe 39_000L
+        money.amount shouldBe 10_000
     }
 
     @Test
-    fun `금액이 음수면 예외를 던진다`() {
+    fun `음수 금액이면 예외를 던진다`() {
         val exception =
             shouldThrow<IllegalArgumentException> {
-                Money(-1L)
+                Money(-1)
             }
 
         exception.message shouldBe "금액은 0 이상이어야 합니다."

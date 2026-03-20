@@ -1,7 +1,6 @@
-package zoonza.commerce.adapter.`in`.response
+package zoonza.commerce.common
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import zoonza.commerce.adapter.`in`.exception.ErrorResponse
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ApiResponse<T>(

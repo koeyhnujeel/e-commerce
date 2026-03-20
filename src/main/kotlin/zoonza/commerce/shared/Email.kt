@@ -1,4 +1,4 @@
-package zoonza.commerce.common
+package zoonza.commerce.shared
 
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable

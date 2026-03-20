@@ -1,4 +1,4 @@
-package zoonza.commerce.exception
+package zoonza.commerce.shared
 
 enum class ErrorCode(
     val code: String,

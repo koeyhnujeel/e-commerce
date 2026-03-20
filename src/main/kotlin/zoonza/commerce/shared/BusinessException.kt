@@ -1,4 +1,4 @@
-package zoonza.commerce.exception
+package zoonza.commerce.shared
 
 open class BusinessException(
     val errorCode: ErrorCode,

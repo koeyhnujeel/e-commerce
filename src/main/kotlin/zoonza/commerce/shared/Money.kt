@@ -1,6 +1,11 @@
-package zoonza.commerce.common
+package zoonza.commerce.shared
 
+import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
+
+@Embeddable
 data class Money(
+    @Column(nullable = false)
     val amount: Long,
 ) {
     init {

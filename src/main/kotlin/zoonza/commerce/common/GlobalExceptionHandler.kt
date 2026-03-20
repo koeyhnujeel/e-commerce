@@ -1,22 +1,16 @@
-package zoonza.commerce.adapter.`in`.exception
+package zoonza.commerce.common
 
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import zoonza.commerce.adapter.`in`.auth.RefreshTokenCookieManager
-import zoonza.commerce.adapter.`in`.response.ApiResponse
-import zoonza.commerce.exception.AuthException
-import zoonza.commerce.exception.BusinessException
-import zoonza.commerce.exception.ErrorCode
+import zoonza.commerce.shared.AuthException
+import zoonza.commerce.shared.BusinessException
+import zoonza.commerce.shared.ErrorCode
 
 @RestControllerAdvice
-class GlobalExceptionHandler(
-    private val refreshTokenCookieManager: RefreshTokenCookieManager,
-) {
+class GlobalExceptionHandler {
     private val businessStatusMap: Map<ErrorCode, HttpStatus> =
         mapOf(
             ErrorCode.INVALID_INPUT_VALUE to HttpStatus.BAD_REQUEST,
@@ -30,9 +24,7 @@ class GlobalExceptionHandler(
         )
 
     @ExceptionHandler(BusinessException::class)
-    fun handleBusinessException(
-        e: BusinessException,
-    ): ResponseEntity<ApiResponse<Nothing>> {
+    fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {
         val errorCode = e.errorCode
 
         return ResponseEntity
@@ -41,39 +33,16 @@ class GlobalExceptionHandler(
     }
 
     @ExceptionHandler(AuthException::class)
-    fun handleAuthException(
-        e: AuthException,
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ): ResponseEntity<ApiResponse<Nothing>> {
-        if (shouldExpireRefreshTokenCookie(request.requestURI, e.errorCode)) {
-            response.addHeader("Set-Cookie", refreshTokenCookieManager.expire().toString())
-        }
-
+    fun handleAuthException(e: AuthException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .body(ApiResponse.error(ErrorResponse.of(e.errorCode, e.message)))
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValid(
-        e: MethodArgumentNotValidException,
-    ): ResponseEntity<ApiResponse<Nothing>> {
+    fun handleMethodArgumentNotValid(e: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .body(ApiResponse.error(ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, e.bindingResult)))
-    }
-
-    private fun shouldExpireRefreshTokenCookie(
-        requestUri: String,
-        errorCode: ErrorCode,
-    ): Boolean {
-        if (requestUri != "/api/auth/refresh") {
-            return false
-        }
-
-        return errorCode == ErrorCode.INVALID_TOKEN ||
-            errorCode == ErrorCode.EXPIRED_TOKEN ||
-            errorCode == ErrorCode.UNAUTHORIZED
     }
 }

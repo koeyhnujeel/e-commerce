@@ -1,4 +1,4 @@
-package zoonza.commerce.exception
+package zoonza.commerce.shared
 
 class AuthException(
     val errorCode: ErrorCode,
