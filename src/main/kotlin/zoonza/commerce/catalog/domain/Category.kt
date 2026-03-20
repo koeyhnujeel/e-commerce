@@ -1,10 +1,45 @@
-package zoonza.commerce.category
+package zoonza.commerce.catalog.domain
 
+import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
+
+@Entity
+@Table(
+    name = "category",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_category_parent_id_sort_order",
+            columnNames = ["parent_id", "sort_order"],
+        ),
+    ],
+)
 class Category private constructor(
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+
+    @Column(nullable = false)
     var name: String,
+
+    @Column(name = "sort_order", nullable = false)
     var sortOrder: Int,
-    val parent: Category? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    var parent: Category? = null,
+
+    @OneToMany(mappedBy = "parent", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
     val children: MutableList<Category> = mutableListOf(),
 ) {
     companion object {
@@ -32,8 +67,7 @@ class Category private constructor(
         ): Category {
             validateId(id)
 
-            val child =
-                Category(
+            val child = Category(
                     id = id,
                     name = normalizeName(name),
                     sortOrder = validateSortOrder(sortOrder),
@@ -70,6 +104,7 @@ class Category private constructor(
         parent?.ensureChildSortOrderAvailable(sortOrder, this)
 
         this.sortOrder = sortOrder
+        parent?.sortChildren()
     }
 
     fun isLeaf(): Boolean {
@@ -82,8 +117,13 @@ class Category private constructor(
         check(child.parent === this) { "카테고리 부모-자식 연관관계가 올바르지 않습니다." }
 
         children.add(child)
+        sortChildren()
 
         check(children.contains(child)) { "카테고리 자식 목록이 올바르지 않습니다." }
+    }
+
+    private fun sortChildren() {
+        children.sortBy(Category::sortOrder)
     }
 
     private fun ensureChildSortOrderAvailable(

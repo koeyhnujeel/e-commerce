@@ -1,15 +1,64 @@
-package zoonza.commerce.product
+package zoonza.commerce.catalog.domain
 
-import zoonza.commerce.common.Money
+import jakarta.persistence.AttributeOverride
+import jakarta.persistence.CascadeType
+import jakarta.persistence.CollectionTable
+import jakarta.persistence.Column
+import jakarta.persistence.ElementCollection
+import jakarta.persistence.Embedded
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
+import zoonza.commerce.shared.Money
 
+@Entity
+@Table(name = "product")
 class Product private constructor(
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+
+    @Column(name = "brand_id", nullable = false)
     val brandId: Long,
+
+    @Column(nullable = false)
     var name: String,
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     var description: String,
+
+    @Embedded
+    @AttributeOverride(
+        name = "amount",
+        column = Column(name = "base_price", nullable = false),
+    )
     var basePrice: Money,
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+        name = "product_category",
+        joinColumns = [JoinColumn(name = "product_id")],
+        uniqueConstraints = [
+            UniqueConstraint(
+                name = "uk_product_category_product_id_category_id",
+                columnNames = ["product_id", "category_id"],
+            ),
+        ],
+    )
+    @Column(name = "category_id", nullable = false)
     val categoryIds: MutableSet<Long>,
+
+    @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
     val images: MutableList<ProductImage>,
+
+    @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true)
     val options: MutableList<ProductOption>,
 ) {
     companion object {
@@ -33,16 +82,21 @@ class Product private constructor(
             validateImages(images)
             validateOptions(options)
 
-            return Product(
-                id = id,
-                brandId = brandId,
-                name = normalizedName,
-                description = normalizedDescription,
-                basePrice = basePrice,
-                categoryIds = validatedCategoryIds.toMutableSet(),
-                images = images.toMutableList(),
-                options = options.toMutableList(),
-            )
+            val product = Product(
+                    id = id,
+                    brandId = brandId,
+                    name = normalizedName,
+                    description = normalizedDescription,
+                    basePrice = basePrice,
+                    categoryIds = validatedCategoryIds.toMutableSet(),
+                    images = mutableListOf(),
+                    options = mutableListOf(),
+                )
+
+            product.replaceImages(images)
+            product.replaceOptions(options)
+
+            return product
         }
 
         private fun normalizeName(name: String): String {
@@ -127,7 +181,10 @@ class Product private constructor(
         validateImages(images)
 
         this.images.clear()
-        this.images.addAll(images)
+
+        images.sortedBy(ProductImage::sortOrder)
+            .onEach { it.belongTo(this) }
+            .forEach(this.images::add)
 
         check(this.images.size == images.size) { "상품 이미지 목록이 올바르지 않습니다." }
     }
@@ -136,7 +193,8 @@ class Product private constructor(
         validateOptions(options)
 
         this.options.clear()
-        this.options.addAll(options)
+        options.onEach { it.belongTo(this) }
+            .forEach(this.options::add)
 
         check(this.options.size == options.size) { "상품 옵션 목록이 올바르지 않습니다." }
     }
