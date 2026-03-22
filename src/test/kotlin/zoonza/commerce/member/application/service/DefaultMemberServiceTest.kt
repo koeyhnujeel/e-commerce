@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.junit.jupiter.api.Test
 import zoonza.commerce.member.AuthenticatedMember
+import zoonza.commerce.member.MemberProfile
 import zoonza.commerce.member.application.dto.SignupCommand
 import zoonza.commerce.member.application.port.out.MemberRepository
 import zoonza.commerce.member.application.port.out.NicknameGenerator
@@ -140,5 +141,66 @@ class DefaultMemberServiceTest {
         val found = memberService.findById(1L)
 
         found shouldBe AuthenticatedMember(member.id, member.email, member.role.name)
+    }
+
+    @Test
+    fun `회원 식별자로 회원 프로필을 조회한다`() {
+        val member =
+            Member.create(
+                email = Email("member@example.com"),
+                passwordHash = "encoded-password",
+                name = "주문자",
+                nickname = "nickname",
+                phoneNumber = "01012345678",
+                registeredAt = LocalDateTime.of(2026, 3, 21, 10, 0),
+            )
+        every { memberRepository.findById(1L) } returns member
+
+        val found = memberService.findProfileById(1L)
+
+        found shouldBe MemberProfile(member.id, member.nickname)
+    }
+
+    @Test
+    fun `회원 식별자로 회원 프로필을 찾지 못하면 예외를 던진다`() {
+        every { memberRepository.findById(1L) } returns null
+
+        val exception =
+            shouldThrow<BusinessException> {
+                memberService.findProfileById(1L)
+            }
+
+        exception.errorCode shouldBe ErrorCode.MEMBER_NOT_FOUND
+    }
+
+    @Test
+    fun `회원 식별자 목록으로 최신 회원 프로필을 조회한다`() {
+        val member1 =
+            Member.create(
+                email = Email("member1@example.com"),
+                passwordHash = "encoded-password",
+                name = "주문자1",
+                nickname = "nickname1",
+                phoneNumber = "01012345678",
+                registeredAt = LocalDateTime.of(2026, 3, 21, 10, 0),
+            )
+        val member2 =
+            Member.create(
+                email = Email("member2@example.com"),
+                passwordHash = "encoded-password",
+                name = "주문자2",
+                nickname = "nickname2",
+                phoneNumber = "01087654321",
+                registeredAt = LocalDateTime.of(2026, 3, 21, 10, 0),
+            )
+        every { memberRepository.findAllByIds(setOf(1L, 2L)) } returns listOf(member1, member2)
+
+        val found = memberService.findProfilesByIds(setOf(1L, 2L))
+
+        found shouldBe
+            mapOf(
+                member1.id to MemberProfile(member1.id, member1.nickname),
+                member2.id to MemberProfile(member2.id, member2.nickname),
+            )
     }
 }

@@ -11,4 +11,6 @@ interface MemberJapRepository : JpaRepository<Member, Long> {
     fun existsByNickname(nickname: String): Boolean
 
     fun findByEmailAddress(email: String): Member?
+
+    fun findAllByIdIn(ids: Collection<Long>): List<Member>
 }

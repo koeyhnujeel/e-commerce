@@ -30,6 +30,14 @@ class MemberRepositoryAdapter(
         return memberJapRepository.findByIdOrNull(id)
     }
 
+    override fun findAllByIds(ids: Set<Long>): List<Member> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+
+        return memberJapRepository.findAllByIdIn(ids)
+    }
+
     override fun save(member: Member): Member {
         return memberJapRepository.save(member)
     }

@@ -14,5 +14,7 @@ interface MemberRepository {
 
     fun findById(id: Long): Member?
 
+    fun findAllByIds(ids: Set<Long>): List<Member>
+
     fun save(member: Member): Member
 }

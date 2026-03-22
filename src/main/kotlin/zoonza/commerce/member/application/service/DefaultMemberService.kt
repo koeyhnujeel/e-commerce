@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.member.AuthenticatedMember
 import zoonza.commerce.member.MemberApi
+import zoonza.commerce.member.MemberProfile
 import zoonza.commerce.member.application.dto.SignupCommand
 import zoonza.commerce.member.application.port.`in`.MemberService
 import zoonza.commerce.member.application.port.out.MemberRepository
@@ -91,6 +92,24 @@ class DefaultMemberService(
     override fun findById(id: Long): AuthenticatedMember? {
         return memberRepository.findById(id)
             ?.let { member -> AuthenticatedMember(member.id, member.email, member.role.name) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun findProfileById(id: Long): MemberProfile {
+        val member = memberRepository.findById(id)
+            ?: throw BusinessException(ErrorCode.MEMBER_NOT_FOUND)
+
+        return MemberProfile(member.id, member.nickname)
+    }
+
+    @Transactional(readOnly = true)
+    override fun findProfilesByIds(ids: Set<Long>): Map<Long, MemberProfile> {
+        if (ids.isEmpty()) {
+            return emptyMap()
+        }
+
+        return memberRepository.findAllByIds(ids)
+            .associate { member -> member.id to MemberProfile(member.id, member.nickname) }
     }
 
     private fun generateUniqueNickname(): String {
