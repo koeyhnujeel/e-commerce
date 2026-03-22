@@ -10,14 +10,14 @@ import zoonza.commerce.payment.application.dto.CreatePaymentResult
 import zoonza.commerce.payment.application.dto.CancelPaymentCommand
 import zoonza.commerce.payment.application.dto.ConfirmPaymentCommand
 import zoonza.commerce.payment.application.dto.PaymentDetail
-import zoonza.commerce.payment.application.dto.TossCheckout
+import zoonza.commerce.payment.application.dto.PaymentCheckout
 import zoonza.commerce.payment.application.port.`in`.PaymentService
 import zoonza.commerce.payment.application.port.out.PaymentRepository
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentsClient
-import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
-import zoonza.commerce.payment.application.port.out.TossPaymentsConfiguration
+import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClient
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClientException
+import zoonza.commerce.payment.application.port.out.PaymentGatewayConfiguration
 import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.shared.BusinessException
@@ -29,8 +29,8 @@ import java.time.LocalDateTime
 class DefaultPaymentService(
     private val paymentRepository: PaymentRepository,
     private val orderApi: OrderApi,
-    private val tossPaymentsConfiguration: TossPaymentsConfiguration,
-    private val tossPaymentsClient: TossPaymentsClient,
+    private val paymentGatewayConfiguration: PaymentGatewayConfiguration,
+    private val paymentGatewayClient: PaymentGatewayClient,
 ) : PaymentService {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -75,14 +75,14 @@ class DefaultPaymentService(
             status = payment.status,
             amount = payment.amount.amount,
             checkout =
-                TossCheckout(
-                    clientKey = tossPaymentsConfiguration.clientKey,
+                PaymentCheckout(
+                    clientKey = paymentGatewayConfiguration.clientKey,
                     orderId = order.orderNumber,
                     orderName = createOrderName(order),
                     customerKey = createCustomerKey(order.memberId),
                     amount = payment.amount.amount,
-                    successUrl = tossPaymentsConfiguration.successUrl,
-                    failUrl = tossPaymentsConfiguration.failUrl,
+                    successUrl = paymentGatewayConfiguration.successUrl,
+                    failUrl = paymentGatewayConfiguration.failUrl,
                 ),
             createdAt = payment.createdAt,
         )
@@ -116,8 +116,8 @@ class DefaultPaymentService(
 
         return try {
             val confirmedPayment =
-                tossPaymentsClient.confirm(
-                    TossPaymentConfirmRequest(
+                paymentGatewayClient.confirm(
+                    PaymentConfirmRequest(
                         paymentKey = command.paymentKey,
                         orderId = command.orderId,
                         amount = command.amount,
@@ -141,7 +141,7 @@ class DefaultPaymentService(
             )
 
             toPaymentDetail(payment)
-        } catch (e: TossPaymentsClientException) {
+        } catch (e: PaymentGatewayClientException) {
             failPayment(payment, e.message ?: PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message)
             throw BusinessException(PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
         }
@@ -165,9 +165,9 @@ class DefaultPaymentService(
 
         return try {
             val canceledPayment =
-                tossPaymentsClient.cancel(
+                paymentGatewayClient.cancel(
                     paymentKey = paymentKey,
-                    request = TossPaymentCancelRequest(cancelReason = command.reason),
+                    request = PaymentCancelRequest(cancelReason = command.reason),
                 )
 
             payment.cancel(
@@ -186,7 +186,7 @@ class DefaultPaymentService(
             )
 
             toPaymentDetail(payment)
-        } catch (e: TossPaymentsClientException) {
+        } catch (e: PaymentGatewayClientException) {
             throw BusinessException(PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
         }
     }
@@ -226,8 +226,8 @@ class DefaultPaymentService(
         command: ConfirmPaymentCommand,
     ) {
         if (payment.orderNumber != command.orderId) {
-            failPayment(payment, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
-            throw BusinessException(PaymentErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
+            failPayment(payment, "결제 승인 요청의 주문번호가 일치하지 않습니다.")
+            throw BusinessException(PaymentErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED, "결제 승인 요청의 주문번호가 일치하지 않습니다.")
         }
 
         if (payment.amount.amount != command.amount) {

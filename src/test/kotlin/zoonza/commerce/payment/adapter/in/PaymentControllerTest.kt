@@ -20,11 +20,11 @@ import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
 import zoonza.commerce.order.adapter.out.persistence.OrderJpaRepository
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.payment.adapter.out.persistence.PaymentJpaRepository
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelResult
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmResult
-import zoonza.commerce.payment.application.port.out.TossPaymentsClient
+import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.PaymentCancelResult
+import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.PaymentConfirmResult
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClient
 import zoonza.commerce.payment.domain.PaymentStatus
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.support.MySqlTestContainerConfig
@@ -59,7 +59,7 @@ class PaymentControllerTest {
     private lateinit var paymentJpaRepository: PaymentJpaRepository
 
     @MockBean
-    private lateinit var tossPaymentsClient: TossPaymentsClient
+    private lateinit var paymentGatewayClient: PaymentGatewayClient
 
     @Test
     fun `인증된 회원은 주문으로 결제를 생성할 수 있다`() {
@@ -288,15 +288,15 @@ class PaymentControllerTest {
 
         val payment = paymentJpaRepository.findAll().single()
         given(
-            tossPaymentsClient.confirm(
-                TossPaymentConfirmRequest(
+            paymentGatewayClient.confirm(
+                PaymentConfirmRequest(
                     paymentKey = "pay_123",
                     orderId = "ORD-PAYMENT-4",
                     amount = 19_900,
                 ),
             ),
         ).willReturn(
-            TossPaymentConfirmResult(
+            PaymentConfirmResult(
                 paymentKey = "pay_123",
                 method = "CARD",
                 providerReference = "tx_123",
@@ -370,15 +370,15 @@ class PaymentControllerTest {
 
         val payment = paymentJpaRepository.findAll().single()
         given(
-            tossPaymentsClient.confirm(
-                TossPaymentConfirmRequest(
+            paymentGatewayClient.confirm(
+                PaymentConfirmRequest(
                     paymentKey = "pay_456",
                     orderId = "ORD-PAYMENT-5",
                     amount = 19_900,
                 ),
             ),
         ).willReturn(
-            TossPaymentConfirmResult(
+            PaymentConfirmResult(
                 paymentKey = "pay_456",
                 method = "CARD",
                 providerReference = "tx_456",
@@ -403,12 +403,12 @@ class PaymentControllerTest {
             }
 
         given(
-            tossPaymentsClient.cancel(
+            paymentGatewayClient.cancel(
                 paymentKey = "pay_456",
-                request = TossPaymentCancelRequest(cancelReason = "고객 요청"),
+                request = PaymentCancelRequest(cancelReason = "고객 요청"),
             ),
         ).willReturn(
-            TossPaymentCancelResult(
+            PaymentCancelResult(
                 providerReference = "cancel_tx_456",
                 cancelReason = "고객 요청",
                 canceledAt = LocalDateTime.of(2026, 3, 22, 12, 10),

@@ -9,32 +9,32 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestClientResponseException
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelResult
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmResult
-import zoonza.commerce.payment.application.port.out.TossPaymentsClient
-import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
-import zoonza.commerce.payment.application.port.out.TossPaymentsConfiguration
+import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.PaymentCancelResult
+import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.PaymentConfirmResult
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClient
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClientException
+import zoonza.commerce.payment.application.port.out.PaymentGatewayConfiguration
 import java.time.LocalDateTime
 
 @Component
 class DefaultTossPaymentsClient(
     restClientBuilder: RestClient.Builder,
-    private val tossPaymentsConfiguration: TossPaymentsConfiguration,
+    private val paymentGatewayConfiguration: PaymentGatewayConfiguration,
     private val tossAuthorizationHeaderProvider: TossAuthorizationHeaderProvider,
     private val objectMapper: ObjectMapper,
-) : TossPaymentsClient {
+) : PaymentGatewayClient {
     private val log = LoggerFactory.getLogger(javaClass)
 
     private val restClient =
         restClientBuilder
-            .baseUrl(tossPaymentsConfiguration.baseUrl)
+            .baseUrl(paymentGatewayConfiguration.baseUrl)
             .defaultHeader(HttpHeaders.AUTHORIZATION, tossAuthorizationHeaderProvider.authorizationHeader())
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build()
 
-    override fun confirm(request: TossPaymentConfirmRequest): TossPaymentConfirmResult {
+    override fun confirm(request: PaymentConfirmRequest): PaymentConfirmResult {
         return try {
             val response =
                 restClient.post()
@@ -42,9 +42,9 @@ class DefaultTossPaymentsClient(
                     .body(request)
                     .retrieve()
                     .body(TossConfirmResponse::class.java)
-                    ?: throw TossPaymentsClientException("토스 승인 응답 본문이 비어 있습니다.")
+                    ?: throw PaymentGatewayClientException("토스 승인 응답 본문이 비어 있습니다.")
 
-            TossPaymentConfirmResult(
+            PaymentConfirmResult(
                 paymentKey = response.paymentKey,
                 method = response.method,
                 providerReference = response.lastTransactionKey ?: response.mId ?: response.orderId,
@@ -58,7 +58,7 @@ class DefaultTossPaymentsClient(
                 mask(request.paymentKey),
                 extractMessage(e),
             )
-            throw TossPaymentsClientException(extractMessage(e), e)
+            throw PaymentGatewayClientException(extractMessage(e), e)
         } catch (e: RestClientException) {
             log.warn(
                 "toss confirm request failed orderId={} paymentKey={} message={}",
@@ -66,14 +66,14 @@ class DefaultTossPaymentsClient(
                 mask(request.paymentKey),
                 e.message,
             )
-            throw TossPaymentsClientException("토스 결제 승인 호출에 실패했습니다.", e)
+            throw PaymentGatewayClientException("토스 결제 승인 호출에 실패했습니다.", e)
         }
     }
 
     override fun cancel(
         paymentKey: String,
-        request: TossPaymentCancelRequest,
-    ): TossPaymentCancelResult {
+        request: PaymentCancelRequest,
+    ): PaymentCancelResult {
         return try {
             val response =
                 restClient.post()
@@ -81,11 +81,11 @@ class DefaultTossPaymentsClient(
                     .body(request)
                     .retrieve()
                     .body(TossCancelResponse::class.java)
-                    ?: throw TossPaymentsClientException("토스 취소 응답 본문이 비어 있습니다.")
+                    ?: throw PaymentGatewayClientException("토스 취소 응답 본문이 비어 있습니다.")
 
             val latestCancel = response.cancels.maxByOrNull { it.canceledAt ?: LocalDateTime.MIN }
 
-            TossPaymentCancelResult(
+            PaymentCancelResult(
                 providerReference = latestCancel?.transactionKey ?: response.lastTransactionKey ?: response.paymentKey,
                 cancelReason = latestCancel?.cancelReason,
                 canceledAt = latestCancel?.canceledAt,
@@ -97,14 +97,14 @@ class DefaultTossPaymentsClient(
                 mask(paymentKey),
                 extractMessage(e),
             )
-            throw TossPaymentsClientException(extractMessage(e), e)
+            throw PaymentGatewayClientException(extractMessage(e), e)
         } catch (e: RestClientException) {
             log.warn(
                 "toss cancel request failed paymentKey={} message={}",
                 mask(paymentKey),
                 e.message,
             )
-            throw TossPaymentsClientException("토스 결제 취소 호출에 실패했습니다.", e)
+            throw PaymentGatewayClientException("토스 결제 취소 호출에 실패했습니다.", e)
         }
     }
 

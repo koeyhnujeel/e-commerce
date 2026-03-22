@@ -3,35 +3,35 @@ package zoonza.commerce.payment.application.port.out
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.LocalDateTime
 
-interface TossPaymentsClient {
-    fun confirm(request: TossPaymentConfirmRequest): TossPaymentConfirmResult
+interface PaymentGatewayClient {
+    fun confirm(request: PaymentConfirmRequest): PaymentConfirmResult
 
     fun cancel(
         paymentKey: String,
-        request: TossPaymentCancelRequest,
-    ): TossPaymentCancelResult
+        request: PaymentCancelRequest,
+    ): PaymentCancelResult
 }
 
-data class TossPaymentConfirmRequest(
+data class PaymentConfirmRequest(
     val paymentKey: String,
     val orderId: String,
     val amount: Long,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class TossPaymentConfirmResult(
+data class PaymentConfirmResult(
     val paymentKey: String,
     val method: String?,
     val providerReference: String,
     val approvedAt: LocalDateTime?,
 )
 
-data class TossPaymentCancelRequest(
+data class PaymentCancelRequest(
     val cancelReason: String?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class TossPaymentCancelResult(
+data class PaymentCancelResult(
     val providerReference: String,
     val cancelReason: String?,
     val canceledAt: LocalDateTime?,

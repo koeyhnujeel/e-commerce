@@ -14,12 +14,12 @@ import zoonza.commerce.payment.application.dto.CancelPaymentCommand
 import zoonza.commerce.payment.application.dto.ConfirmPaymentCommand
 import zoonza.commerce.payment.application.dto.CreatePaymentCommand
 import zoonza.commerce.payment.application.port.out.PaymentRepository
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelResult
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmResult
-import zoonza.commerce.payment.application.port.out.TossPaymentsClient
-import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
+import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.PaymentCancelResult
+import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.PaymentConfirmResult
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClient
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClientException
 import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.payment.domain.PaymentStatus
@@ -31,7 +31,7 @@ import java.time.LocalDateTime
 class DefaultPaymentServiceTest {
     private val paymentRepository = mockk<PaymentRepository>()
     private val orderApi = mockk<OrderApi>()
-    private val tossPaymentsClient = mockk<TossPaymentsClient>()
+    private val paymentGatewayClient = mockk<PaymentGatewayClient>()
     private val tossPaymentsProperties =
         TossPaymentsProperties().apply {
             baseUrl = "https://api.tosspayments.com"
@@ -44,8 +44,8 @@ class DefaultPaymentServiceTest {
         DefaultPaymentService(
             paymentRepository = paymentRepository,
             orderApi = orderApi,
-            tossPaymentsConfiguration = tossPaymentsProperties,
-            tossPaymentsClient = tossPaymentsClient,
+            paymentGatewayConfiguration = tossPaymentsProperties,
+            paymentGatewayClient = paymentGatewayClient,
         )
 
     @Test
@@ -133,14 +133,14 @@ class DefaultPaymentServiceTest {
 
         every { paymentRepository.findByIdAndMemberId(100L, 1L) } returns payment
         every {
-            tossPaymentsClient.confirm(
-                TossPaymentConfirmRequest(
+            paymentGatewayClient.confirm(
+                PaymentConfirmRequest(
                     paymentKey = "pay_123",
                     orderId = "ORD-20260322-ABC",
                     amount = 39_800,
                 ),
             )
-        } returns TossPaymentConfirmResult(
+        } returns PaymentConfirmResult(
             paymentKey = "pay_123",
             method = "CARD",
             providerReference = "tx_123",
@@ -172,7 +172,7 @@ class DefaultPaymentServiceTest {
         val payment = readyPayment()
 
         every { paymentRepository.findByIdAndMemberId(100L, 1L) } returns payment
-        every { tossPaymentsClient.confirm(any()) } throws TossPaymentsClientException("토스 승인 실패")
+        every { paymentGatewayClient.confirm(any()) } throws PaymentGatewayClientException("토스 승인 실패")
         every { paymentRepository.save(payment) } returns payment
         every { orderApi.markPaymentReady(10L) } returns Unit
 
@@ -209,11 +209,11 @@ class DefaultPaymentServiceTest {
 
         every { paymentRepository.findByIdAndMemberId(100L, 1L) } returns payment
         every {
-            tossPaymentsClient.cancel(
+            paymentGatewayClient.cancel(
                 paymentKey = "pay_123",
-                request = TossPaymentCancelRequest(cancelReason = "고객 요청"),
+                request = PaymentCancelRequest(cancelReason = "고객 요청"),
             )
-        } returns TossPaymentCancelResult(
+        } returns PaymentCancelResult(
             providerReference = "cancel_tx_123",
             cancelReason = "고객 요청",
             canceledAt = LocalDateTime.of(2026, 3, 22, 12, 10),

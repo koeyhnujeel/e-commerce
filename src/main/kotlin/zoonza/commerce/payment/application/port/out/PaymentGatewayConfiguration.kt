@@ -1,6 +1,6 @@
 package zoonza.commerce.payment.application.port.out
 
-interface TossPaymentsConfiguration {
+interface PaymentGatewayConfiguration {
     val baseUrl: String
     val clientKey: String
     val secretKey: String

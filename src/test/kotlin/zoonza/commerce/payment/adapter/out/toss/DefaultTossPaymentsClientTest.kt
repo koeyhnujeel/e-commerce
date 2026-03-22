@@ -19,9 +19,9 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
-import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.PaymentGatewayClientException
 
 class DefaultTossPaymentsClientTest {
     private lateinit var server: MockRestServiceServer
@@ -52,7 +52,7 @@ class DefaultTossPaymentsClientTest {
         client =
             DefaultTossPaymentsClient(
                 restClientBuilder = restClientBuilder,
-                tossPaymentsConfiguration = properties,
+                paymentGatewayConfiguration = properties,
                 tossAuthorizationHeaderProvider = TossAuthorizationHeaderProvider(properties),
                 objectMapper = objectMapper,
             )
@@ -81,7 +81,7 @@ class DefaultTossPaymentsClientTest {
 
         val result =
             client.confirm(
-                TossPaymentConfirmRequest(
+                PaymentConfirmRequest(
                     paymentKey = "pay_123",
                     orderId = "ORD-1",
                     amount = 19_900,
@@ -121,7 +121,7 @@ class DefaultTossPaymentsClientTest {
         val result =
             client.cancel(
                 paymentKey = "pay_123",
-                request = TossPaymentCancelRequest(cancelReason = "고객 요청"),
+                request = PaymentCancelRequest(cancelReason = "고객 요청"),
             )
 
         result.providerReference shouldBe "cancel_tx_123"
@@ -139,9 +139,9 @@ class DefaultTossPaymentsClientTest {
             )
 
         val exception =
-            shouldThrow<TossPaymentsClientException> {
+            shouldThrow<PaymentGatewayClientException> {
                 client.confirm(
-                    TossPaymentConfirmRequest(
+                    PaymentConfirmRequest(
                         paymentKey = "pay_123",
                         orderId = "ORD-1",
                         amount = 19_900,

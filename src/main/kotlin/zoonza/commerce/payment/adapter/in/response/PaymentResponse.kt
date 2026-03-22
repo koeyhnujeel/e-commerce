@@ -1,7 +1,7 @@
 package zoonza.commerce.payment.adapter.`in`.response
 
-import zoonza.commerce.payment.application.dto.TossCheckout
 import zoonza.commerce.payment.application.dto.PaymentDetail
+import zoonza.commerce.payment.application.dto.PaymentCheckout
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.payment.domain.PaymentStatus
 import java.time.LocalDateTime
@@ -12,11 +12,11 @@ data class CreatePaymentResponse(
     val orderNumber: String,
     val status: PaymentStatus,
     val amount: Long,
-    val checkout: TossCheckoutResponse,
+    val checkout: PaymentCheckoutResponse,
     val createdAt: LocalDateTime,
 )
 
-data class TossCheckoutResponse(
+data class PaymentCheckoutResponse(
     val clientKey: String,
     val orderId: String,
     val orderName: String,
@@ -41,8 +41,8 @@ data class PaymentDetailResponse(
     val canceledAt: LocalDateTime?,
 )
 
-fun TossCheckout.toResponse(): TossCheckoutResponse {
-    return TossCheckoutResponse(
+fun PaymentCheckout.toResponse(): PaymentCheckoutResponse {
+    return PaymentCheckoutResponse(
         clientKey = clientKey,
         orderId = orderId,
         orderName = orderName,

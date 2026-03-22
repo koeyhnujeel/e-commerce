@@ -15,11 +15,11 @@ data class CreatePaymentResult(
     val orderNumber: String,
     val status: PaymentStatus,
     val amount: Long,
-    val checkout: TossCheckout,
+    val checkout: PaymentCheckout,
     val createdAt: LocalDateTime,
 )
 
-data class TossCheckout(
+data class PaymentCheckout(
     val clientKey: String,
     val orderId: String,
     val orderName: String,
