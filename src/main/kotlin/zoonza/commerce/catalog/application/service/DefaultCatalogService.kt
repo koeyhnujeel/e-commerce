@@ -16,8 +16,8 @@ import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.like.LikeApi
-import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.catalog.CatalogErrorCode
+import zoonza.commerce.shared.BusinessException
 
 @Service
 class DefaultCatalogService(
@@ -90,6 +90,7 @@ class DefaultCatalogService(
         val images = productRepository.findImagesByProductId(productId)
         val options = productRepository.findOptionsByProductId(productId)
         val likedByMe = memberId?.let { productId in likeApi.findLikedProductIds(it, listOf(productId)) } ?: false
+        val likeCount = likeApi.countProductLikes(listOf(productId))[productId] ?: 0L
 
         return ProductDetail(
             productId = product.id,
@@ -113,7 +114,7 @@ class DefaultCatalogService(
                     orderable = option.isOrderable(),
                 )
             },
-            likeCount = likeApi.countProductLikes(productId),
+            likeCount = likeCount,
             likedByMe = likedByMe,
             saleStatus = product.saleStatus(),
         )
@@ -149,8 +150,7 @@ class DefaultCatalogService(
 
         return OrderProductSnapshot(
             productName = product.name,
-            optionColor = option.color,
-            optionSize = option.size,
+            option = ProductOptionSnapshot(color = option.color, size = option.size),
             unitPrice = product.basePrice,
         )
     }

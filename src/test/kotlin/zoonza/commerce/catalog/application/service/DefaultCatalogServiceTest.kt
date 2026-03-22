@@ -104,7 +104,7 @@ class DefaultCatalogServiceTest {
         every { productRepository.findById(10L) } returns product
         every { productRepository.findImagesByProductId(10L) } returns product.images
         every { productRepository.findOptionsByProductId(10L) } returns product.options
-        every { likeApi.countProductLikes(10L) } returns 7L
+        every { likeApi.countProductLikes(listOf(10L)) } returns mapOf(10L to 7L)
         every { likeApi.findLikedProductIds(1L, listOf(10L)) } returns setOf(10L)
 
         val result = catalogService.getProduct(productId = 10L, memberId = 1L)

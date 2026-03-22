@@ -13,11 +13,6 @@ class DefaultLikeService(
     private val likeRepository: LikeRepository,
 ) : LikeApi, LikeService {
     @Transactional(readOnly = true)
-    override fun countProductLikes(productId: Long): Long {
-        return countProductLikes(listOf(productId))[productId] ?: 0L
-    }
-
-    @Transactional(readOnly = true)
     override fun countProductLikes(productIds: Collection<Long>): Map<Long, Long> {
         return likeRepository.countByTargetIds(productIds, LikeTargetType.PRODUCT)
     }
