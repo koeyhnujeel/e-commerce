@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.order.OrderApi
+import zoonza.commerce.order.PaymentOrder
 import zoonza.commerce.order.ReviewablePurchase
 import zoonza.commerce.order.application.dto.CreateOrderCommand
 import zoonza.commerce.order.application.dto.CreateOrderItemCommand
@@ -36,6 +37,60 @@ class DefaultOrderService(
         productId: Long,
     ): List<ReviewablePurchase> {
         return orderRepository.findReviewablePurchase(memberId, productId)
+    }
+
+    @Transactional(readOnly = true)
+    override fun getPaymentOrder(
+        memberId: Long,
+        orderId: Long,
+    ): PaymentOrder {
+        val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        return PaymentOrder(
+            orderId = order.id,
+            memberId = order.memberId,
+            orderNumber = order.orderNumber,
+            status = order.status,
+            totalAmount = order.totalAmount,
+            productNames = order.items.map(OrderItem::productNameSnapshot),
+        )
+    }
+
+    @Transactional
+    override fun markPaymentPending(orderId: Long) {
+        val order = orderRepository.findOrderById(orderId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        order.markPaymentPending()
+        orderRepository.save(order)
+    }
+
+    @Transactional
+    override fun markPaymentReady(orderId: Long) {
+        val order = orderRepository.findOrderById(orderId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        order.markCreated()
+        orderRepository.save(order)
+    }
+
+    @Transactional
+    override fun markPaid(orderId: Long) {
+        val order = orderRepository.findOrderById(orderId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        order.markPaid()
+        orderRepository.save(order)
+    }
+
+    @Transactional
+    override fun cancel(orderId: Long) {
+        val order = orderRepository.findOrderById(orderId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        order.cancel()
+        orderRepository.save(order)
     }
 
     @Transactional

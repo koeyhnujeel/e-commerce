@@ -39,6 +39,10 @@ class OrderRepositoryAdapter(
         return orderJpaRepository.findOrderByMemberIdAndOrderItemId(memberId, orderItemId)
     }
 
+    override fun findOrderById(orderId: Long): Order? {
+        return orderJpaRepository.findOrderDetailById(orderId)
+    }
+
     override fun save(order: Order): Order {
         return orderJpaRepository.save(order)
     }

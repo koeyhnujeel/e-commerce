@@ -17,3 +17,11 @@ jwt:
   secret: test-secret-key-test-secret-key-123456
   access-expiration-ms: 600000
   refresh-expiration-ms: 1200000
+
+payment:
+  toss:
+    base-url: https://api.tosspayments.com
+    client-key: test-client-key
+    secret-key: test-secret-key
+    success-url: https://example.com/payments/success
+    fail-url: https://example.com/payments/fail

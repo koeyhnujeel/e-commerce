@@ -173,59 +173,59 @@
 
 ### payment domain
 
-- [ ] `Payment` 엔티티를 추가한다.
-- [ ] `PaymentStatus` enum을 추가한다.
-- [ ] `PaymentMethod` enum을 추가한다.
-- [ ] `Payment`에 `paymentKey`, `providerReference`, `failureReason` 필드를 반영한다.
-- [ ] 주문당 활성 결제 1건 제약을 모델에 반영한다.
+- [x] `Payment` 엔티티를 추가한다.
+- [x] `PaymentStatus` enum을 추가한다.
+- [x] `PaymentMethod` enum을 추가한다.
+- [x] `Payment`에 `paymentKey`, `providerReference`, `failureReason` 필드를 반영한다.
+- [x] 주문당 활성 결제 1건 제약을 모델에 반영한다.
 
 ### payment application
 
-- [ ] 결제 생성 command/DTO를 정의한다.
-- [ ] 결제 상세 DTO를 정의한다.
-- [ ] 주문 기준 결제 생성 서비스 유스케이스를 추가한다.
-- [ ] 결제 상세 조회 서비스 유스케이스를 추가한다.
-- [ ] 결제 생성 시 주문 상태를 `PAYMENT_PENDING`으로 변경한다.
-- [ ] 주문 금액과 결제 금액 정합성 검증 로직을 추가한다.
+- [x] 결제 생성 command/DTO를 정의한다.
+- [x] 결제 상세 DTO를 정의한다.
+- [x] 주문 기준 결제 생성 서비스 유스케이스를 추가한다.
+- [x] 결제 상세 조회 서비스 유스케이스를 추가한다.
+- [x] 결제 생성 시 주문 상태를 `PAYMENT_PENDING`으로 변경한다.
+- [x] 주문 금액과 결제 금액 정합성 검증 로직을 추가한다.
 
 ### toss checkout preparation
 
-- [ ] 토스 체크아웃 응답 필드를 정의한다.
-- [ ] `orderId`에 사용할 내부 주문번호 형식을 최종 확정한다.
-- [ ] `orderName` 생성 규칙을 정한다.
-- [ ] `customerKey` 생성 규칙을 정한다.
-- [ ] `successUrl`, `failUrl` 설정값 주입 방식을 정한다.
+- [x] 토스 체크아웃 응답 필드를 정의한다.
+- [x] `orderId`에 사용할 내부 주문번호 형식을 최종 확정한다.
+- [x] `orderName` 생성 규칙을 정한다.
+- [x] `customerKey` 생성 규칙을 정한다.
+- [x] `successUrl`, `failUrl` 설정값 주입 방식을 정한다.
 
 ### payment persistence
 
-- [ ] `PaymentRepository`와 JPA repository를 추가한다.
-- [ ] 결제 상세 조회 쿼리를 추가한다.
-- [ ] 주문-결제 관계 저장 방식을 정한다.
-- [ ] 활성 결제 중복 방지 제약을 DB 레벨에서 검토한다.
+- [x] `PaymentRepository`와 JPA repository를 추가한다.
+- [x] 결제 상세 조회 쿼리를 추가한다.
+- [x] 주문-결제 관계 저장 방식을 정한다.
+- [x] 활성 결제 중복 방지 제약을 DB 레벨에서 검토한다.
 
 ### payment adapter/in
 
-- [ ] `POST /api/orders/{orderId}/payments` 컨트롤러를 추가한다.
-- [ ] `GET /api/payments/{paymentId}` 컨트롤러를 추가한다.
-- [ ] 결제 관련 엔드포인트를 인증 대상으로 추가한다.
+- [x] `POST /api/orders/{orderId}/payments` 컨트롤러를 추가한다.
+- [x] `GET /api/payments/{paymentId}` 컨트롤러를 추가한다.
+- [x] 결제 관련 엔드포인트를 인증 대상으로 추가한다.
 
 ### payment adapter/out
 
-- [ ] 토스 API 설정 프로퍼티 클래스를 추가한다.
-- [ ] 토스 연동용 공통 헤더 구성 방식을 정한다.
+- [x] 토스 API 설정 프로퍼티 클래스를 추가한다.
+- [x] 토스 연동용 공통 헤더 구성 방식을 정한다.
 
 ### optional manual test support
 
-- [ ] 테스트용 체크아웃 HTML 페이지가 필요한지 결정한다.
-- [ ] 필요하면 `src/main/resources/static` 아래 샘플 페이지를 추가한다.
+- [x] 테스트용 체크아웃 HTML 페이지가 필요한지 결정한다.
+- [x] 필요하면 `src/main/resources/static` 아래 샘플 페이지를 추가한다.
 
 ### tests
 
-- [ ] 결제 생성 도메인 테스트를 추가한다.
-- [ ] 결제 생성 서비스 테스트를 추가한다.
-- [ ] 결제 상세 조회 서비스 테스트를 추가한다.
-- [ ] 결제 생성 API 통합 테스트를 추가한다.
-- [ ] 결제 상세 API 통합 테스트를 추가한다.
+- [x] 결제 생성 도메인 테스트를 추가한다.
+- [x] 결제 생성 서비스 테스트를 추가한다.
+- [x] 결제 상세 조회 서비스 테스트를 추가한다.
+- [x] 결제 생성 API 통합 테스트를 추가한다.
+- [x] 결제 상세 API 통합 테스트를 추가한다.
 
 ## Phase 6. 토스 승인, 취소, 실패 처리
 

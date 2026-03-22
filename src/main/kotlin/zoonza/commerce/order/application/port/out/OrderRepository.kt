@@ -21,5 +21,7 @@ interface OrderRepository {
         orderItemId: Long,
     ): Order?
 
+    fun findOrderById(orderId: Long): Order?
+
     fun save(order: Order): Order
 }

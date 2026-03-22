@@ -48,6 +48,18 @@ class AuthSecurityIntegrationTest {
     }
 
     @Test
+    fun `인증 정보가 없으면 결제 생성 엔드포인트도 401 응답을 반환한다`() {
+        mockMvc
+            .post("/api/orders/1/payments")
+            .andExpect {
+                status { isUnauthorized() }
+                header { string(HttpHeaders.WWW_AUTHENTICATE, "Bearer") }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.code") { value("UNAUTHORIZED") }
+            }
+    }
+
+    @Test
     fun `형식이 잘못된 access 토큰이면 401 응답을 반환한다`() {
         mockMvc
             .post("/api/products/1/likes") {

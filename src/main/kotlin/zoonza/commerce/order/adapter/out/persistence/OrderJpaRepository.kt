@@ -62,4 +62,18 @@ interface OrderJpaRepository : JpaRepository<Order, Long> {
         @Param("orderId") orderId: Long,
         @Param("memberId") memberId: Long,
     ): Order?
+
+    @Query(
+        """
+        select distinct o
+        from Order o
+        left join fetch o.items item
+        where o.id = :orderId
+          and o.deletedAt is null
+        order by item.id asc
+        """,
+    )
+    fun findOrderDetailById(
+        @Param("orderId") orderId: Long,
+    ): Order?
 }

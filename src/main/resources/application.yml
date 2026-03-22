@@ -25,3 +25,11 @@ jwt:
   secret: ${JWT_SECRET}
   access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS}
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS}
+
+payment:
+  toss:
+    base-url: ${TOSS_PAYMENTS_BASE_URL}
+    client-key: ${TOSS_PAYMENTS_CLIENT_KEY}
+    secret-key: ${TOSS_PAYMENTS_SECRET_KEY}
+    success-url: ${TOSS_PAYMENTS_SUCCESS_URL}
+    fail-url: ${TOSS_PAYMENTS_FAIL_URL}
