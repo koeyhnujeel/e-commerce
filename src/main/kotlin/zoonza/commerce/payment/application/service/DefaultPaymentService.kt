@@ -6,13 +6,20 @@ import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.PaymentOrder
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.payment.adapter.out.toss.TossPaymentsProperties
+import zoonza.commerce.payment.adapter.out.toss.TossPaymentsClientException
 import zoonza.commerce.payment.application.dto.CreatePaymentCommand
 import zoonza.commerce.payment.application.dto.CreatePaymentResult
+import zoonza.commerce.payment.application.dto.CancelPaymentCommand
+import zoonza.commerce.payment.application.dto.ConfirmPaymentCommand
 import zoonza.commerce.payment.application.dto.PaymentDetail
 import zoonza.commerce.payment.application.dto.TossCheckout
 import zoonza.commerce.payment.application.port.`in`.PaymentService
 import zoonza.commerce.payment.application.port.out.PaymentRepository
+import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.TossPaymentsClient
 import zoonza.commerce.payment.domain.Payment
+import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.ErrorCode
 import zoonza.commerce.shared.Money
@@ -23,6 +30,7 @@ class DefaultPaymentService(
     private val paymentRepository: PaymentRepository,
     private val orderApi: OrderApi,
     private val tossPaymentsProperties: TossPaymentsProperties,
+    private val tossPaymentsClient: TossPaymentsClient,
 ) : PaymentService {
     @Transactional
     override fun createPayment(
@@ -79,6 +87,88 @@ class DefaultPaymentService(
         val payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
             ?: throw BusinessException(ErrorCode.PAYMENT_NOT_FOUND)
 
+        return toPaymentDetail(payment)
+    }
+
+    @Transactional
+    override fun confirmPayment(
+        memberId: Long,
+        paymentId: Long,
+        command: ConfirmPaymentCommand,
+    ): PaymentDetail {
+        val payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
+            ?: throw BusinessException(ErrorCode.PAYMENT_NOT_FOUND)
+
+        if (!payment.canConfirm()) {
+            throw BusinessException(ErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED)
+        }
+
+        validateConfirmRequest(payment, command)
+
+        return try {
+            val confirmedPayment =
+                tossPaymentsClient.confirm(
+                    TossPaymentConfirmRequest(
+                        paymentKey = command.paymentKey,
+                        orderId = command.orderId,
+                        amount = command.amount,
+                    ),
+                )
+
+            payment.confirm(
+                paymentKey = confirmedPayment.paymentKey,
+                paymentMethod = PaymentMethod.fromProvider(confirmedPayment.method),
+                providerReference = confirmedPayment.providerReference,
+                approvedAt = confirmedPayment.approvedAt ?: LocalDateTime.now(),
+            )
+            paymentRepository.save(payment)
+            orderApi.markPaid(payment.orderId)
+
+            toPaymentDetail(payment)
+        } catch (e: TossPaymentsClientException) {
+            failPayment(payment, e.message ?: ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message)
+            throw BusinessException(ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
+        }
+    }
+
+    @Transactional
+    override fun cancelPayment(
+        memberId: Long,
+        paymentId: Long,
+        command: CancelPaymentCommand,
+    ): PaymentDetail {
+        val payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
+            ?: throw BusinessException(ErrorCode.PAYMENT_NOT_FOUND)
+
+        if (!payment.canCancel()) {
+            throw BusinessException(ErrorCode.PAYMENT_CANCELLATION_NOT_ALLOWED)
+        }
+
+        val paymentKey = payment.paymentKey
+            ?: throw BusinessException(ErrorCode.PAYMENT_CANCELLATION_NOT_ALLOWED)
+
+        return try {
+            val canceledPayment =
+                tossPaymentsClient.cancel(
+                    paymentKey = paymentKey,
+                    request = TossPaymentCancelRequest(cancelReason = command.reason),
+                )
+
+            payment.cancel(
+                reason = canceledPayment.cancelReason ?: command.reason,
+                providerReference = canceledPayment.providerReference,
+                canceledAt = canceledPayment.canceledAt ?: LocalDateTime.now(),
+            )
+            paymentRepository.save(payment)
+            orderApi.cancel(payment.orderId)
+
+            toPaymentDetail(payment)
+        } catch (e: TossPaymentsClientException) {
+            throw BusinessException(ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
+        }
+    }
+
+    private fun toPaymentDetail(payment: Payment): PaymentDetail {
         return PaymentDetail(
             paymentId = payment.id,
             orderId = payment.orderId,
@@ -106,6 +196,30 @@ class DefaultPaymentService(
         if (order.totalAmount.amount != amount) {
             throw BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH)
         }
+    }
+
+    private fun validateConfirmRequest(
+        payment: Payment,
+        command: ConfirmPaymentCommand,
+    ) {
+        if (payment.orderNumber != command.orderId) {
+            failPayment(payment, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
+            throw BusinessException(ErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
+        }
+
+        if (payment.amount.amount != command.amount) {
+            failPayment(payment, ErrorCode.PAYMENT_AMOUNT_MISMATCH.message)
+            throw BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH)
+        }
+    }
+
+    private fun failPayment(
+        payment: Payment,
+        reason: String,
+    ) {
+        payment.fail(reason)
+        paymentRepository.save(payment)
+        orderApi.markPaymentReady(payment.orderId)
     }
 
     private fun createOrderName(order: PaymentOrder): String {

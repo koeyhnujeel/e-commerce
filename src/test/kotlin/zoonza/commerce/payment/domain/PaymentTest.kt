@@ -24,4 +24,36 @@ class PaymentTest {
         payment.providerReference shouldBe "ORD-TEST-1"
         payment.isActive() shouldBe true
     }
+
+    @Test
+    fun `결제 승인과 취소는 상태와 참조값을 갱신한다`() {
+        val payment =
+            Payment.create(
+                orderId = 1L,
+                memberId = 2L,
+                orderNumber = "ORD-TEST-2",
+                amount = Money(39_800),
+                paymentMethod = PaymentMethod.UNKNOWN,
+                providerReference = "ORD-TEST-2",
+                createdAt = LocalDateTime.of(2026, 3, 22, 12, 0),
+            )
+
+        payment.confirm(
+            paymentKey = "pay_123",
+            paymentMethod = PaymentMethod.CARD,
+            providerReference = "tx_123",
+            approvedAt = LocalDateTime.of(2026, 3, 22, 12, 5),
+        )
+        payment.cancel(
+            reason = "고객 요청",
+            providerReference = "cancel_tx_123",
+            canceledAt = LocalDateTime.of(2026, 3, 22, 12, 10),
+        )
+
+        payment.status shouldBe PaymentStatus.CANCELED
+        payment.paymentMethod shouldBe PaymentMethod.CARD
+        payment.providerReference shouldBe "cancel_tx_123"
+        payment.failureReason shouldBe "고객 요청"
+        payment.isActive() shouldBe false
+    }
 }

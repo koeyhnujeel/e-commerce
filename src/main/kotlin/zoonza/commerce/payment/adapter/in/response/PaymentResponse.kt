@@ -1,6 +1,7 @@
 package zoonza.commerce.payment.adapter.`in`.response
 
 import zoonza.commerce.payment.application.dto.TossCheckout
+import zoonza.commerce.payment.application.dto.PaymentDetail
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.payment.domain.PaymentStatus
 import java.time.LocalDateTime
@@ -49,5 +50,22 @@ fun TossCheckout.toResponse(): TossCheckoutResponse {
         amount = amount,
         successUrl = successUrl,
         failUrl = failUrl,
+    )
+}
+
+fun PaymentDetail.toResponse(): PaymentDetailResponse {
+    return PaymentDetailResponse(
+        paymentId = paymentId,
+        orderId = orderId,
+        orderNumber = orderNumber,
+        status = status,
+        paymentMethod = paymentMethod,
+        amount = amount,
+        paymentKey = paymentKey,
+        providerReference = providerReference,
+        failureReason = failureReason,
+        createdAt = createdAt,
+        approvedAt = approvedAt,
+        canceledAt = canceledAt,
     )
 }

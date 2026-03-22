@@ -1,14 +1,15 @@
 package zoonza.commerce.payment.adapter.`in`
 
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.nulls.shouldNotBeNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
+import org.mockito.BDDMockito.given
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -25,6 +26,11 @@ import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.payment.adapter.out.persistence.PaymentJpaRepository
+import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
+import zoonza.commerce.payment.application.port.out.TossPaymentCancelResult
+import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
+import zoonza.commerce.payment.application.port.out.TossPaymentConfirmResult
+import zoonza.commerce.payment.application.port.out.TossPaymentsClient
 import zoonza.commerce.payment.domain.PaymentStatus
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.shared.Email
@@ -55,6 +61,9 @@ class PaymentControllerTest {
 
     @Autowired
     private lateinit var paymentJpaRepository: PaymentJpaRepository
+
+    @MockBean
+    private lateinit var tossPaymentsClient: TossPaymentsClient
 
     @Test
     fun `인증된 회원은 주문으로 결제를 생성할 수 있다`() {
@@ -160,6 +169,143 @@ class PaymentControllerTest {
                 status { isNotFound() }
                 jsonPath("$.error.code") { value("NOT_FOUND") }
             }
+    }
+
+    @Test
+    fun `인증된 회원은 토스 승인 결과로 결제를 확정할 수 있다`() {
+        val member = insertMember(index = 1)
+        val product = insertProduct(index = 1)
+        val order = insertCreatedOrder(member.id, product, "ORD-PAYMENT-4", LocalDateTime.of(2026, 3, 22, 10, 0))
+
+        mockMvc
+            .post("/api/orders/${order.id}/payments") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"amount": 19900, "paymentMethod": "CARD"}"""
+            }.andExpect {
+                status { isOk() }
+            }
+
+        val payment = paymentJpaRepository.findAll().single()
+        given(
+            tossPaymentsClient.confirm(
+                TossPaymentConfirmRequest(
+                    paymentKey = "pay_123",
+                    orderId = "ORD-PAYMENT-4",
+                    amount = 19_900,
+                ),
+            ),
+        ).willReturn(
+            TossPaymentConfirmResult(
+                paymentKey = "pay_123",
+                method = "CARD",
+                providerReference = "tx_123",
+                approvedAt = LocalDateTime.of(2026, 3, 22, 12, 5),
+            ),
+        )
+
+        mockMvc
+            .post("/api/payments/${payment.id}/confirm") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """
+                    {
+                      "paymentKey": "pay_123",
+                      "orderId": "ORD-PAYMENT-4",
+                      "amount": 19900
+                    }
+                    """.trimIndent()
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.data.status") { value("CONFIRMED") }
+                jsonPath("$.data.paymentKey") { value("pay_123") }
+                jsonPath("$.data.providerReference") { value("tx_123") }
+            }
+
+        val confirmedPayment = paymentJpaRepository.findById(payment.id).orElseThrow()
+        confirmedPayment.status shouldBe PaymentStatus.CONFIRMED
+        val confirmedOrder = orderJpaRepository.findById(order.id).orElseThrow()
+        confirmedOrder.status shouldBe OrderStatus.PAID
+    }
+
+    @Test
+    fun `인증된 회원은 결제를 취소할 수 있다`() {
+        val member = insertMember(index = 1)
+        val product = insertProduct(index = 1)
+        val order = insertCreatedOrder(member.id, product, "ORD-PAYMENT-5", LocalDateTime.of(2026, 3, 22, 10, 0))
+
+        mockMvc
+            .post("/api/orders/${order.id}/payments") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"amount": 19900, "paymentMethod": "CARD"}"""
+            }.andExpect {
+                status { isOk() }
+            }
+
+        val payment = paymentJpaRepository.findAll().single()
+        given(
+            tossPaymentsClient.confirm(
+                TossPaymentConfirmRequest(
+                    paymentKey = "pay_456",
+                    orderId = "ORD-PAYMENT-5",
+                    amount = 19_900,
+                ),
+            ),
+        ).willReturn(
+            TossPaymentConfirmResult(
+                paymentKey = "pay_456",
+                method = "CARD",
+                providerReference = "tx_456",
+                approvedAt = LocalDateTime.of(2026, 3, 22, 12, 5),
+            ),
+        )
+
+        mockMvc
+            .post("/api/payments/${payment.id}/confirm") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """
+                    {
+                      "paymentKey": "pay_456",
+                      "orderId": "ORD-PAYMENT-5",
+                      "amount": 19900
+                    }
+                    """.trimIndent()
+            }.andExpect {
+                status { isOk() }
+            }
+
+        given(
+            tossPaymentsClient.cancel(
+                paymentKey = "pay_456",
+                request = TossPaymentCancelRequest(cancelReason = "고객 요청"),
+            ),
+        ).willReturn(
+            TossPaymentCancelResult(
+                providerReference = "cancel_tx_456",
+                cancelReason = "고객 요청",
+                canceledAt = LocalDateTime.of(2026, 3, 22, 12, 10),
+            ),
+        )
+
+        mockMvc
+            .post("/api/payments/${payment.id}/cancel") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"reason": "고객 요청"}"""
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.data.status") { value("CANCELED") }
+                jsonPath("$.data.failureReason") { value("고객 요청") }
+            }
+
+        val canceledPayment = paymentJpaRepository.findById(payment.id).orElseThrow()
+        canceledPayment.status shouldBe PaymentStatus.CANCELED
+        val canceledOrder = orderJpaRepository.findById(order.id).orElseThrow()
+        canceledOrder.status shouldBe OrderStatus.CANCELED
     }
 
     private fun insertMember(index: Int): Member {

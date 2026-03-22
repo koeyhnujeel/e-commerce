@@ -5,13 +5,16 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import zoonza.commerce.common.ApiResponse
+import zoonza.commerce.payment.adapter.`in`.request.CancelPaymentRequest
+import zoonza.commerce.payment.adapter.`in`.request.ConfirmPaymentRequest
 import zoonza.commerce.payment.adapter.`in`.request.CreatePaymentRequest
 import zoonza.commerce.payment.adapter.`in`.response.CreatePaymentResponse
 import zoonza.commerce.payment.adapter.`in`.response.PaymentDetailResponse
 import zoonza.commerce.payment.adapter.`in`.response.toResponse
+import zoonza.commerce.payment.application.dto.CancelPaymentCommand
+import zoonza.commerce.payment.application.dto.ConfirmPaymentCommand
 import zoonza.commerce.payment.application.dto.CreatePaymentCommand
 import zoonza.commerce.payment.application.port.`in`.PaymentService
 import zoonza.commerce.security.CurrentMember
@@ -50,6 +53,41 @@ class PaymentController(
         )
     }
 
+    @PostMapping("/api/payments/{paymentId}/confirm")
+    fun confirmPayment(
+        @CurrentMember currentMember: CurrentMemberInfo,
+        @PathVariable paymentId: Long,
+        @Valid @RequestBody request: ConfirmPaymentRequest,
+    ): ApiResponse<PaymentDetailResponse> {
+        val payment = paymentService.confirmPayment(
+            memberId = currentMember.memberId,
+            paymentId = paymentId,
+            command =
+                ConfirmPaymentCommand(
+                    paymentKey = request.paymentKey,
+                    orderId = request.orderId,
+                    amount = request.amount,
+                ),
+        )
+
+        return ApiResponse.success(payment.toResponse())
+    }
+
+    @PostMapping("/api/payments/{paymentId}/cancel")
+    fun cancelPayment(
+        @CurrentMember currentMember: CurrentMemberInfo,
+        @PathVariable paymentId: Long,
+        @Valid @RequestBody request: CancelPaymentRequest,
+    ): ApiResponse<PaymentDetailResponse> {
+        val payment = paymentService.cancelPayment(
+            memberId = currentMember.memberId,
+            paymentId = paymentId,
+            command = CancelPaymentCommand(reason = request.reason),
+        )
+
+        return ApiResponse.success(payment.toResponse())
+    }
+
     @GetMapping("/api/payments/{paymentId}")
     fun getPayment(
         @CurrentMember currentMember: CurrentMemberInfo,
@@ -60,21 +98,6 @@ class PaymentController(
             paymentId = paymentId,
         )
 
-        return ApiResponse.success(
-            PaymentDetailResponse(
-                paymentId = payment.paymentId,
-                orderId = payment.orderId,
-                orderNumber = payment.orderNumber,
-                status = payment.status,
-                paymentMethod = payment.paymentMethod,
-                amount = payment.amount,
-                paymentKey = payment.paymentKey,
-                providerReference = payment.providerReference,
-                failureReason = payment.failureReason,
-                createdAt = payment.createdAt,
-                approvedAt = payment.approvedAt,
-                canceledAt = payment.canceledAt,
-            ),
-        )
+        return ApiResponse.success(payment.toResponse())
     }
 }

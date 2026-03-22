@@ -231,39 +231,39 @@
 
 ### toss api client
 
-- [ ] 토스 승인 요청/응답 DTO를 정의한다.
-- [ ] 토스 취소 요청/응답 DTO를 정의한다.
-- [ ] 토스 API 클라이언트를 구현한다.
-- [ ] Basic 인증 헤더 생성 로직을 추가한다.
-- [ ] 토스 API 예외 변환 로직을 추가한다.
+- [x] 토스 승인 요청/응답 DTO를 정의한다.
+- [x] 토스 취소 요청/응답 DTO를 정의한다.
+- [x] 토스 API 클라이언트를 구현한다.
+- [x] Basic 인증 헤더 생성 로직을 추가한다.
+- [x] 토스 API 예외 변환 로직을 추가한다.
 
 ### payment application
 
-- [ ] 결제 확정 command/DTO를 정의한다.
-- [ ] 결제 취소 command/DTO를 정의한다.
-- [ ] `POST /api/payments/{paymentId}/confirm` 유스케이스를 추가한다.
-- [ ] `POST /api/payments/{paymentId}/cancel` 유스케이스를 추가한다.
-- [ ] 토스 리다이렉트의 `orderId`, `amount` 검증 로직을 추가한다.
-- [ ] 토스 승인 성공 시 `paymentKey` 저장 로직을 추가한다.
-- [ ] 토스 승인 성공 시 주문 상태를 `PAID`로 변경한다.
-- [ ] 토스 승인 실패 시 결제를 `FAILED`로 변경한다.
-- [ ] 토스 승인 실패 시 주문을 재결제 가능 상태로 복구한다.
-- [ ] 토스 취소 성공 시 결제 상태를 `CANCELED`로 변경한다.
-- [ ] 토스 취소 후 주문 상태 정책을 최종 확정하고 반영한다.
+- [x] 결제 확정 command/DTO를 정의한다.
+- [x] 결제 취소 command/DTO를 정의한다.
+- [x] `POST /api/payments/{paymentId}/confirm` 유스케이스를 추가한다.
+- [x] `POST /api/payments/{paymentId}/cancel` 유스케이스를 추가한다.
+- [x] 토스 리다이렉트의 `orderId`, `amount` 검증 로직을 추가한다.
+- [x] 토스 승인 성공 시 `paymentKey` 저장 로직을 추가한다.
+- [x] 토스 승인 성공 시 주문 상태를 `PAID`로 변경한다.
+- [x] 토스 승인 실패 시 결제를 `FAILED`로 변경한다.
+- [x] 토스 승인 실패 시 주문을 재결제 가능 상태로 복구한다.
+- [x] 토스 취소 성공 시 결제 상태를 `CANCELED`로 변경한다.
+- [x] 토스 취소 후 주문 상태 정책을 최종 확정하고 반영한다.
 
 ### payment adapter/in
 
-- [ ] `POST /api/payments/{paymentId}/confirm` 컨트롤러를 추가한다.
-- [ ] `POST /api/payments/{paymentId}/cancel` 컨트롤러를 추가한다.
+- [x] `POST /api/payments/{paymentId}/confirm` 컨트롤러를 추가한다.
+- [x] `POST /api/payments/{paymentId}/cancel` 컨트롤러를 추가한다.
 
 ### tests
 
-- [ ] 토스 API 클라이언트 직렬화/역직렬화 테스트를 추가한다.
-- [ ] 결제 확정 서비스 테스트를 추가한다.
-- [ ] 결제 취소 서비스 테스트를 추가한다.
-- [ ] 토스 승인 실패 서비스 테스트를 추가한다.
-- [ ] 결제 확정 API 통합 테스트를 추가한다.
-- [ ] 결제 취소 API 통합 테스트를 추가한다.
+- [x] 토스 API 클라이언트 직렬화/역직렬화 테스트를 추가한다.
+- [x] 결제 확정 서비스 테스트를 추가한다.
+- [x] 결제 취소 서비스 테스트를 추가한다.
+- [x] 토스 승인 실패 서비스 테스트를 추가한다.
+- [x] 결제 확정 API 통합 테스트를 추가한다.
+- [x] 결제 취소 API 통합 테스트를 추가한다.
 
 ## Phase 7. 안정화와 운영 준비
 

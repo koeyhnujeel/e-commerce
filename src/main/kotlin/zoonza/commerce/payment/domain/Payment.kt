@@ -153,11 +153,13 @@ class Payment private constructor(
 
     fun cancel(
         reason: String?,
+        providerReference: String?,
         canceledAt: LocalDateTime,
     ) {
         require(canCancel()) { "취소할 수 없는 결제입니다." }
 
         this.status = PaymentStatus.CANCELED
+        this.providerReference = providerReference?.trim()?.takeIf(String::isNotBlank) ?: this.providerReference
         this.failureReason = reason?.trim()?.takeIf(String::isNotBlank)
         this.canceledAt = canceledAt
         this.activeMarker = null
