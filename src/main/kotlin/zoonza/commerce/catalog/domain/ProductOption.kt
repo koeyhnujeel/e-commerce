@@ -81,4 +81,8 @@ class ProductOption private constructor(
     internal fun belongTo(product: Product) {
         this.product = product
     }
+
+    fun isOrderable(): Boolean {
+        return true
+    }
 }

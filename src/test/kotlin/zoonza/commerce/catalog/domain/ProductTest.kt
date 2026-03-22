@@ -99,6 +99,39 @@ class ProductTest {
         }
     }
 
+    @Test
+    fun `상품은 대표 이미지를 조회할 수 있다`() {
+        val product =
+            Product.create(
+                brandId = 1L,
+                name = "반팔 티셔츠",
+                description = "여름 기본 아이템",
+                basePrice = Money(19_900),
+                categoryIds = listOf(10L),
+                images = listOf(secondaryImage(), primaryImage()),
+                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
+            )
+
+        product.primaryImage().imageUrl shouldBe "https://cdn.example.com/primary.jpg"
+    }
+
+    @Test
+    fun `주문 가능한 옵션이 있으면 판매 가능 상품이다`() {
+        val product =
+            Product.create(
+                brandId = 1L,
+                name = "반팔 티셔츠",
+                description = "여름 기본 아이템",
+                basePrice = Money(19_900),
+                categoryIds = listOf(10L),
+                images = listOf(primaryImage()),
+                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
+            )
+
+        product.isAvailableForSale() shouldBe true
+        product.saleStatus() shouldBe ProductSaleStatus.AVAILABLE
+    }
+
     private fun primaryImage(): ProductImage {
         return ProductImage.create(
             imageUrl = "https://cdn.example.com/primary.jpg",

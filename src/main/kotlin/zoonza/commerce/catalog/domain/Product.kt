@@ -198,4 +198,21 @@ class Product private constructor(
 
         check(this.options.size == options.size) { "상품 옵션 목록이 올바르지 않습니다." }
     }
+
+    fun primaryImage(): ProductImage {
+        return images.firstOrNull(ProductImage::isPrimary)
+            ?: throw IllegalStateException("대표 상품 이미지가 없습니다.")
+    }
+
+    fun isAvailableForSale(): Boolean {
+        return options.any(ProductOption::isOrderable)
+    }
+
+    fun saleStatus(): ProductSaleStatus {
+        return if (isAvailableForSale()) {
+            ProductSaleStatus.AVAILABLE
+        } else {
+            ProductSaleStatus.UNAVAILABLE
+        }
+    }
 }
