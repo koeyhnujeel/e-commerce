@@ -1,6 +1,8 @@
 package zoonza.commerce.catalog.adapter.out.persistence
 
-import jakarta.persistence.EntityManager
+import com.querydsl.core.types.OrderSpecifier
+import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
 import zoonza.commerce.catalog.application.dto.ProductListSort
@@ -8,13 +10,14 @@ import zoonza.commerce.catalog.application.port.out.ProductRepository
 import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.catalog.domain.ProductImage
 import zoonza.commerce.catalog.domain.ProductOption
+import zoonza.commerce.catalog.domain.QProduct.Companion.product
 import zoonza.commerce.common.PageQuery
 import zoonza.commerce.common.PageResult
 import kotlin.math.ceil
 
 @Repository
 class ProductRepositoryAdapter(
-    private val entityManager: EntityManager,
+    private val queryFactory: JPAQueryFactory,
     private val productJpaRepository: ProductJpaRepository,
     private val productImageJpaRepository: ProductImageJpaRepository,
     private val productOptionJpaRepository: ProductOptionJpaRepository,
@@ -29,31 +32,20 @@ class ProductRepositoryAdapter(
         sort: ProductListSort,
     ): PageResult<Product> {
         val items =
-            entityManager.createQuery(
-                """
-                select p
-                from Product p
-                where (:categoryId is null or :categoryId member of p.categoryIds)
-                order by ${orderByClause(sort)}
-                """.trimIndent(),
-                Product::class.java,
-            ).apply {
-                setParameter("categoryId", categoryId)
-                setFirstResult(pageQuery.page * pageQuery.size)
-                setMaxResults(pageQuery.size)
-            }.resultList
+            queryFactory
+                .selectFrom(product)
+                .where(categoryIdEq(categoryId))
+                .orderBy(*orderSpecifiers(sort))
+                .offset((pageQuery.page * pageQuery.size).toLong())
+                .limit(pageQuery.size.toLong())
+                .fetch()
 
         val totalElements =
-            entityManager.createQuery(
-                """
-                select count(p)
-                from Product p
-                where (:categoryId is null or :categoryId member of p.categoryIds)
-                """.trimIndent(),
-                java.lang.Long::class.java,
-            ).apply {
-                setParameter("categoryId", categoryId)
-            }.singleResult.toLong()
+            queryFactory
+                .select(product.count())
+                .from(product)
+                .where(categoryIdEq(categoryId))
+                .fetchOne() ?: 0L
 
         val totalPages =
             if (totalElements == 0L) {
@@ -102,11 +94,15 @@ class ProductRepositoryAdapter(
         return productOptionJpaRepository.findByIdAndProductId(productOptionId, productId)
     }
 
-    private fun orderByClause(sort: ProductListSort): String {
+    private fun categoryIdEq(categoryId: Long?): BooleanExpression? {
+        return categoryId?.let(product.categoryIds.any()::eq)
+    }
+
+    private fun orderSpecifiers(sort: ProductListSort): Array<OrderSpecifier<*>> {
         return when (sort) {
-            ProductListSort.LATEST -> "p.id desc"
-            ProductListSort.PRICE_ASC -> "p.basePrice.amount asc, p.id desc"
-            ProductListSort.PRICE_DESC -> "p.basePrice.amount desc, p.id desc"
+            ProductListSort.LATEST -> arrayOf(product.id.desc())
+            ProductListSort.PRICE_ASC -> arrayOf(product.basePrice.amount.asc(), product.id.desc())
+            ProductListSort.PRICE_DESC -> arrayOf(product.basePrice.amount.desc(), product.id.desc())
         }
     }
 }
