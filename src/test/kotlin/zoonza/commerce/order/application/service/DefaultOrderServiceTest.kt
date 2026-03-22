@@ -1,6 +1,7 @@
 package zoonza.commerce.order.application.service
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -11,6 +12,8 @@ import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.catalog.OrderProductSnapshot
 import zoonza.commerce.order.application.dto.CreateOrderCommand
 import zoonza.commerce.order.application.dto.CreateOrderItemCommand
+import zoonza.commerce.order.application.dto.UpdateOrderCommand
+import zoonza.commerce.order.application.dto.UpdateOrderItemCommand
 import zoonza.commerce.order.application.port.out.OrderNumberGenerator
 import zoonza.commerce.order.application.port.out.OrderRepository
 import zoonza.commerce.order.domain.Order
@@ -131,17 +134,113 @@ class DefaultOrderServiceTest {
         result.items.single().lineAmount shouldBe 39_800
     }
 
+    @Test
+    fun `주문 수정은 주문상품을 다시 검증하고 총액을 갱신한다`() {
+        val savedOrder = slot<Order>()
+        val existingOrder = order(id = 10L, orderNumber = "ORD-10", orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0))
+
+        every { orderRepository.findOrderByIdAndMemberId(10L, 1L) } returns existingOrder
+        every {
+            catalogApi.findOrderProductSnapshot(11L, 21L)
+        } returns OrderProductSnapshot(
+            productName = "후드 집업",
+            optionColor = "GRAY",
+            optionSize = "L",
+            unitPrice = Money(39_900),
+        )
+        every { orderRepository.save(capture(savedOrder)) } answers { savedOrder.captured }
+
+        val result = orderService.updateOrder(
+            memberId = 1L,
+            orderId = 10L,
+            command =
+                UpdateOrderCommand(
+                    items =
+                        listOf(
+                            UpdateOrderItemCommand(productId = 11L, productOptionId = 21L, quantity = 2),
+                        ),
+                ),
+        )
+
+        result.totalAmount shouldBe 79_800
+        savedOrder.captured.items.single().productNameSnapshot shouldBe "후드 집업"
+        savedOrder.captured.items.single().status shouldBe zoonza.commerce.order.domain.OrderItemStatus.CREATED
+    }
+
+    @Test
+    fun `결제 완료 주문은 수정할 수 없다`() {
+        every { orderRepository.findOrderByIdAndMemberId(10L, 1L) } returns
+            order(
+                id = 10L,
+                orderNumber = "ORD-10",
+                orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                status = OrderStatus.PAID,
+            )
+
+        val exception =
+            shouldThrow<BusinessException> {
+                orderService.updateOrder(
+                    memberId = 1L,
+                    orderId = 10L,
+                    command = UpdateOrderCommand(items = listOf(UpdateOrderItemCommand(10L, 20L, 1))),
+                )
+            }
+
+        exception.errorCode shouldBe ErrorCode.ORDER_MODIFICATION_NOT_ALLOWED
+    }
+
+    @Test
+    fun `주문 삭제는 취소 상태와 삭제 시각을 저장한다`() {
+        val savedOrder = slot<Order>()
+        val existingOrder = order(id = 10L, orderNumber = "ORD-10", orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0))
+
+        every { orderRepository.findOrderByIdAndMemberId(10L, 1L) } returns existingOrder
+        every { orderRepository.save(capture(savedOrder)) } answers { savedOrder.captured }
+
+        orderService.deleteOrder(memberId = 1L, orderId = 10L)
+
+        savedOrder.captured.status shouldBe OrderStatus.CANCELED
+        savedOrder.captured.deletedAt.shouldNotBeNull()
+    }
+
+    @Test
+    fun `결제 완료 주문은 삭제할 수 없다`() {
+        every { orderRepository.findOrderByIdAndMemberId(10L, 1L) } returns
+            order(
+                id = 10L,
+                orderNumber = "ORD-10",
+                orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                status = OrderStatus.PAID,
+            )
+
+        val exception =
+            shouldThrow<BusinessException> {
+                orderService.deleteOrder(memberId = 1L, orderId = 10L)
+            }
+
+        exception.errorCode shouldBe ErrorCode.ORDER_DELETION_NOT_ALLOWED
+    }
+
     private fun order(
         id: Long,
         orderNumber: String,
         orderedAt: LocalDateTime,
+        status: OrderStatus = OrderStatus.CREATED,
     ): Order {
+        val deliveredAt =
+            if (status == OrderStatus.DELIVERED) {
+                orderedAt.plusDays(1)
+            } else {
+                null
+            }
+
         return Order.create(
             id = id,
             memberId = 1L,
             orderNumber = orderNumber,
-            status = OrderStatus.CREATED,
+            status = status,
             orderedAt = orderedAt,
+            deliveredAt = deliveredAt,
             items =
                 listOf(
                     OrderItem.create(

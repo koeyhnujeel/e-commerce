@@ -1,7 +1,9 @@
 package zoonza.commerce.order.adapter.`in`
 
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import zoonza.commerce.common.ApiResponse
 import zoonza.commerce.order.adapter.`in`.request.CreateOrderRequest
+import zoonza.commerce.order.adapter.`in`.request.UpdateOrderRequest
 import zoonza.commerce.order.adapter.`in`.response.CreateOrderResponse
 import zoonza.commerce.order.adapter.`in`.response.OrderDetailResponse
 import zoonza.commerce.order.adapter.`in`.response.OrderItemResponse
@@ -18,6 +21,8 @@ import zoonza.commerce.order.application.dto.CreateOrderItemCommand
 import zoonza.commerce.order.application.dto.OrderDetail
 import zoonza.commerce.order.application.dto.OrderItemDetail
 import zoonza.commerce.order.application.dto.OrderSummary
+import zoonza.commerce.order.application.dto.UpdateOrderCommand
+import zoonza.commerce.order.application.dto.UpdateOrderItemCommand
 import zoonza.commerce.order.application.port.`in`.OrderService
 import zoonza.commerce.security.CurrentMember
 import zoonza.commerce.security.CurrentMemberInfo
@@ -61,6 +66,42 @@ class OrderManagementController(
         val orders = orderService.getOrders(currentMember.memberId)
 
         return ApiResponse.success(orders.map(::toOrderSummaryResponse))
+    }
+
+    @PatchMapping("/{orderId}")
+    fun updateOrder(
+        @CurrentMember currentMember: CurrentMemberInfo,
+        @PathVariable orderId: Long,
+        @Valid @RequestBody request: UpdateOrderRequest,
+    ): ApiResponse<OrderDetailResponse> {
+        val updatedOrder = orderService.updateOrder(
+            memberId = currentMember.memberId,
+            orderId = orderId,
+            command = UpdateOrderCommand(
+                items = request.items.map { item ->
+                    UpdateOrderItemCommand(
+                        productId = item.productId,
+                        productOptionId = item.productOptionId,
+                        quantity = item.quantity,
+                    )
+                },
+            ),
+        )
+
+        return ApiResponse.success(toOrderDetailResponse(updatedOrder))
+    }
+
+    @DeleteMapping("/{orderId}")
+    fun deleteOrder(
+        @CurrentMember currentMember: CurrentMemberInfo,
+        @PathVariable orderId: Long,
+    ): ApiResponse<Nothing> {
+        orderService.deleteOrder(
+            memberId = currentMember.memberId,
+            orderId = orderId,
+        )
+
+        return ApiResponse.success()
     }
 
     @GetMapping("/{orderId}")

@@ -85,6 +85,93 @@ class OrderTest {
         order.totalAmount.amount shouldBe 79_700
     }
 
+    @Test
+    fun `생성된 주문과 결제 대기 주문만 수정할 수 있다`() {
+        val createdOrder = createOrder(status = OrderStatus.CREATED)
+        val paymentPendingOrder = createOrder(status = OrderStatus.PAYMENT_PENDING)
+        val paidOrder = createOrder(status = OrderStatus.PAID)
+
+        createdOrder.canModify() shouldBe true
+        paymentPendingOrder.canModify() shouldBe true
+        paidOrder.canModify() shouldBe false
+    }
+
+    @Test
+    fun `수정 가능한 주문은 주문상품 전체를 교체하고 총액을 다시 계산한다`() {
+        val order = createOrder(status = OrderStatus.CREATED)
+
+        order.replaceItems(
+            listOf(
+                orderItem(
+                    productId = 11L,
+                    productOptionId = 21L,
+                    productNameSnapshot = "후드 집업",
+                    quantity = 2,
+                    orderPrice = Money(39_900),
+                ),
+            ),
+        )
+
+        order.items.single().productId shouldBe 11L
+        order.items.single().status shouldBe OrderItemStatus.CREATED
+        order.totalAmount.amount shouldBe 79_800
+    }
+
+    @Test
+    fun `결제 대기 주문은 삭제하면 취소 상태와 삭제 시각을 기록한다`() {
+        val order = createOrder(status = OrderStatus.PAYMENT_PENDING)
+        val deletedAt = LocalDateTime.of(2026, 3, 22, 12, 0)
+
+        order.delete(deletedAt)
+
+        order.status shouldBe OrderStatus.CANCELED
+        order.deletedAt shouldBe deletedAt
+        order.items.single().status shouldBe OrderItemStatus.CANCELED
+        order.canDelete() shouldBe false
+    }
+
+    @Test
+    fun `결제 상태 전이는 주문상품 상태와 함께 변경된다`() {
+        val order = createOrder(status = OrderStatus.CREATED)
+
+        order.markPaymentPending()
+        order.status shouldBe OrderStatus.PAYMENT_PENDING
+        order.items.single().status shouldBe OrderItemStatus.PAYMENT_PENDING
+
+        order.markPaid()
+        order.status shouldBe OrderStatus.PAID
+        order.items.single().status shouldBe OrderItemStatus.PAID
+    }
+
+    @Test
+    fun `삭제된 주문은 수정할 수 없다`() {
+        val order = createOrder(status = OrderStatus.CREATED)
+
+        order.delete(LocalDateTime.of(2026, 3, 22, 12, 0))
+
+        shouldThrow<IllegalArgumentException> {
+            order.replaceItems(listOf(orderItem()))
+        }
+    }
+
+    private fun createOrder(status: OrderStatus): Order {
+        val deliveredAt =
+            if (status == OrderStatus.DELIVERED) {
+                LocalDateTime.of(2026, 3, 22, 9, 0)
+            } else {
+                null
+            }
+
+        return Order.create(
+            memberId = 1L,
+            orderNumber = "ORD-STATE-${status.name}",
+            status = status,
+            orderedAt = LocalDateTime.of(2026, 3, 21, 10, 0),
+            deliveredAt = deliveredAt,
+            items = listOf(orderItem()),
+        )
+    }
+
     private fun orderItem(
         productId: Long = 10L,
         productOptionId: Long = 20L,

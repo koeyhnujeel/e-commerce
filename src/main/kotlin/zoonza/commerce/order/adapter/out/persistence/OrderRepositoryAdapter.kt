@@ -22,7 +22,7 @@ class OrderRepositoryAdapter(
     }
 
     override fun findOrders(memberId: Long): List<Order> {
-        return orderJpaRepository.findAllByMemberIdOrderByOrderedAtDescIdDesc(memberId)
+        return orderJpaRepository.findAllByMemberIdAndDeletedAtIsNullOrderByOrderedAtDescIdDesc(memberId)
     }
 
     override fun findOrderByIdAndMemberId(

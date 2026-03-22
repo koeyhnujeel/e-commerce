@@ -11,6 +11,8 @@ import zoonza.commerce.order.application.dto.CreateOrderResult
 import zoonza.commerce.order.application.dto.OrderDetail
 import zoonza.commerce.order.application.dto.OrderItemDetail
 import zoonza.commerce.order.application.dto.OrderSummary
+import zoonza.commerce.order.application.dto.UpdateOrderCommand
+import zoonza.commerce.order.application.dto.UpdateOrderItemCommand
 import zoonza.commerce.order.application.port.`in`.OrderService
 import zoonza.commerce.order.application.port.out.OrderNumberGenerator
 import zoonza.commerce.order.application.port.out.OrderRepository
@@ -78,6 +80,44 @@ class DefaultOrderService(
         val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
             ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
 
+        return toOrderDetail(order)
+    }
+
+    @Transactional
+    override fun updateOrder(
+        memberId: Long,
+        orderId: Long,
+        command: UpdateOrderCommand,
+    ): OrderDetail {
+        val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        if (!order.canModify()) {
+            throw BusinessException(ErrorCode.ORDER_MODIFICATION_NOT_ALLOWED)
+        }
+
+        order.replaceItems(command.items.map(::toOrderItem))
+
+        return toOrderDetail(orderRepository.save(order))
+    }
+
+    @Transactional
+    override fun deleteOrder(
+        memberId: Long,
+        orderId: Long,
+    ) {
+        val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
+            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+
+        if (!order.canDelete()) {
+            throw BusinessException(ErrorCode.ORDER_DELETION_NOT_ALLOWED)
+        }
+
+        order.delete(LocalDateTime.now())
+        orderRepository.save(order)
+    }
+
+    private fun toOrderDetail(order: Order): OrderDetail {
         return OrderDetail(
             orderId = order.id,
             orderNumber = order.orderNumber,
@@ -131,18 +171,38 @@ class DefaultOrderService(
     }
 
     private fun toOrderItem(command: CreateOrderItemCommand): OrderItem {
-        val productSnapshot = catalogApi.findOrderProductSnapshot(
+        return toOrderItem(
             productId = command.productId,
             productOptionId = command.productOptionId,
+            quantity = command.quantity,
+        )
+    }
+
+    private fun toOrderItem(command: UpdateOrderItemCommand): OrderItem {
+        return toOrderItem(
+            productId = command.productId,
+            productOptionId = command.productOptionId,
+            quantity = command.quantity,
+        )
+    }
+
+    private fun toOrderItem(
+        productId: Long,
+        productOptionId: Long,
+        quantity: Int,
+    ): OrderItem {
+        val productSnapshot = catalogApi.findOrderProductSnapshot(
+            productId = productId,
+            productOptionId = productOptionId,
         )
 
         return OrderItem.create(
-            productId = command.productId,
-            productOptionId = command.productOptionId,
+            productId = productId,
+            productOptionId = productOptionId,
             productNameSnapshot = productSnapshot.productName,
             optionColorSnapshot = productSnapshot.optionColor,
             optionSizeSnapshot = productSnapshot.optionSize,
-            quantity = command.quantity,
+            quantity = quantity,
             orderPrice = productSnapshot.unitPrice,
         )
     }

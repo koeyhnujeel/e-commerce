@@ -24,6 +24,8 @@ class GlobalExceptionHandler {
             ErrorCode.PRODUCT_OPTION_NOT_FOUND to HttpStatus.NOT_FOUND,
             ErrorCode.ORDER_NOT_FOUND to HttpStatus.NOT_FOUND,
             ErrorCode.ORDER_ITEM_NOT_FOUND to HttpStatus.NOT_FOUND,
+            ErrorCode.ORDER_MODIFICATION_NOT_ALLOWED to HttpStatus.BAD_REQUEST,
+            ErrorCode.ORDER_DELETION_NOT_ALLOWED to HttpStatus.BAD_REQUEST,
             ErrorCode.ORDER_ITEM_PURCHASE_CONFIRM_NOT_ALLOWED to HttpStatus.BAD_REQUEST,
             ErrorCode.REVIEW_NOT_FOUND to HttpStatus.NOT_FOUND,
             ErrorCode.REVIEW_ALREADY_EXISTS to HttpStatus.CONFLICT,

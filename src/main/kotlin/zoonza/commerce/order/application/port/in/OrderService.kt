@@ -4,6 +4,7 @@ import zoonza.commerce.order.application.dto.CreateOrderCommand
 import zoonza.commerce.order.application.dto.CreateOrderResult
 import zoonza.commerce.order.application.dto.OrderDetail
 import zoonza.commerce.order.application.dto.OrderSummary
+import zoonza.commerce.order.application.dto.UpdateOrderCommand
 
 interface OrderService {
     fun createOrder(
@@ -17,6 +18,17 @@ interface OrderService {
         memberId: Long,
         orderId: Long,
     ): OrderDetail
+
+    fun updateOrder(
+        memberId: Long,
+        orderId: Long,
+        command: UpdateOrderCommand,
+    ): OrderDetail
+
+    fun deleteOrder(
+        memberId: Long,
+        orderId: Long,
+    )
 
     fun confirmPurchase(
         memberId: Long,

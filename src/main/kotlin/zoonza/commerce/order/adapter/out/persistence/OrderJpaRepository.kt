@@ -18,6 +18,7 @@ interface OrderJpaRepository : JpaRepository<Order, Long> {
         from Order o
         join o.items item
         where o.memberId = :memberId
+          and o.deletedAt is null
           and item.productId = :productId
           and item.status = :status
         order by item.confirmedAt desc, o.id desc, item.id desc
@@ -35,6 +36,7 @@ interface OrderJpaRepository : JpaRepository<Order, Long> {
         from Order o
         join fetch o.items item
         where o.memberId = :memberId
+          and o.deletedAt is null
           and item.id = :orderItemId
         """,
     )
@@ -43,7 +45,7 @@ interface OrderJpaRepository : JpaRepository<Order, Long> {
         @Param("orderItemId") orderItemId: Long,
     ): Order?
 
-    fun findAllByMemberIdOrderByOrderedAtDescIdDesc(memberId: Long): List<Order>
+    fun findAllByMemberIdAndDeletedAtIsNullOrderByOrderedAtDescIdDesc(memberId: Long): List<Order>
 
     @Query(
         """
@@ -52,6 +54,7 @@ interface OrderJpaRepository : JpaRepository<Order, Long> {
         left join fetch o.items item
         where o.id = :orderId
           and o.memberId = :memberId
+          and o.deletedAt is null
         order by item.id asc
         """,
     )

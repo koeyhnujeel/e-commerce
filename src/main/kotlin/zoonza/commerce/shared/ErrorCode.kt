@@ -17,6 +17,8 @@ enum class ErrorCode(
     MEMBER_NOT_FOUND("NOT_FOUND", "회원을 찾을 수 없습니다."),
     ORDER_NOT_FOUND("NOT_FOUND", "주문을 찾을 수 없습니다."),
     ORDER_ITEM_NOT_FOUND("NOT_FOUND", "주문상품을 찾을 수 없습니다."),
+    ORDER_MODIFICATION_NOT_ALLOWED("BAD_REQUEST", "수정할 수 없는 주문입니다."),
+    ORDER_DELETION_NOT_ALLOWED("BAD_REQUEST", "삭제할 수 없는 주문입니다."),
     ORDER_ITEM_PURCHASE_CONFIRM_NOT_ALLOWED("BAD_REQUEST", "구매 확정할 수 없는 주문상품입니다."),
     REVIEW_NOT_FOUND("NOT_FOUND", "리뷰를 찾을 수 없습니다."),
     REVIEW_ALREADY_EXISTS("CONFLICT", "이미 작성된 리뷰가 있습니다."),
