@@ -1,4 +1,4 @@
-package zoonza.commerce.payment.adapter.out.toss
+package zoonza.commerce.payment.application.port.out
 
 class TossPaymentsClientException(
     message: String,

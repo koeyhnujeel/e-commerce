@@ -2,6 +2,7 @@ package zoonza.commerce.order.application.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.slf4j.LoggerFactory
 import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.PaymentOrder
@@ -31,6 +32,8 @@ class DefaultOrderService(
     private val catalogApi: CatalogApi,
     private val orderNumberGenerator: OrderNumberGenerator,
 ) : OrderApi, OrderService {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Transactional(readOnly = true)
     override fun findReviewablePurchase(
         memberId: Long,
@@ -51,7 +54,7 @@ class DefaultOrderService(
             orderId = order.id,
             memberId = order.memberId,
             orderNumber = order.orderNumber,
-            status = order.status,
+            payable = order.status == OrderStatus.CREATED,
             totalAmount = order.totalAmount,
             productNames = order.items.map(OrderItem::productNameSnapshot),
         )
@@ -62,8 +65,10 @@ class DefaultOrderService(
         val order = orderRepository.findOrderById(orderId)
             ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
 
+        val previousStatus = order.status
         order.markPaymentPending()
         orderRepository.save(order)
+        logOrderStatusChange(order.id, previousStatus, order.status)
     }
 
     @Transactional
@@ -71,8 +76,10 @@ class DefaultOrderService(
         val order = orderRepository.findOrderById(orderId)
             ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
 
+        val previousStatus = order.status
         order.markCreated()
         orderRepository.save(order)
+        logOrderStatusChange(order.id, previousStatus, order.status)
     }
 
     @Transactional
@@ -80,8 +87,10 @@ class DefaultOrderService(
         val order = orderRepository.findOrderById(orderId)
             ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
 
+        val previousStatus = order.status
         order.markPaid()
         orderRepository.save(order)
+        logOrderStatusChange(order.id, previousStatus, order.status)
     }
 
     @Transactional
@@ -89,8 +98,10 @@ class DefaultOrderService(
         val order = orderRepository.findOrderById(orderId)
             ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
 
+        val previousStatus = order.status
         order.cancel()
         orderRepository.save(order)
+        logOrderStatusChange(order.id, previousStatus, order.status)
     }
 
     @Transactional
@@ -152,8 +163,15 @@ class DefaultOrderService(
         }
 
         order.replaceItems(command.items.map(::toOrderItem))
+        val updatedOrder = orderRepository.save(order)
+        log.info(
+            "order updated orderId={} itemCount={} totalAmount={}",
+            updatedOrder.id,
+            updatedOrder.items.size,
+            updatedOrder.totalAmount.amount,
+        )
 
-        return toOrderDetail(orderRepository.save(order))
+        return toOrderDetail(updatedOrder)
     }
 
     @Transactional
@@ -168,8 +186,15 @@ class DefaultOrderService(
             throw BusinessException(ErrorCode.ORDER_DELETION_NOT_ALLOWED)
         }
 
+        val previousStatus = order.status
         order.delete(LocalDateTime.now())
         orderRepository.save(order)
+        logOrderStatusChange(order.id, previousStatus, order.status)
+        log.info(
+            "order deleted orderId={} deletedAt={}",
+            order.id,
+            order.deletedAt,
+        )
     }
 
     private fun toOrderDetail(order: Order): OrderDetail {
@@ -260,5 +285,13 @@ class DefaultOrderService(
             quantity = quantity,
             orderPrice = productSnapshot.unitPrice,
         )
+    }
+
+    private fun logOrderStatusChange(
+        orderId: Long,
+        from: OrderStatus,
+        to: OrderStatus,
+    ) {
+        log.info("order status changed orderId={} from={} to={}", orderId, from, to)
     }
 }

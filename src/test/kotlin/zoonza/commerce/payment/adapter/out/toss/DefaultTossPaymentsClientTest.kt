@@ -19,6 +19,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
 import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
 import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
 
@@ -51,7 +52,7 @@ class DefaultTossPaymentsClientTest {
         client =
             DefaultTossPaymentsClient(
                 restClientBuilder = restClientBuilder,
-                tossPaymentsProperties = properties,
+                tossPaymentsConfiguration = properties,
                 tossAuthorizationHeaderProvider = TossAuthorizationHeaderProvider(properties),
                 objectMapper = objectMapper,
             )

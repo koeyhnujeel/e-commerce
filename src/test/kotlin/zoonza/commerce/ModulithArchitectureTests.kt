@@ -1,5 +1,6 @@
 package zoonza.commerce
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.modulith.core.ApplicationModules
 
@@ -10,11 +11,12 @@ class ModulithArchitectureTests {
     }
 
     @Test
-    fun `module list`() {
+    fun `payment module is part of the modulith`() {
         val modules = ApplicationModules.of(CommerceApplication::class.java)
+        val paymentModule = modules.getModuleByName("payment")
+        val orderModule = modules.getModuleByName("order")
 
-        for (module in modules) {
-            println(module.toString())
-        }
+        assertThat(paymentModule).isPresent
+        assertThat(orderModule).isPresent
     }
 }

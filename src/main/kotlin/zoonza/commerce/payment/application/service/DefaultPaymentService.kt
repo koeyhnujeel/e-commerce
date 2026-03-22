@@ -1,12 +1,10 @@
 package zoonza.commerce.payment.application.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.PaymentOrder
-import zoonza.commerce.order.domain.OrderStatus
-import zoonza.commerce.payment.adapter.out.toss.TossPaymentsProperties
-import zoonza.commerce.payment.adapter.out.toss.TossPaymentsClientException
 import zoonza.commerce.payment.application.dto.CreatePaymentCommand
 import zoonza.commerce.payment.application.dto.CreatePaymentResult
 import zoonza.commerce.payment.application.dto.CancelPaymentCommand
@@ -18,6 +16,8 @@ import zoonza.commerce.payment.application.port.out.PaymentRepository
 import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
 import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
 import zoonza.commerce.payment.application.port.out.TossPaymentsClient
+import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
+import zoonza.commerce.payment.application.port.out.TossPaymentsConfiguration
 import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.shared.BusinessException
@@ -29,9 +29,11 @@ import java.time.LocalDateTime
 class DefaultPaymentService(
     private val paymentRepository: PaymentRepository,
     private val orderApi: OrderApi,
-    private val tossPaymentsProperties: TossPaymentsProperties,
+    private val tossPaymentsConfiguration: TossPaymentsConfiguration,
     private val tossPaymentsClient: TossPaymentsClient,
 ) : PaymentService {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Transactional
     override fun createPayment(
         memberId: Long,
@@ -54,10 +56,17 @@ class DefaultPaymentService(
                 paymentMethod = command.paymentMethod,
                 providerReference = order.orderNumber,
                 createdAt = LocalDateTime.now(),
-            ),
+                ),
         )
 
         orderApi.markPaymentPending(order.orderId)
+        log.info(
+            "payment created paymentId={} orderId={} status={} amount={}",
+            payment.id,
+            payment.orderId,
+            payment.status,
+            payment.amount.amount,
+        )
 
         return CreatePaymentResult(
             paymentId = payment.id,
@@ -67,13 +76,13 @@ class DefaultPaymentService(
             amount = payment.amount.amount,
             checkout =
                 TossCheckout(
-                    clientKey = tossPaymentsProperties.clientKey,
+                    clientKey = tossPaymentsConfiguration.clientKey,
                     orderId = order.orderNumber,
                     orderName = createOrderName(order),
                     customerKey = createCustomerKey(order.memberId),
                     amount = payment.amount.amount,
-                    successUrl = tossPaymentsProperties.successUrl,
-                    failUrl = tossPaymentsProperties.failUrl,
+                    successUrl = tossPaymentsConfiguration.successUrl,
+                    failUrl = tossPaymentsConfiguration.failUrl,
                 ),
             createdAt = payment.createdAt,
         )
@@ -123,6 +132,13 @@ class DefaultPaymentService(
             )
             paymentRepository.save(payment)
             orderApi.markPaid(payment.orderId)
+            log.info(
+                "payment confirmed paymentId={} orderId={} status={} providerReference={}",
+                payment.id,
+                payment.orderId,
+                payment.status,
+                payment.providerReference,
+            )
 
             toPaymentDetail(payment)
         } catch (e: TossPaymentsClientException) {
@@ -161,6 +177,13 @@ class DefaultPaymentService(
             )
             paymentRepository.save(payment)
             orderApi.cancel(payment.orderId)
+            log.info(
+                "payment canceled paymentId={} orderId={} status={} providerReference={}",
+                payment.id,
+                payment.orderId,
+                payment.status,
+                payment.providerReference,
+            )
 
             toPaymentDetail(payment)
         } catch (e: TossPaymentsClientException) {
@@ -189,7 +212,7 @@ class DefaultPaymentService(
         order: PaymentOrder,
         amount: Long,
     ) {
-        if (order.status != OrderStatus.CREATED) {
+        if (!order.payable) {
             throw BusinessException(ErrorCode.PAYMENT_CREATION_NOT_ALLOWED)
         }
 
@@ -220,6 +243,13 @@ class DefaultPaymentService(
         payment.fail(reason)
         paymentRepository.save(payment)
         orderApi.markPaymentReady(payment.orderId)
+        log.warn(
+            "payment failed paymentId={} orderId={} status={} reason={}",
+            payment.id,
+            payment.orderId,
+            payment.status,
+            reason,
+        )
     }
 
     private fun createOrderName(order: PaymentOrder): String {

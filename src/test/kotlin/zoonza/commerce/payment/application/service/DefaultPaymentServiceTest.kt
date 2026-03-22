@@ -9,9 +9,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.PaymentOrder
-import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.payment.adapter.out.toss.TossPaymentsProperties
-import zoonza.commerce.payment.adapter.out.toss.TossPaymentsClientException
 import zoonza.commerce.payment.application.dto.CancelPaymentCommand
 import zoonza.commerce.payment.application.dto.ConfirmPaymentCommand
 import zoonza.commerce.payment.application.dto.CreatePaymentCommand
@@ -21,6 +19,7 @@ import zoonza.commerce.payment.application.port.out.TossPaymentCancelResult
 import zoonza.commerce.payment.application.port.out.TossPaymentConfirmRequest
 import zoonza.commerce.payment.application.port.out.TossPaymentConfirmResult
 import zoonza.commerce.payment.application.port.out.TossPaymentsClient
+import zoonza.commerce.payment.application.port.out.TossPaymentsClientException
 import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.payment.domain.PaymentStatus
@@ -45,7 +44,7 @@ class DefaultPaymentServiceTest {
         DefaultPaymentService(
             paymentRepository = paymentRepository,
             orderApi = orderApi,
-            tossPaymentsProperties = tossPaymentsProperties,
+            tossPaymentsConfiguration = tossPaymentsProperties,
             tossPaymentsClient = tossPaymentsClient,
         )
 
@@ -239,7 +238,7 @@ class DefaultPaymentServiceTest {
             orderId = 10L,
             memberId = 1L,
             orderNumber = "ORD-20260322-ABC",
-            status = OrderStatus.CREATED,
+            payable = true,
             totalAmount = Money(39_800),
             productNames = listOf("반팔 티셔츠", "후드 집업"),
         )
