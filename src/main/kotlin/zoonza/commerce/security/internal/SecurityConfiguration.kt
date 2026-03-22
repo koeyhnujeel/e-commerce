@@ -29,6 +29,20 @@ class SecurityConfiguration(
                         HttpMethod.POST,
                         "/api/products/{productId}/likes",
                         "/api/products/{productId}/likes/cancel",
+                        "/api/products/{productId}/reviews",
+                        "/api/orders/items/{orderItemId}/purchase-confirmation",
+                    ).authenticated()
+                    .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/products/{productId}/reviews/me",
+                    ).authenticated()
+                    .requestMatchers(
+                        HttpMethod.PUT,
+                        "/api/products/{productId}/reviews/me",
+                    ).authenticated()
+                    .requestMatchers(
+                        HttpMethod.DELETE,
+                        "/api/products/{productId}/reviews/me",
                     ).authenticated()
                     .anyRequest().permitAll()
             }
