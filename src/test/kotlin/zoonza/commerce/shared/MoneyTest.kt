@@ -21,4 +21,18 @@ class MoneyTest {
 
         exception.message shouldBe "금액은 0 이상이어야 합니다."
     }
+
+    @Test
+    fun `금액을 더할 수 있다`() {
+        val result = Money(10_000) + Money(2_500)
+
+        result.amount shouldBe 12_500
+    }
+
+    @Test
+    fun `금액에 수량을 곱할 수 있다`() {
+        val result = Money(19_900).multiply(3)
+
+        result.amount shouldBe 59_700
+    }
 }

@@ -9,6 +9,13 @@ interface OrderRepository {
         productId: Long,
     ): List<ReviewablePurchase>
 
+    fun findOrders(memberId: Long): List<Order>
+
+    fun findOrderByIdAndMemberId(
+        orderId: Long,
+        memberId: Long,
+    ): Order?
+
     fun findOrderByMemberIdAndOrderItemId(
         memberId: Long,
         orderItemId: Long,

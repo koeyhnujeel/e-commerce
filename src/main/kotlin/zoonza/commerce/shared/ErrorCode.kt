@@ -15,6 +15,7 @@ enum class ErrorCode(
     PRODUCT_NOT_FOUND("NOT_FOUND", "상품을 찾을 수 없습니다."),
     PRODUCT_OPTION_NOT_FOUND("NOT_FOUND", "상품 옵션을 찾을 수 없습니다."),
     MEMBER_NOT_FOUND("NOT_FOUND", "회원을 찾을 수 없습니다."),
+    ORDER_NOT_FOUND("NOT_FOUND", "주문을 찾을 수 없습니다."),
     ORDER_ITEM_NOT_FOUND("NOT_FOUND", "주문상품을 찾을 수 없습니다."),
     ORDER_ITEM_PURCHASE_CONFIRM_NOT_ALLOWED("BAD_REQUEST", "구매 확정할 수 없는 주문상품입니다."),
     REVIEW_NOT_FOUND("NOT_FOUND", "리뷰를 찾을 수 없습니다."),

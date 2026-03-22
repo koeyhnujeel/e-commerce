@@ -389,6 +389,7 @@ class ReviewControllerTest {
             orderJpaRepository.save(
             Order.create(
                 memberId = memberId,
+                orderNumber = "ORD-REVIEW-$memberId-${deliveredAt.toLocalDate()}",
                 status = OrderStatus.DELIVERED,
                 orderedAt = deliveredAt.minusDays(2),
                 deliveredAt = deliveredAt,
@@ -397,6 +398,9 @@ class ReviewControllerTest {
                         OrderItem.create(
                             productId = product.id,
                             productOptionId = productOptionId,
+                            productNameSnapshot = product.name,
+                            optionColorSnapshot = product.options.single().color,
+                            optionSizeSnapshot = product.options.single().size,
                             quantity = 1,
                             orderPrice = Money(19_900),
                         ),

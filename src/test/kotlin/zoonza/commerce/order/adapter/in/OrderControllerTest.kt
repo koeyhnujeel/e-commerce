@@ -8,8 +8,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.adapter.out.persistence.ProductJpaRepository
@@ -49,6 +51,130 @@ class OrderControllerTest {
 
     @Autowired
     private lateinit var orderJpaRepository: OrderJpaRepository
+
+    @Test
+    fun `인증된 회원은 주문을 생성할 수 있다`() {
+        val member = insertMember(index = 1)
+        val product = insertProduct(index = 1)
+        val productOption = product.options.single()
+
+        mockMvc
+            .post("/api/orders") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """
+                    {
+                      "items": [
+                        {
+                          "productId": ${product.id},
+                          "productOptionId": ${productOption.id},
+                          "quantity": 2
+                        }
+                      ]
+                    }
+                    """.trimIndent()
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data.orderId") { exists() }
+                jsonPath("$.data.orderNumber") { exists() }
+                jsonPath("$.data.totalAmount") { value(39_800) }
+            }
+
+        val savedOrder = orderJpaRepository.findAll().single()
+        savedOrder.memberId shouldBe member.id
+        savedOrder.status shouldBe OrderStatus.CREATED
+        savedOrder.totalAmount.amount shouldBe 39_800
+        savedOrder.items.single().productNameSnapshot shouldBe "주문상품1"
+        savedOrder.items.single().optionColorSnapshot shouldBe "BLACK"
+        savedOrder.items.single().optionSizeSnapshot shouldBe "M"
+    }
+
+    @Test
+    fun `인증된 회원은 자신의 주문 목록을 최신순으로 조회할 수 있다`() {
+        val member = insertMember(index = 1)
+        val otherMember = insertMember(index = 2)
+        val product = insertProduct(index = 1)
+
+        insertCreatedOrder(
+            memberId = member.id,
+            product = product,
+            orderNumber = "ORD-OLD",
+            orderedAt = LocalDateTime.of(2026, 3, 21, 10, 0),
+        )
+        insertCreatedOrder(
+            memberId = member.id,
+            product = product,
+            orderNumber = "ORD-NEW",
+            orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+        )
+        insertCreatedOrder(
+            memberId = otherMember.id,
+            product = product,
+            orderNumber = "ORD-OTHER",
+            orderedAt = LocalDateTime.of(2026, 3, 23, 10, 0),
+        )
+
+        mockMvc
+            .get("/api/orders") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data.length()") { value(2) }
+                jsonPath("$.data[0].orderNumber") { value("ORD-NEW") }
+                jsonPath("$.data[1].orderNumber") { value("ORD-OLD") }
+            }
+    }
+
+    @Test
+    fun `인증된 회원은 자신의 주문 상세를 조회할 수 있다`() {
+        val member = insertMember(index = 1)
+        val product = insertProduct(index = 1)
+        val order =
+            insertCreatedOrder(
+                memberId = member.id,
+                product = product,
+                orderNumber = "ORD-DETAIL",
+                orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+            )
+
+        mockMvc
+            .get("/api/orders/${order.id}") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data.orderId") { value(order.id) }
+                jsonPath("$.data.orderNumber") { value("ORD-DETAIL") }
+                jsonPath("$.data.items.length()") { value(1) }
+                jsonPath("$.data.items[0].productName") { value("주문상품1") }
+                jsonPath("$.data.items[0].lineAmount") { value(19_900) }
+            }
+    }
+
+    @Test
+    fun `타인 주문 상세는 조회할 수 없다`() {
+        val member = insertMember(index = 1)
+        val otherMember = insertMember(index = 2)
+        val product = insertProduct(index = 1)
+        val order =
+            insertCreatedOrder(
+                memberId = otherMember.id,
+                product = product,
+                orderNumber = "ORD-PRIVATE",
+                orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+            )
+
+        mockMvc
+            .get("/api/orders/${order.id}") {
+                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+            }.andExpect {
+                status { isNotFound() }
+                jsonPath("$.error.code") { value("NOT_FOUND") }
+            }
+    }
 
     @Test
     fun `인증된 회원은 배송 완료 주문상품을 구매 확정할 수 있다`() {
@@ -142,11 +268,12 @@ class OrderControllerTest {
         product: Product,
         deliveredAt: LocalDateTime,
     ): Order {
-        val productOptionId = product.options.single().id
+        val productOption = product.options.single()
 
         return orderJpaRepository.save(
             Order.create(
                 memberId = memberId,
+                orderNumber = "ORD-DELIVERED-$memberId-${deliveredAt.toLocalDate()}",
                 status = OrderStatus.DELIVERED,
                 orderedAt = deliveredAt.minusDays(2),
                 deliveredAt = deliveredAt,
@@ -154,7 +281,41 @@ class OrderControllerTest {
                     listOf(
                         OrderItem.create(
                             productId = product.id,
+                            productOptionId = productOption.id,
+                            productNameSnapshot = product.name,
+                            optionColorSnapshot = productOption.color,
+                            optionSizeSnapshot = productOption.size,
+                            quantity = 1,
+                            orderPrice = product.basePrice,
+                        ),
+                    ),
+            ),
+        )
+    }
+
+    private fun insertCreatedOrder(
+        memberId: Long,
+        product: Product,
+        orderNumber: String,
+        orderedAt: LocalDateTime,
+    ): Order {
+        val productOptionId = product.options.single().id
+        val productOption = product.options.single()
+
+        return orderJpaRepository.save(
+            Order.create(
+                memberId = memberId,
+                orderNumber = orderNumber,
+                status = OrderStatus.CREATED,
+                orderedAt = orderedAt,
+                items =
+                    listOf(
+                        OrderItem.create(
+                            productId = product.id,
                             productOptionId = productOptionId,
+                            productNameSnapshot = product.name,
+                            optionColorSnapshot = productOption.color,
+                            optionSizeSnapshot = productOption.size,
                             quantity = 1,
                             orderPrice = Money(19_900),
                         ),

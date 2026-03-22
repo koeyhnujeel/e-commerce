@@ -21,6 +21,17 @@ class OrderRepositoryAdapter(
         )
     }
 
+    override fun findOrders(memberId: Long): List<Order> {
+        return orderJpaRepository.findAllByMemberIdOrderByOrderedAtDescIdDesc(memberId)
+    }
+
+    override fun findOrderByIdAndMemberId(
+        orderId: Long,
+        memberId: Long,
+    ): Order? {
+        return orderJpaRepository.findOrderDetailByIdAndMemberId(orderId, memberId)
+    }
+
     override fun findOrderByMemberIdAndOrderItemId(
         memberId: Long,
         orderItemId: Long,

@@ -42,4 +42,21 @@ interface OrderJpaRepository : JpaRepository<Order, Long> {
         @Param("memberId") memberId: Long,
         @Param("orderItemId") orderItemId: Long,
     ): Order?
+
+    fun findAllByMemberIdOrderByOrderedAtDescIdDesc(memberId: Long): List<Order>
+
+    @Query(
+        """
+        select distinct o
+        from Order o
+        left join fetch o.items item
+        where o.id = :orderId
+          and o.memberId = :memberId
+        order by item.id asc
+        """,
+    )
+    fun findOrderDetailByIdAndMemberId(
+        @Param("orderId") orderId: Long,
+        @Param("memberId") memberId: Long,
+    ): Order?
 }

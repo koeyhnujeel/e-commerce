@@ -27,6 +27,7 @@ class SecurityConfiguration(
                 auth
                     .requestMatchers(
                         HttpMethod.POST,
+                        "/api/orders",
                         "/api/products/{productId}/likes",
                         "/api/products/{productId}/likes/cancel",
                         "/api/products/{productId}/reviews",
@@ -34,6 +35,8 @@ class SecurityConfiguration(
                     ).authenticated()
                     .requestMatchers(
                         HttpMethod.GET,
+                        "/api/orders",
+                        "/api/orders/{orderId}",
                         "/api/products/{productId}/reviews/me",
                     ).authenticated()
                     .requestMatchers(

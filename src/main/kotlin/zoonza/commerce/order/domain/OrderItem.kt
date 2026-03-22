@@ -28,6 +28,15 @@ class OrderItem private constructor(
     @Column(name = "product_option_id", nullable = false)
     val productOptionId: Long,
 
+    @Column(name = "product_name_snapshot", nullable = false)
+    val productNameSnapshot: String,
+
+    @Column(name = "option_color_snapshot", nullable = false)
+    var optionColorSnapshot: String,
+
+    @Column(name = "option_size_snapshot", nullable = false)
+    var optionSizeSnapshot: String,
+
     @Column(nullable = false)
     val quantity: Int,
 
@@ -37,12 +46,6 @@ class OrderItem private constructor(
 
     @Column(name = "confirmed_at")
     var confirmedAt: LocalDateTime? = null,
-
-    @Column(name = "option_color_snapshot")
-    var optionColorSnapshot: String? = null,
-
-    @Column(name = "option_size_snapshot")
-    var optionSizeSnapshot: String? = null,
 
     @Embedded
     @AttributeOverride(
@@ -59,6 +62,9 @@ class OrderItem private constructor(
         fun create(
             productId: Long,
             productOptionId: Long,
+            productNameSnapshot: String,
+            optionColorSnapshot: String,
+            optionSizeSnapshot: String,
             quantity: Int,
             orderPrice: Money,
             status: OrderItemStatus = OrderItemStatus.CREATED,
@@ -73,10 +79,21 @@ class OrderItem private constructor(
                 id = id,
                 productId = productId,
                 productOptionId = productOptionId,
+                productNameSnapshot = normalizeSnapshot(productNameSnapshot, "상품명"),
+                optionColorSnapshot = normalizeSnapshot(optionColorSnapshot, "옵션 색상"),
+                optionSizeSnapshot = normalizeSnapshot(optionSizeSnapshot, "옵션 사이즈"),
                 quantity = quantity,
                 status = status,
                 orderPrice = orderPrice,
             )
+        }
+
+        private fun normalizeSnapshot(
+            value: String,
+            label: String,
+        ): String {
+            require(value.isNotBlank()) { "주문상품 $label 스냅샷은 비어 있을 수 없습니다." }
+            return value.trim()
         }
     }
 
@@ -95,6 +112,10 @@ class OrderItem private constructor(
         this.confirmedAt = confirmedAt
         this.optionColorSnapshot = normalizeOption(color)
         this.optionSizeSnapshot = normalizeOption(size)
+    }
+
+    fun lineAmount(): Money {
+        return orderPrice.multiply(quantity)
     }
 
     private fun normalizeOption(value: String): String {
