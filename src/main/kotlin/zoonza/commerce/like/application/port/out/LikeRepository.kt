@@ -10,5 +10,16 @@ interface LikeRepository {
         targetType: LikeTargetType,
     ): MemberLike?
 
+    fun countByTargetIds(
+        targetIds: Collection<Long>,
+        targetType: LikeTargetType,
+    ): Map<Long, Long>
+
+    fun findActiveTargetIds(
+        memberId: Long,
+        targetIds: Collection<Long>,
+        targetType: LikeTargetType,
+    ): Set<Long>
+
     fun save(memberLike: MemberLike): MemberLike
 }
