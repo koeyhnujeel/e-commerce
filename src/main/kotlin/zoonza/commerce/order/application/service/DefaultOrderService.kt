@@ -280,8 +280,8 @@ class DefaultOrderService(
             productId = productId,
             productOptionId = productOptionId,
             productNameSnapshot = productSnapshot.productName,
-            optionColorSnapshot = productSnapshot.optionColor,
-            optionSizeSnapshot = productSnapshot.optionSize,
+            optionColorSnapshot = productSnapshot.option.color,
+            optionSizeSnapshot = productSnapshot.option.size,
             quantity = quantity,
             orderPrice = productSnapshot.unitPrice,
         )

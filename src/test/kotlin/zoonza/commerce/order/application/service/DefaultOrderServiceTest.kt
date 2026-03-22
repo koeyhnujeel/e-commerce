@@ -10,6 +10,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.catalog.OrderProductSnapshot
+import zoonza.commerce.catalog.ProductOptionSnapshot
 import zoonza.commerce.order.application.dto.CreateOrderCommand
 import zoonza.commerce.order.application.dto.CreateOrderItemCommand
 import zoonza.commerce.order.application.dto.UpdateOrderCommand
@@ -44,16 +45,14 @@ class DefaultOrderServiceTest {
             catalogApi.findOrderProductSnapshot(10L, 20L)
         } returns OrderProductSnapshot(
             productName = "반팔 티셔츠",
-            optionColor = "BLACK",
-            optionSize = "M",
+            option = ProductOptionSnapshot(color = "BLACK", size = "M"),
             unitPrice = Money(19_900),
         )
         every {
             catalogApi.findOrderProductSnapshot(11L, 21L)
         } returns OrderProductSnapshot(
             productName = "후드 티셔츠",
-            optionColor = "GRAY",
-            optionSize = "L",
+            option = ProductOptionSnapshot(color = "GRAY", size = "L"),
             unitPrice = Money(39_900),
         )
         every { orderRepository.save(capture(savedOrder)) } answers { savedOrder.captured }
@@ -144,8 +143,7 @@ class DefaultOrderServiceTest {
             catalogApi.findOrderProductSnapshot(11L, 21L)
         } returns OrderProductSnapshot(
             productName = "후드 집업",
-            optionColor = "GRAY",
-            optionSize = "L",
+            option = ProductOptionSnapshot(color = "GRAY", size = "L"),
             unitPrice = Money(39_900),
         )
         every { orderRepository.save(capture(savedOrder)) } answers { savedOrder.captured }

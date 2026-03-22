@@ -20,6 +20,7 @@ import zoonza.commerce.review.ReviewErrorCode
 import zoonza.commerce.review.application.dto.CreateReviewCommand
 import zoonza.commerce.review.application.port.out.ReviewRepository
 import zoonza.commerce.review.domain.Review
+import zoonza.commerce.catalog.ProductOptionSnapshot
 import zoonza.commerce.shared.BusinessException
 import java.time.LocalDateTime
 
@@ -43,7 +44,8 @@ class DefaultReviewServiceTest {
 
         every { catalogApi.assertProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns null
-        every { orderApi.findReviewablePurchase(1L, 10L) } returns listOf(ReviewablePurchase(200L, "BLACK", "M"))
+        every { orderApi.findReviewablePurchase(1L, 10L) } returns
+            listOf(ReviewablePurchase(200L, ProductOptionSnapshot("BLACK", "M")))
         every { reviewRepository.save(capture(savedReview)) } returns persistedReview
         every { persistedReview.id } returns 1L
 

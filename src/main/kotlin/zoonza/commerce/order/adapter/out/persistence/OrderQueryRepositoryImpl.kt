@@ -1,8 +1,8 @@
 package zoonza.commerce.order.adapter.out.persistence
 
-import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
+import zoonza.commerce.catalog.ProductOptionSnapshot
 import zoonza.commerce.order.ReviewablePurchase
 import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItemStatus
@@ -18,14 +18,7 @@ class OrderQueryRepositoryImpl(
         status: OrderItemStatus,
     ): List<ReviewablePurchase> {
         return queryFactory
-            .select(
-                Projections.constructor(
-                    ReviewablePurchase::class.java,
-                    orderItem.id,
-                    orderItem.optionColorSnapshot,
-                    orderItem.optionSizeSnapshot,
-                ),
-            )
+            .select(orderItem.id, orderItem.optionColorSnapshot, orderItem.optionSizeSnapshot)
             .from(order)
             .join(order.items, orderItem)
             .where(
@@ -36,6 +29,17 @@ class OrderQueryRepositoryImpl(
             )
             .orderBy(orderItem.confirmedAt.desc(), order.id.desc(), orderItem.id.desc())
             .fetch()
+            .map { tuple ->
+                ReviewablePurchase(
+                    orderItemId = tuple.get(orderItem.id) ?: throw IllegalStateException("주문상품 식별자를 찾을 수 없습니다."),
+                    option = ProductOptionSnapshot(
+                        color = tuple.get(orderItem.optionColorSnapshot)
+                            ?: throw IllegalStateException("주문상품 옵션 색상을 찾을 수 없습니다."),
+                        size = tuple.get(orderItem.optionSizeSnapshot)
+                            ?: throw IllegalStateException("주문상품 옵션 사이즈를 찾을 수 없습니다."),
+                    ),
+                )
+            }
     }
 
     override fun findOrderByMemberIdAndOrderItemId(
