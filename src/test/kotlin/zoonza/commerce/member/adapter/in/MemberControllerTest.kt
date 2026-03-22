@@ -21,12 +21,12 @@ import zoonza.commerce.member.adapter.`in`.request.SignupMemberRequest
 import zoonza.commerce.member.adapter.`in`.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
 import zoonza.commerce.member.application.port.out.NicknameGenerator
-import zoonza.commerce.member.domain.Member
 import zoonza.commerce.member.domain.PasswordEncoder
 import zoonza.commerce.notification.application.port.out.EmailSender
 import zoonza.commerce.support.MySqlTestContainerConfig
+import zoonza.commerce.support.fixture.MemberFixture
+import zoonza.commerce.support.fixture.VerificationCodeFixture
 import zoonza.commerce.verification.adapter.out.persistence.VerificationCodeJpaRepository
-import zoonza.commerce.verification.domain.VerificationCode
 import zoonza.commerce.verification.domain.VerificationPurpose
 import java.time.LocalDateTime
 
@@ -77,7 +77,16 @@ class MemberControllerTest {
 
     @Test
     fun `이미 사용 중인 이메일이면 충돌 응답을 반환한다`() {
-        insertMember(email = "member@example.com", phoneNumber = "01012345678")
+        memberJapRepository.save(
+            MemberFixture.create(
+                email = "member@example.com",
+                passwordHash = passwordEncoder.encode("Password123!"),
+                name = "기존회원",
+                nickname = "existing-nickname-01012345678",
+                phoneNumber = "01012345678",
+                registeredAt = LocalDateTime.now(),
+            ),
+        )
 
         mockMvc
             .post("/api/members/signup/email-verifications") {
@@ -94,7 +103,14 @@ class MemberControllerTest {
 
     @Test
     fun `회원가입 이메일 인증 코드 검증에 성공한다`() {
-        insertVerification(email = "member@example.com", code = "123 456")
+        verificationCodeJpaRepository.save(
+            VerificationCodeFixture.create(
+                email = "member@example.com",
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(1),
+                expiresAt = LocalDateTime.now().plusMinutes(4),
+            ),
+        )
 
         mockMvc
             .post("/api/members/signup/email-verifications/verify") {
@@ -122,7 +138,15 @@ class MemberControllerTest {
 
     @Test
     fun `검증된 이메일이면 회원가입에 성공한다`() {
-        val verification = insertVerification(email = "member@example.com", code = "123 456")
+        val verification =
+            verificationCodeJpaRepository.save(
+                VerificationCodeFixture.create(
+                    email = "member@example.com",
+                    code = "123 456",
+                    issuedAt = LocalDateTime.now().minusMinutes(1),
+                    expiresAt = LocalDateTime.now().plusMinutes(4),
+                ),
+            )
         verification.verify("123 456", LocalDateTime.now())
         verificationCodeJpaRepository.save(verification)
 
@@ -167,37 +191,6 @@ class MemberControllerTest {
                 jsonPath("$.success") { value(false) }
                 jsonPath("$.error.code") { value("BAD_REQUEST") }
             }
-    }
-
-    private fun insertMember(
-        email: String,
-        phoneNumber: String,
-    ): Member {
-        return memberJapRepository.save(
-            Member.create(
-                email = zoonza.commerce.shared.Email(email),
-                passwordHash = passwordEncoder.encode("Password123!"),
-                name = "기존회원",
-                nickname = "existing-nickname-$phoneNumber",
-                phoneNumber = phoneNumber,
-                registeredAt = LocalDateTime.now(),
-            ),
-        )
-    }
-
-    private fun insertVerification(
-        email: String,
-        code: String,
-    ): VerificationCode {
-        return verificationCodeJpaRepository.save(
-            VerificationCode.create(
-                email = zoonza.commerce.shared.Email(email),
-                purpose = VerificationPurpose.SIGNUP,
-                code = code,
-                issuedAt = LocalDateTime.now().minusMinutes(1),
-                expiresAt = LocalDateTime.now().plusMinutes(4),
-            ),
-        )
     }
 
     @TestConfiguration

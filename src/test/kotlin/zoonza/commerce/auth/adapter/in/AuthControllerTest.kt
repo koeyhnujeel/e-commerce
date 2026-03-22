@@ -18,9 +18,9 @@ import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.auth.adapter.`in`.request.LoginRequest
 import zoonza.commerce.auth.adapter.out.persistence.RefreshTokenJpaRepository
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
-import zoonza.commerce.member.domain.Member
 import zoonza.commerce.member.domain.PasswordEncoder
 import zoonza.commerce.support.MySqlTestContainerConfig
+import zoonza.commerce.support.fixture.MemberFixture
 import java.time.LocalDateTime
 
 @SpringBootTest
@@ -46,7 +46,17 @@ class AuthControllerTest {
 
     @Test
     fun `로그인에 성공하면 access 토큰과 refresh 토큰 쿠키를 반환한다`() {
-        val member = insertMember("member@example.com")
+        val member =
+            memberJapRepository.save(
+                MemberFixture.create(
+                    email = "member@example.com",
+                    passwordHash = passwordEncoder.encode("Password123!"),
+                    name = "주문자",
+                    nickname = "nickname",
+                    phoneNumber = "01012345678",
+                    registeredAt = LocalDateTime.now(),
+                ),
+            )
 
         val result =
             mockMvc
@@ -72,7 +82,16 @@ class AuthControllerTest {
 
     @Test
     fun `로그인 정보가 잘못되면 인증 실패 응답을 반환한다`() {
-        insertMember("member@example.com")
+        memberJapRepository.save(
+            MemberFixture.create(
+                email = "member@example.com",
+                passwordHash = passwordEncoder.encode("Password123!"),
+                name = "주문자",
+                nickname = "nickname",
+                phoneNumber = "01012345678",
+                registeredAt = LocalDateTime.now(),
+            ),
+        )
 
         mockMvc
             .post("/api/auth/login") {
@@ -92,7 +111,17 @@ class AuthControllerTest {
 
     @Test
     fun `refresh 쿠키가 있으면 access 토큰과 refresh 토큰을 다시 발급한다`() {
-        val member = insertMember("member@example.com")
+        val member =
+            memberJapRepository.save(
+                MemberFixture.create(
+                    email = "member@example.com",
+                    passwordHash = passwordEncoder.encode("Password123!"),
+                    name = "주문자",
+                    nickname = "nickname",
+                    phoneNumber = "01012345678",
+                    registeredAt = LocalDateTime.now(),
+                ),
+            )
         val loginResult =
             mockMvc
                 .post("/api/auth/login") {
@@ -130,7 +159,16 @@ class AuthControllerTest {
 
     @Test
     fun `logout하면 refresh 토큰을 삭제하고 만료 쿠키를 반환한다`() {
-        insertMember("member@example.com")
+        memberJapRepository.save(
+            MemberFixture.create(
+                email = "member@example.com",
+                passwordHash = passwordEncoder.encode("Password123!"),
+                name = "주문자",
+                nickname = "nickname",
+                phoneNumber = "01012345678",
+                registeredAt = LocalDateTime.now(),
+            ),
+        )
         val loginResult =
             mockMvc
                 .post("/api/auth/login") {
@@ -155,20 +193,6 @@ class AuthControllerTest {
         expiredCookie.contains("Max-Age=0") shouldBe true
         refreshTokenJpaRepository.findByToken(refreshToken) shouldBe null
     }
-
-    private fun insertMember(email: String): Member {
-        return memberJapRepository.save(
-            Member.create(
-                email = zoonza.commerce.shared.Email(email),
-                passwordHash = passwordEncoder.encode("Password123!"),
-                name = "주문자",
-                nickname = "nickname",
-                phoneNumber = "01012345678",
-                registeredAt = LocalDateTime.now(),
-            ),
-        )
-    }
-
     private fun extractRefreshToken(setCookie: String): String {
         return Regex("""${RefreshTokenCookieManager.REFRESH_TOKEN_COOKIE_NAME}=([^;]+)""")
             .find(setCookie)

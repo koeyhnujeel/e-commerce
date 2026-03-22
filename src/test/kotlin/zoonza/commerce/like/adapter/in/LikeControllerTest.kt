@@ -18,6 +18,7 @@ import zoonza.commerce.like.domain.MemberLike
 import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaRepository
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.support.MySqlTestContainerConfig
+import zoonza.commerce.support.fixture.AuthFixture
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,7 +39,7 @@ class LikeControllerTest {
     fun `인증된 회원은 상품 좋아요를 등록할 수 있다`() {
         mockMvc
             .post("/api/products/10/likes") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(memberId = 1L))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -55,7 +56,7 @@ class LikeControllerTest {
 
         mockMvc
             .post("/api/products/10/likes/cancel") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(memberId = 1L))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -64,10 +65,5 @@ class LikeControllerTest {
         val savedMemberLike = memberLikeJpaRepository.findByMemberIdAndTargetIdAndTargetType(1L, 10L, LikeTargetType.PRODUCT)
         savedMemberLike.shouldNotBeNull()
         savedMemberLike.deletedAt.shouldNotBeNull()
-    }
-
-    private fun authorizationHeader(memberId: Long): String {
-        val accessToken = accessTokenProvider.issue(memberId, "member@example.com", "CUSTOMER")
-        return "Bearer $accessToken"
     }
 }

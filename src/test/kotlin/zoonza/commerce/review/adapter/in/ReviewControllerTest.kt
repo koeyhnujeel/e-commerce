@@ -19,24 +19,19 @@ import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.adapter.out.persistence.ProductJpaRepository
-import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.catalog.domain.ProductImage
-import zoonza.commerce.catalog.domain.ProductOption
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
-import zoonza.commerce.member.domain.Member
 import zoonza.commerce.order.adapter.out.persistence.OrderJpaRepository
-import zoonza.commerce.order.domain.Order
-import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderItemStatus
-import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.review.adapter.`in`.request.CreateReviewRequest
 import zoonza.commerce.review.adapter.`in`.request.UpdateReviewRequest
 import zoonza.commerce.review.adapter.out.persistence.ReviewJpaRepository
 import zoonza.commerce.review.domain.Review
 import zoonza.commerce.security.AccessTokenProvider
-import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.Money
 import zoonza.commerce.support.MySqlTestContainerConfig
+import zoonza.commerce.support.fixture.AuthFixture
+import zoonza.commerce.support.fixture.MemberFixture
+import zoonza.commerce.support.fixture.OrderFixture
+import zoonza.commerce.support.fixture.ProductFixture
 import java.time.LocalDateTime
 
 @SpringBootTest
@@ -68,26 +63,34 @@ class ReviewControllerTest {
 
     @Test
     fun `인증된 회원은 가장 최근 구매 확정 주문상품을 근거로 리뷰를 등록할 수 있다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
-        insertPurchaseConfirmedOrder(
-            memberId = member.id,
-            product = product,
-            deliveredAt = LocalDateTime.of(2026, 3, 20, 9, 0),
-            confirmedAt = LocalDateTime.of(2026, 3, 21, 9, 0),
-        )
-        val latestOrder =
-            insertPurchaseConfirmedOrder(
+        val member =
+            memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+        val product =
+            productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
+        orderJpaRepository.save(
+            OrderFixture.createPurchaseConfirmed(
                 memberId = member.id,
                 product = product,
-                deliveredAt = LocalDateTime.of(2026, 3, 22, 9, 0),
-                confirmedAt = LocalDateTime.of(2026, 3, 23, 9, 0),
+                orderNumber = "ORD-REVIEW-${member.id}-2026-03-20",
+                deliveredAt = LocalDateTime.of(2026, 3, 20, 9, 0),
+                confirmedAt = LocalDateTime.of(2026, 3, 21, 9, 0),
+            ),
+        )
+        val latestOrder =
+            orderJpaRepository.save(
+                OrderFixture.createPurchaseConfirmed(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-REVIEW-${member.id}-2026-03-22",
+                    deliveredAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+                    confirmedAt = LocalDateTime.of(2026, 3, 23, 9, 0),
+                ),
             )
         val latestOrderItemId = latestOrder.items.single().id
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(
                     CreateReviewRequest(
@@ -111,7 +114,7 @@ class ReviewControllerTest {
 
     @Test
     fun `비인증 사용자는 리뷰를 등록할 수 없다`() {
-        val product = insertProduct(index = 1)
+        val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
@@ -132,30 +135,39 @@ class ReviewControllerTest {
 
     @Test
     fun `상품 리뷰 목록은 공개 조회되고 삭제된 리뷰는 제외된다`() {
-        val product = insertProduct(index = 1)
-        val writer1 = insertMember(index = 1)
-        val writer2 = insertMember(index = 2)
-        val deletedWriter = insertMember(index = 3)
+        val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
+        val writer1 = memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+        val writer2 = memberJapRepository.save(MemberFixture.createIndexed(index = 2))
+        val deletedWriter = memberJapRepository.save(MemberFixture.createIndexed(index = 3))
         val orderItemId1 =
-            insertPurchaseConfirmedOrder(
-                memberId = writer1.id,
-                product = product,
-                deliveredAt = LocalDateTime.of(2026, 3, 20, 9, 0),
-                confirmedAt = LocalDateTime.of(2026, 3, 21, 9, 0),
+            orderJpaRepository.save(
+                OrderFixture.createPurchaseConfirmed(
+                    memberId = writer1.id,
+                    product = product,
+                    orderNumber = "ORD-REVIEW-${writer1.id}-2026-03-20",
+                    deliveredAt = LocalDateTime.of(2026, 3, 20, 9, 0),
+                    confirmedAt = LocalDateTime.of(2026, 3, 21, 9, 0),
+                ),
             ).items.single().id
         val orderItemId2 =
-            insertPurchaseConfirmedOrder(
-                memberId = writer2.id,
-                product = product,
-                deliveredAt = LocalDateTime.of(2026, 3, 21, 9, 0),
-                confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+            orderJpaRepository.save(
+                OrderFixture.createPurchaseConfirmed(
+                    memberId = writer2.id,
+                    product = product,
+                    orderNumber = "ORD-REVIEW-${writer2.id}-2026-03-21",
+                    deliveredAt = LocalDateTime.of(2026, 3, 21, 9, 0),
+                    confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+                ),
             ).items.single().id
         val deletedOrderItemId =
-            insertPurchaseConfirmedOrder(
-                memberId = deletedWriter.id,
-                product = product,
-                deliveredAt = LocalDateTime.of(2026, 3, 19, 9, 0),
-                confirmedAt = LocalDateTime.of(2026, 3, 20, 9, 0),
+            orderJpaRepository.save(
+                OrderFixture.createPurchaseConfirmed(
+                    memberId = deletedWriter.id,
+                    product = product,
+                    orderNumber = "ORD-REVIEW-${deletedWriter.id}-2026-03-19",
+                    deliveredAt = LocalDateTime.of(2026, 3, 19, 9, 0),
+                    confirmedAt = LocalDateTime.of(2026, 3, 20, 9, 0),
+                ),
             ).items.single().id
 
         reviewJpaRepository.save(
@@ -217,14 +229,17 @@ class ReviewControllerTest {
 
     @Test
     fun `인증된 회원은 내 리뷰를 조회하고 수정하고 삭제할 수 있다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
+        val member = memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+        val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
         val orderItemId =
-            insertPurchaseConfirmedOrder(
-                memberId = member.id,
-                product = product,
-                deliveredAt = LocalDateTime.of(2026, 3, 21, 9, 0),
-                confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+            orderJpaRepository.save(
+                OrderFixture.createPurchaseConfirmed(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-REVIEW-${member.id}-2026-03-21",
+                    deliveredAt = LocalDateTime.of(2026, 3, 21, 9, 0),
+                    confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+                ),
             ).items.single().id
         reviewJpaRepository.save(
             Review.create(
@@ -241,7 +256,7 @@ class ReviewControllerTest {
 
         mockMvc
             .get("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -253,7 +268,7 @@ class ReviewControllerTest {
 
         mockMvc
             .put("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(
                     UpdateReviewRequest(
@@ -273,7 +288,7 @@ class ReviewControllerTest {
 
         mockMvc
             .delete("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -286,20 +301,23 @@ class ReviewControllerTest {
 
     @Test
     fun `삭제한 리뷰는 다시 작성하면 기존 리뷰를 복원한다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
+        val member = memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+        val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
         val order =
-            insertPurchaseConfirmedOrder(
-                memberId = member.id,
-                product = product,
-                deliveredAt = LocalDateTime.of(2026, 3, 21, 9, 0),
-                confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+            orderJpaRepository.save(
+                OrderFixture.createPurchaseConfirmed(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-REVIEW-${member.id}-2026-03-21",
+                    deliveredAt = LocalDateTime.of(2026, 3, 21, 9, 0),
+                    confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
+                ),
             )
         val orderItemId = order.items.single().id
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(CreateReviewRequest(rating = 5, content = "첫 리뷰"))
             }.andExpect {
@@ -311,14 +329,14 @@ class ReviewControllerTest {
 
         mockMvc
             .delete("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
             }.andExpect {
                 status { isOk() }
             }
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(CreateReviewRequest(rating = 3, content = "다시 작성"))
             }.andExpect {
@@ -335,91 +353,5 @@ class ReviewControllerTest {
         restoredReview.rating shouldBe 3
         restoredReview.deletedAt.shouldBeNull()
         reviewJpaRepository.count() shouldBe 1L
-    }
-
-    private fun insertMember(index: Int): Member {
-        return memberJapRepository.save(
-            Member.create(
-                email = Email("member$index@example.com"),
-                passwordHash = "encoded-password",
-                name = "회원$index",
-                nickname = "nickname$index",
-                phoneNumber = "0100000000$index",
-                registeredAt = LocalDateTime.of(2026, 3, 21, 8, 0),
-            ),
-        )
-    }
-
-    private fun insertProduct(index: Int): Product {
-        return productJpaRepository.save(
-            Product.create(
-                brandId = 1L,
-                name = "상품$index",
-                description = "상품 설명$index",
-                basePrice = Money(19_900),
-                categoryIds = listOf(1L),
-                images =
-                    listOf(
-                        ProductImage.create(
-                            imageUrl = "https://cdn.example.com/product-$index-primary.jpg",
-                            isPrimary = true,
-                            sortOrder = 0,
-                        ),
-                    ),
-                options =
-                    listOf(
-                        ProductOption.create(
-                            color = "BLACK",
-                            size = "M",
-                            stockId = index.toLong(),
-                        ),
-                    ),
-            ),
-        )
-    }
-
-    private fun insertPurchaseConfirmedOrder(
-        memberId: Long,
-        product: Product,
-        deliveredAt: LocalDateTime,
-        confirmedAt: LocalDateTime,
-    ): Order {
-        val productOptionId = product.options.single().id
-        val deliveredOrder =
-            orderJpaRepository.save(
-            Order.create(
-                memberId = memberId,
-                orderNumber = "ORD-REVIEW-$memberId-${deliveredAt.toLocalDate()}",
-                status = OrderStatus.DELIVERED,
-                orderedAt = deliveredAt.minusDays(2),
-                deliveredAt = deliveredAt,
-                items =
-                    listOf(
-                        OrderItem.create(
-                            productId = product.id,
-                            productOptionId = productOptionId,
-                            productNameSnapshot = product.name,
-                            optionColorSnapshot = product.options.single().color,
-                            optionSizeSnapshot = product.options.single().size,
-                            quantity = 1,
-                            orderPrice = Money(19_900),
-                        ),
-                    ),
-            ),
-        )
-
-        deliveredOrder.confirmPurchase(
-            orderItemId = deliveredOrder.items.single().id,
-            optionColor = product.options.single().color,
-            optionSize = product.options.single().size,
-            confirmedAt = confirmedAt,
-        )
-
-        return orderJpaRepository.save(deliveredOrder)
-    }
-
-    private fun authorizationHeader(member: Member): String {
-        val accessToken = accessTokenProvider.issue(member.id, member.email.address, member.role.name)
-        return "Bearer $accessToken"
     }
 }

@@ -16,14 +16,8 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.adapter.out.persistence.ProductJpaRepository
-import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.catalog.domain.ProductImage
-import zoonza.commerce.catalog.domain.ProductOption
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
-import zoonza.commerce.member.domain.Member
 import zoonza.commerce.order.adapter.out.persistence.OrderJpaRepository
-import zoonza.commerce.order.domain.Order
-import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.payment.adapter.out.persistence.PaymentJpaRepository
 import zoonza.commerce.payment.application.port.out.TossPaymentCancelRequest
@@ -33,9 +27,11 @@ import zoonza.commerce.payment.application.port.out.TossPaymentConfirmResult
 import zoonza.commerce.payment.application.port.out.TossPaymentsClient
 import zoonza.commerce.payment.domain.PaymentStatus
 import zoonza.commerce.security.AccessTokenProvider
-import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.Money
 import zoonza.commerce.support.MySqlTestContainerConfig
+import zoonza.commerce.support.fixture.AuthFixture
+import zoonza.commerce.support.fixture.MemberFixture
+import zoonza.commerce.support.fixture.OrderFixture
+import zoonza.commerce.support.fixture.ProductFixture
 import java.time.LocalDateTime
 
 @SpringBootTest
@@ -67,13 +63,37 @@ class PaymentControllerTest {
 
     @Test
     fun `인증된 회원은 주문으로 결제를 생성할 수 있다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
-        val order = insertCreatedOrder(member.id, product, "ORD-PAYMENT-1", LocalDateTime.of(2026, 3, 22, 10, 0))
+        val member =
+            memberJapRepository.save(
+                MemberFixture.createIndexed(
+                    index = 1,
+                    emailPrefix = "payment-member",
+                    nicknamePrefix = "payment-nickname",
+                    phoneNumberPrefix = "0102000000",
+                ),
+            )
+        val product =
+            productJpaRepository.save(
+                ProductFixture.createSingleOption(
+                    index = 1,
+                    namePrefix = "결제상품",
+                    descriptionPrefix = "결제상품 설명",
+                    imagePrefix = "payment-product",
+                ),
+            )
+        val order =
+            orderJpaRepository.save(
+                OrderFixture.create(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-PAYMENT-1",
+                    orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                ),
+            )
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -104,13 +124,37 @@ class PaymentControllerTest {
 
     @Test
     fun `인증된 회원은 자신의 결제 상세를 조회할 수 있다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
-        val order = insertCreatedOrder(member.id, product, "ORD-PAYMENT-2", LocalDateTime.of(2026, 3, 22, 10, 0))
+        val member =
+            memberJapRepository.save(
+                MemberFixture.createIndexed(
+                    index = 1,
+                    emailPrefix = "payment-member",
+                    nicknamePrefix = "payment-nickname",
+                    phoneNumberPrefix = "0102000000",
+                ),
+            )
+        val product =
+            productJpaRepository.save(
+                ProductFixture.createSingleOption(
+                    index = 1,
+                    namePrefix = "결제상품",
+                    descriptionPrefix = "결제상품 설명",
+                    imagePrefix = "payment-product",
+                ),
+            )
+        val order =
+            orderJpaRepository.save(
+                OrderFixture.create(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-PAYMENT-2",
+                    orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                ),
+            )
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -127,7 +171,7 @@ class PaymentControllerTest {
 
         mockMvc
             .get("/api/payments/${payment.id}") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -140,14 +184,46 @@ class PaymentControllerTest {
 
     @Test
     fun `타인 결제 상세는 조회할 수 없다`() {
-        val member = insertMember(index = 1)
-        val otherMember = insertMember(index = 2)
-        val product = insertProduct(index = 1)
-        val order = insertCreatedOrder(otherMember.id, product, "ORD-PAYMENT-3", LocalDateTime.of(2026, 3, 22, 10, 0))
+        val member =
+            memberJapRepository.save(
+                MemberFixture.createIndexed(
+                    index = 1,
+                    emailPrefix = "payment-member",
+                    nicknamePrefix = "payment-nickname",
+                    phoneNumberPrefix = "0102000000",
+                ),
+            )
+        val otherMember =
+            memberJapRepository.save(
+                MemberFixture.createIndexed(
+                    index = 2,
+                    emailPrefix = "payment-member",
+                    nicknamePrefix = "payment-nickname",
+                    phoneNumberPrefix = "0102000000",
+                ),
+            )
+        val product =
+            productJpaRepository.save(
+                ProductFixture.createSingleOption(
+                    index = 1,
+                    namePrefix = "결제상품",
+                    descriptionPrefix = "결제상품 설명",
+                    imagePrefix = "payment-product",
+                ),
+            )
+        val order =
+            orderJpaRepository.save(
+                OrderFixture.create(
+                    memberId = otherMember.id,
+                    product = product,
+                    orderNumber = "ORD-PAYMENT-3",
+                    orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                ),
+            )
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(otherMember))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, otherMember))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -164,7 +240,7 @@ class PaymentControllerTest {
 
         mockMvc
             .get("/api/payments/${payment.id}") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.error.code") { value("NOT_FOUND") }
@@ -173,13 +249,37 @@ class PaymentControllerTest {
 
     @Test
     fun `인증된 회원은 토스 승인 결과로 결제를 확정할 수 있다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
-        val order = insertCreatedOrder(member.id, product, "ORD-PAYMENT-4", LocalDateTime.of(2026, 3, 22, 10, 0))
+        val member =
+            memberJapRepository.save(
+                MemberFixture.createIndexed(
+                    index = 1,
+                    emailPrefix = "payment-member",
+                    nicknamePrefix = "payment-nickname",
+                    phoneNumberPrefix = "0102000000",
+                ),
+            )
+        val product =
+            productJpaRepository.save(
+                ProductFixture.createSingleOption(
+                    index = 1,
+                    namePrefix = "결제상품",
+                    descriptionPrefix = "결제상품 설명",
+                    imagePrefix = "payment-product",
+                ),
+            )
+        val order =
+            orderJpaRepository.save(
+                OrderFixture.create(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-PAYMENT-4",
+                    orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                ),
+            )
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"amount": 19900, "paymentMethod": "CARD"}"""
             }.andExpect {
@@ -206,7 +306,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/payments/${payment.id}/confirm") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -231,13 +331,37 @@ class PaymentControllerTest {
 
     @Test
     fun `인증된 회원은 결제를 취소할 수 있다`() {
-        val member = insertMember(index = 1)
-        val product = insertProduct(index = 1)
-        val order = insertCreatedOrder(member.id, product, "ORD-PAYMENT-5", LocalDateTime.of(2026, 3, 22, 10, 0))
+        val member =
+            memberJapRepository.save(
+                MemberFixture.createIndexed(
+                    index = 1,
+                    emailPrefix = "payment-member",
+                    nicknamePrefix = "payment-nickname",
+                    phoneNumberPrefix = "0102000000",
+                ),
+            )
+        val product =
+            productJpaRepository.save(
+                ProductFixture.createSingleOption(
+                    index = 1,
+                    namePrefix = "결제상품",
+                    descriptionPrefix = "결제상품 설명",
+                    imagePrefix = "payment-product",
+                ),
+            )
+        val order =
+            orderJpaRepository.save(
+                OrderFixture.create(
+                    memberId = member.id,
+                    product = product,
+                    orderNumber = "ORD-PAYMENT-5",
+                    orderedAt = LocalDateTime.of(2026, 3, 22, 10, 0),
+                ),
+            )
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"amount": 19900, "paymentMethod": "CARD"}"""
             }.andExpect {
@@ -264,7 +388,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/payments/${payment.id}/confirm") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -293,7 +417,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/payments/${payment.id}/cancel") {
-                header(HttpHeaders.AUTHORIZATION, authorizationHeader(member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"reason": "고객 요청"}"""
             }.andExpect {
@@ -306,80 +430,5 @@ class PaymentControllerTest {
         canceledPayment.status shouldBe PaymentStatus.CANCELED
         val canceledOrder = orderJpaRepository.findById(order.id).orElseThrow()
         canceledOrder.status shouldBe OrderStatus.CANCELED
-    }
-
-    private fun insertMember(index: Int): Member {
-        return memberJapRepository.save(
-            Member.create(
-                email = Email("payment-member$index@example.com"),
-                passwordHash = "encoded-password",
-                name = "회원$index",
-                nickname = "payment-nickname$index",
-                phoneNumber = "0102000000$index",
-                registeredAt = LocalDateTime.of(2026, 3, 21, 8, 0),
-            ),
-        )
-    }
-
-    private fun insertProduct(index: Int): Product {
-        return productJpaRepository.save(
-            Product.create(
-                brandId = 1L,
-                name = "결제상품$index",
-                description = "결제상품 설명$index",
-                basePrice = Money(19_900),
-                categoryIds = listOf(1L),
-                images =
-                    listOf(
-                        ProductImage.create(
-                            imageUrl = "https://cdn.example.com/payment-product-$index-primary.jpg",
-                            isPrimary = true,
-                            sortOrder = 0,
-                        ),
-                    ),
-                options =
-                    listOf(
-                        ProductOption.create(
-                            color = "BLACK",
-                            size = "M",
-                            stockId = index.toLong(),
-                        ),
-                    ),
-            ),
-        )
-    }
-
-    private fun insertCreatedOrder(
-        memberId: Long,
-        product: Product,
-        orderNumber: String,
-        orderedAt: LocalDateTime,
-    ): Order {
-        val option = product.options.single()
-
-        return orderJpaRepository.save(
-            Order.create(
-                memberId = memberId,
-                orderNumber = orderNumber,
-                orderedAt = orderedAt,
-                items =
-                    listOf(
-                        OrderItem.create(
-                            productId = product.id,
-                            productOptionId = option.id,
-                            productNameSnapshot = product.name,
-                            optionColorSnapshot = option.color,
-                            optionSizeSnapshot = option.size,
-                            quantity = 1,
-                            orderPrice = product.basePrice,
-                        ),
-                    ),
-            ),
-        )
-    }
-
-    private fun authorizationHeader(member: Member): String {
-        val accessToken = accessTokenProvider.issue(member.id, member.email.address, member.role.name)
-        return "Bearer $accessToken"
     }
 }
