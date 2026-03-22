@@ -11,8 +11,8 @@ import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.catalog.domain.ProductImage
 import zoonza.commerce.catalog.domain.ProductOption
 import zoonza.commerce.catalog.domain.QProduct.Companion.product
-import zoonza.commerce.common.PageQuery
-import zoonza.commerce.common.PageResult
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResult
 import kotlin.math.ceil
 
 @Repository

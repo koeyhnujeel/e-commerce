@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import zoonza.commerce.common.ApiResponse
+import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.order.adapter.`in`.request.CreateOrderRequest
 import zoonza.commerce.order.adapter.`in`.request.UpdateOrderRequest
 import zoonza.commerce.order.adapter.`in`.response.CreateOrderResponse

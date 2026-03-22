@@ -8,9 +8,9 @@ import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.stereotype.Component
-import zoonza.commerce.common.ApiResponse
-import zoonza.commerce.common.ErrorResponse
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.support.web.ApiResponse
+import zoonza.commerce.support.web.ErrorResponse
+import zoonza.commerce.shared.AuthErrorCode
 import java.nio.charset.StandardCharsets
 
 @Component
@@ -27,7 +27,7 @@ class RestAuthenticationEntryPoint(
         authException: AuthenticationException,
     ) {
         val jwtAuthenticationException = authException as? JwtAuthenticationException
-        val errorCode = jwtAuthenticationException?.errorCode ?: ErrorCode.UNAUTHORIZED
+        val errorCode = jwtAuthenticationException?.errorCode ?: AuthErrorCode.UNAUTHORIZED
         val message = jwtAuthenticationException?.message ?: errorCode.message
 
         response.status = HttpServletResponse.SC_UNAUTHORIZED

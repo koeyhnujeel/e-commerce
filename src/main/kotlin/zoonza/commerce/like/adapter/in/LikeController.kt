@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import zoonza.commerce.common.ApiResponse
+import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.like.application.port.`in`.LikeService
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.security.CurrentMember

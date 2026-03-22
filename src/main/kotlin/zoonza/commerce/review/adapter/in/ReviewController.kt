@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import zoonza.commerce.common.ApiResponse
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.support.web.ApiResponse
+import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.review.adapter.`in`.request.CreateReviewRequest
 import zoonza.commerce.review.adapter.`in`.request.UpdateReviewRequest
 import zoonza.commerce.review.adapter.`in`.response.CreateReviewResponse

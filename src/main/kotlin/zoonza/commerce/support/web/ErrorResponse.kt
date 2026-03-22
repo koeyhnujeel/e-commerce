@@ -1,8 +1,8 @@
-package zoonza.commerce.common
+package zoonza.commerce.support.web
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.validation.BindingResult
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.shared.ErrorDescriptor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorResponse(
@@ -17,19 +17,19 @@ data class ErrorResponse(
     )
 
     companion object {
-        fun of(errorCode: ErrorCode): ErrorResponse =
+        fun of(errorCode: ErrorDescriptor): ErrorResponse =
             ErrorResponse(
                 code = errorCode.code,
                 message = errorCode.message,
             )
 
-        fun of(errorCode: ErrorCode, message: String): ErrorResponse =
+        fun of(errorCode: ErrorDescriptor, message: String): ErrorResponse =
             ErrorResponse(
                 code = errorCode.code,
                 message = message,
             )
 
-        fun of(errorCode: ErrorCode, bindingResult: BindingResult): ErrorResponse =
+        fun of(errorCode: ErrorDescriptor, bindingResult: BindingResult): ErrorResponse =
             ErrorResponse(
                 code = errorCode.code,
                 message = errorCode.message,

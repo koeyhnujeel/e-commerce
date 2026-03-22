@@ -23,7 +23,7 @@ import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderItemStatus
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.order.OrderErrorCode
 import java.time.LocalDateTime
 
 @Service
@@ -48,7 +48,7 @@ class DefaultOrderService(
         orderId: Long,
     ): PaymentOrder {
         val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         return PaymentOrder(
             orderId = order.id,
@@ -63,7 +63,7 @@ class DefaultOrderService(
     @Transactional
     override fun markPaymentPending(orderId: Long) {
         val order = orderRepository.findOrderById(orderId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         val previousStatus = order.status
         order.markPaymentPending()
@@ -74,7 +74,7 @@ class DefaultOrderService(
     @Transactional
     override fun markPaymentReady(orderId: Long) {
         val order = orderRepository.findOrderById(orderId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         val previousStatus = order.status
         order.markCreated()
@@ -85,7 +85,7 @@ class DefaultOrderService(
     @Transactional
     override fun markPaid(orderId: Long) {
         val order = orderRepository.findOrderById(orderId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         val previousStatus = order.status
         order.markPaid()
@@ -96,7 +96,7 @@ class DefaultOrderService(
     @Transactional
     override fun cancel(orderId: Long) {
         val order = orderRepository.findOrderById(orderId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         val previousStatus = order.status
         order.cancel()
@@ -144,7 +144,7 @@ class DefaultOrderService(
         orderId: Long,
     ): OrderDetail {
         val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         return toOrderDetail(order)
     }
@@ -156,10 +156,10 @@ class DefaultOrderService(
         command: UpdateOrderCommand,
     ): OrderDetail {
         val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         if (!order.canModify()) {
-            throw BusinessException(ErrorCode.ORDER_MODIFICATION_NOT_ALLOWED)
+            throw BusinessException(OrderErrorCode.ORDER_MODIFICATION_NOT_ALLOWED)
         }
 
         order.replaceItems(command.items.map(::toOrderItem))
@@ -180,10 +180,10 @@ class DefaultOrderService(
         orderId: Long,
     ) {
         val order = orderRepository.findOrderByIdAndMemberId(orderId, memberId)
-            ?: throw BusinessException(ErrorCode.ORDER_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
 
         if (!order.canDelete()) {
-            throw BusinessException(ErrorCode.ORDER_DELETION_NOT_ALLOWED)
+            throw BusinessException(OrderErrorCode.ORDER_DELETION_NOT_ALLOWED)
         }
 
         val previousStatus = order.status
@@ -229,13 +229,13 @@ class DefaultOrderService(
         orderItemId: Long,
     ) {
         val order = orderRepository.findOrderByMemberIdAndOrderItemId(memberId, orderItemId)
-            ?: throw BusinessException(ErrorCode.ORDER_ITEM_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_ITEM_NOT_FOUND)
 
         val orderItem = order.items.firstOrNull { it.id == orderItemId }
-            ?: throw BusinessException(ErrorCode.ORDER_ITEM_NOT_FOUND)
+            ?: throw BusinessException(OrderErrorCode.ORDER_ITEM_NOT_FOUND)
 
         if (orderItem.status != OrderItemStatus.DELIVERED) {
-            throw BusinessException(ErrorCode.ORDER_ITEM_PURCHASE_CONFIRM_NOT_ALLOWED)
+            throw BusinessException(OrderErrorCode.ORDER_ITEM_PURCHASE_CONFIRM_NOT_ALLOWED)
         }
 
         val optionSnapshot = catalogApi.findProductOptionSnapshot(orderItem.productOptionId)

@@ -3,7 +3,7 @@ package zoonza.commerce.verification.domain
 import jakarta.persistence.*
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.verification.VerificationErrorCode
 import java.time.LocalDateTime
 
 @Entity
@@ -84,19 +84,19 @@ class VerificationCode private constructor(
 
     fun assertVerified() {
         if (verifiedAt == null) {
-            throw BusinessException(ErrorCode.EMAIL_NOT_VERIFIED)
+            throw BusinessException(VerificationErrorCode.EMAIL_NOT_VERIFIED)
         }
     }
 
     private fun validateCode(code: String) {
         if (this.code != code) {
-            throw BusinessException(ErrorCode.INVALID_VERIFICATION_CODE)
+            throw BusinessException(VerificationErrorCode.INVALID_VERIFICATION_CODE)
         }
     }
 
     private fun validateNotExpired(verifiedAt: LocalDateTime) {
         if (verifiedAt.isAfter(expiresAt)) {
-            throw BusinessException(ErrorCode.EXPIRED_VERIFICATION_CODE)
+            throw BusinessException(VerificationErrorCode.EXPIRED_VERIFICATION_CODE)
         }
     }
 }

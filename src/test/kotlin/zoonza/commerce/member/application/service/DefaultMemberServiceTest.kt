@@ -6,16 +6,17 @@ import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.junit.jupiter.api.Test
 import zoonza.commerce.member.AuthenticatedMember
+import zoonza.commerce.member.MemberErrorCode
 import zoonza.commerce.member.MemberProfile
 import zoonza.commerce.member.application.dto.SignupCommand
 import zoonza.commerce.member.application.port.out.MemberRepository
 import zoonza.commerce.member.application.port.out.NicknameGenerator
 import zoonza.commerce.member.domain.Member
 import zoonza.commerce.member.domain.PasswordEncoder
+import zoonza.commerce.shared.AuthErrorCode
 import zoonza.commerce.shared.AuthException
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
 import zoonza.commerce.verification.VerificationApi
 import java.time.LocalDateTime
 
@@ -53,7 +54,7 @@ class DefaultMemberServiceTest {
                 memberService.sendSignupEmailVerificationCode(email.address)
             }
 
-        exception.errorCode shouldBe ErrorCode.DUPLICATE_EMAIL
+        exception.errorCode shouldBe MemberErrorCode.DUPLICATE_EMAIL
         verify(exactly = 0) { verificationApi.createSignupEmailVerificationCode(any()) }
     }
 
@@ -122,7 +123,7 @@ class DefaultMemberServiceTest {
                 memberService.authenticate(email, "Password123!")
             }
 
-        exception.errorCode shouldBe ErrorCode.INVALID_CREDENTIALS
+        exception.errorCode shouldBe AuthErrorCode.INVALID_CREDENTIALS
     }
 
     @Test
@@ -170,29 +171,17 @@ class DefaultMemberServiceTest {
                 memberService.findProfileById(1L)
             }
 
-        exception.errorCode shouldBe ErrorCode.MEMBER_NOT_FOUND
+        exception.errorCode shouldBe MemberErrorCode.MEMBER_NOT_FOUND
     }
 
     @Test
     fun `회원 식별자 목록으로 최신 회원 프로필을 조회한다`() {
-        val member1 =
-            Member.create(
-                email = Email("member1@example.com"),
-                passwordHash = "encoded-password",
-                name = "주문자1",
-                nickname = "nickname1",
-                phoneNumber = "01012345678",
-                registeredAt = LocalDateTime.of(2026, 3, 21, 10, 0),
-            )
-        val member2 =
-            Member.create(
-                email = Email("member2@example.com"),
-                passwordHash = "encoded-password",
-                name = "주문자2",
-                nickname = "nickname2",
-                phoneNumber = "01087654321",
-                registeredAt = LocalDateTime.of(2026, 3, 21, 10, 0),
-            )
+        val member1 = mockk<Member>()
+        val member2 = mockk<Member>()
+        every { member1.id } returns 1L
+        every { member1.nickname } returns "nickname1"
+        every { member2.id } returns 2L
+        every { member2.nickname } returns "nickname2"
         every { memberRepository.findAllByIds(setOf(1L, 2L)) } returns listOf(member1, member2)
 
         val found = memberService.findProfilesByIds(setOf(1L, 2L))
@@ -202,5 +191,26 @@ class DefaultMemberServiceTest {
                 member1.id to MemberProfile(member1.id, member1.nickname),
                 member2.id to MemberProfile(member2.id, member2.nickname),
             )
+    }
+
+    @Test
+    fun `회원 식별자 목록 조회 중 일부 회원이 없으면 예외를 던진다`() {
+        val member =
+            Member.create(
+                email = Email("member1@example.com"),
+                passwordHash = "encoded-password",
+                name = "주문자1",
+                nickname = "nickname1",
+                phoneNumber = "01012345678",
+                registeredAt = LocalDateTime.of(2026, 3, 21, 10, 0),
+            )
+        every { memberRepository.findAllByIds(setOf(1L, 2L)) } returns listOf(member)
+
+        val exception =
+            shouldThrow<BusinessException> {
+                memberService.findProfilesByIds(setOf(1L, 2L))
+            }
+
+        exception.errorCode shouldBe MemberErrorCode.MEMBER_NOT_FOUND
     }
 }

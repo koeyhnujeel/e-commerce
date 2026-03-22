@@ -1,4 +1,4 @@
-package zoonza.commerce.common
+package zoonza.commerce.support.web
 
 import com.fasterxml.jackson.annotation.JsonInclude
 

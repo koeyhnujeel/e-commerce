@@ -3,7 +3,7 @@ package zoonza.commerce.catalog.application.port.`in`
 import zoonza.commerce.catalog.application.dto.ProductDetail
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.dto.ProductSummary
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.support.pagination.PageResponse
 
 interface CatalogService {
     fun getProducts(

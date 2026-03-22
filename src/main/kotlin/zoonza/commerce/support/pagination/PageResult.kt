@@ -1,4 +1,4 @@
-package zoonza.commerce.common
+package zoonza.commerce.support.pagination
 
 data class PageResult<T>(
     val items: List<T>,

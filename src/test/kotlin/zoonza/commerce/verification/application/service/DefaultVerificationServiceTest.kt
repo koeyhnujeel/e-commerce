@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.verification.VerificationErrorCode
 import zoonza.commerce.verification.VerificationCodeCreated
 import zoonza.commerce.verification.application.port.out.VerificationCodeRepository
 import zoonza.commerce.verification.domain.VerificationCode
@@ -100,7 +100,7 @@ class DefaultVerificationServiceTest {
                 verificationService.verifySignupEmailVerificationCode(email, "123 456")
             }
 
-        exception.errorCode shouldBe ErrorCode.EMAIL_VERIFICATION_NOT_FOUND
+        exception.errorCode shouldBe VerificationErrorCode.EMAIL_VERIFICATION_NOT_FOUND
     }
 
     @Test
@@ -121,6 +121,6 @@ class DefaultVerificationServiceTest {
                 verificationService.assertVerifiedSignupEmail(email)
             }
 
-        exception.errorCode shouldBe ErrorCode.EMAIL_NOT_VERIFIED
+        exception.errorCode shouldBe VerificationErrorCode.EMAIL_NOT_VERIFIED
     }
 }

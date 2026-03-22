@@ -13,7 +13,7 @@ import zoonza.commerce.member.MemberApi
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.shared.AuthException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.shared.AuthErrorCode
 import java.time.LocalDateTime
 
 @Service
@@ -48,15 +48,15 @@ class DefaultAuthService(
     @Transactional
     override fun refresh(refreshToken: String): ReissueTokenResult {
         val storedRefreshToken = refreshTokenRepository.findByToken(refreshToken)
-                ?: throw AuthException(ErrorCode.INVALID_TOKEN)
+                ?: throw AuthException(AuthErrorCode.INVALID_TOKEN)
 
         if (storedRefreshToken.expiresAt.isBefore(LocalDateTime.now())) {
             refreshTokenRepository.deleteByToken(refreshToken)
-            throw AuthException(ErrorCode.EXPIRED_TOKEN)
+            throw AuthException(AuthErrorCode.EXPIRED_TOKEN)
         }
 
         val member = memberApi.findById(storedRefreshToken.memberId)
-                ?: throw AuthException(ErrorCode.INVALID_TOKEN)
+                ?: throw AuthException(AuthErrorCode.INVALID_TOKEN)
 
         val accessToken = accessTokenProvider.issue(
             memberId = member.id,

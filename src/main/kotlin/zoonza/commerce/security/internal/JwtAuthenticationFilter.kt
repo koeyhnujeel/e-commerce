@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import zoonza.commerce.security.CurrentMemberInfo
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.shared.AuthErrorCode
 
 @Component
 class JwtAuthenticationFilter(
@@ -41,7 +41,7 @@ class JwtAuthenticationFilter(
                 handleAuthenticationFailure(
                     request = request,
                     response = response,
-                    authException = JwtAuthenticationException(ErrorCode.EXPIRED_TOKEN),
+                    authException = JwtAuthenticationException(AuthErrorCode.EXPIRED_TOKEN),
                 )
 
                 return
@@ -49,7 +49,7 @@ class JwtAuthenticationFilter(
                 handleAuthenticationFailure(
                     request = request,
                     response = response,
-                    authException = JwtAuthenticationException(ErrorCode.INVALID_TOKEN),
+                    authException = JwtAuthenticationException(AuthErrorCode.INVALID_TOKEN),
                 )
 
                 return

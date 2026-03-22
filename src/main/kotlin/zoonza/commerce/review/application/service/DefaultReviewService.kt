@@ -3,11 +3,11 @@ package zoonza.commerce.review.application.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.CatalogApi
-import zoonza.commerce.common.PageQuery
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.member.MemberApi
-import zoonza.commerce.member.MemberProfile
 import zoonza.commerce.order.OrderApi
+import zoonza.commerce.review.ReviewErrorCode
 import zoonza.commerce.review.application.dto.CreateReviewCommand
 import zoonza.commerce.review.application.dto.ReviewDetail
 import zoonza.commerce.review.application.dto.ReviewSummary
@@ -16,7 +16,6 @@ import zoonza.commerce.review.application.port.`in`.ReviewService
 import zoonza.commerce.review.application.port.out.ReviewRepository
 import zoonza.commerce.review.domain.Review
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
 import java.time.LocalDateTime
 
 @Service
@@ -38,7 +37,7 @@ class DefaultReviewService(
 
         if (existingReview != null) {
             if (existingReview.deletedAt == null) {
-                throw BusinessException(ErrorCode.REVIEW_ALREADY_EXISTS)
+                throw BusinessException(ReviewErrorCode.REVIEW_ALREADY_EXISTS)
             }
 
             existingReview.restore(
@@ -51,7 +50,7 @@ class DefaultReviewService(
         }
 
         val reviewablePurchase = orderApi.findReviewablePurchase(memberId, productId).firstOrNull()
-            ?: throw BusinessException(ErrorCode.REVIEW_PURCHASE_REQUIRED)
+            ?: throw BusinessException(ReviewErrorCode.REVIEW_PURCHASE_REQUIRED)
 
         val review = Review.create(
             memberId = memberId,
@@ -88,7 +87,7 @@ class DefaultReviewService(
             items = reviewPage.items.map { review ->
                     toSummary(
                         review = review,
-                        authorNickname = authorNicknameOf(review.memberId, memberProfiles),
+                        authorNickname = memberProfiles.getValue(review.memberId).nickname,
                     )
                 },
             page = reviewPage.page,
@@ -106,7 +105,7 @@ class DefaultReviewService(
         validateProductExists(productId)
 
         val review = reviewRepository.findActiveByMemberIdAndProductId(memberId, productId)
-            ?: throw BusinessException(ErrorCode.REVIEW_NOT_FOUND)
+            ?: throw BusinessException(ReviewErrorCode.REVIEW_NOT_FOUND)
 
         val memberProfile = memberApi.findProfileById(review.memberId)
 
@@ -122,7 +121,7 @@ class DefaultReviewService(
         validateProductExists(productId)
 
         val review = reviewRepository.findActiveByMemberIdAndProductId(memberId, productId)
-            ?: throw BusinessException(ErrorCode.REVIEW_NOT_FOUND)
+            ?: throw BusinessException(ReviewErrorCode.REVIEW_NOT_FOUND)
 
         review.update(
             rating = command.rating,
@@ -141,7 +140,7 @@ class DefaultReviewService(
         validateProductExists(productId)
 
         val review = reviewRepository.findActiveByMemberIdAndProductId(memberId, productId)
-            ?: throw BusinessException(ErrorCode.REVIEW_NOT_FOUND)
+            ?: throw BusinessException(ReviewErrorCode.REVIEW_NOT_FOUND)
 
         review.delete(LocalDateTime.now())
 
@@ -149,9 +148,7 @@ class DefaultReviewService(
     }
 
     private fun validateProductExists(productId: Long) {
-        if (!catalogApi.existsProduct(productId)) {
-            throw BusinessException(ErrorCode.PRODUCT_NOT_FOUND)
-        }
+        catalogApi.assertProductExists(productId)
     }
 
     private fun toSummary(
@@ -185,13 +182,5 @@ class DefaultReviewService(
             createdAt = review.createdAt,
             updatedAt = review.updatedAt,
         )
-    }
-
-    private fun authorNicknameOf(
-        memberId: Long,
-        memberProfiles: Map<Long, MemberProfile>,
-    ): String {
-        return memberProfiles[memberId]?.nickname
-            ?: throw BusinessException(ErrorCode.MEMBER_NOT_FOUND)
     }
 }

@@ -11,8 +11,8 @@ import zoonza.commerce.catalog.application.port.out.ProductRepository
 import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.catalog.domain.ProductImage
 import zoonza.commerce.catalog.domain.ProductSaleStatus
-import zoonza.commerce.common.PageQuery
-import zoonza.commerce.common.PageResult
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResult
 import zoonza.commerce.like.LikeApi
 import zoonza.commerce.shared.Money
 

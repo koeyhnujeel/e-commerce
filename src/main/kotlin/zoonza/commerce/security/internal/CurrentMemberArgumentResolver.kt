@@ -10,7 +10,7 @@ import org.springframework.web.method.support.ModelAndViewContainer
 import zoonza.commerce.security.CurrentMember
 import zoonza.commerce.security.CurrentMemberInfo
 import zoonza.commerce.shared.AuthException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.shared.AuthErrorCode
 
 @Component
 class CurrentMemberArgumentResolver : HandlerMethodArgumentResolver {
@@ -26,9 +26,9 @@ class CurrentMemberArgumentResolver : HandlerMethodArgumentResolver {
         binderFactory: WebDataBinderFactory?,
     ): Any {
         val authentication = SecurityContextHolder.getContext().authentication
-            ?: throw AuthException(ErrorCode.UNAUTHORIZED)
+            ?: throw AuthException(AuthErrorCode.UNAUTHORIZED)
 
         return authentication.principal as? CurrentMemberInfo
-            ?: throw AuthException(ErrorCode.UNAUTHORIZED)
+            ?: throw AuthException(AuthErrorCode.UNAUTHORIZED)
     }
 }

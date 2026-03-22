@@ -8,18 +8,19 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.CatalogApi
-import zoonza.commerce.common.PageQuery
-import zoonza.commerce.common.PageResult
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.member.MemberErrorCode
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResult
+import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.member.MemberApi
 import zoonza.commerce.member.MemberProfile
 import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.ReviewablePurchase
+import zoonza.commerce.review.ReviewErrorCode
 import zoonza.commerce.review.application.dto.CreateReviewCommand
 import zoonza.commerce.review.application.port.out.ReviewRepository
 import zoonza.commerce.review.domain.Review
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
 import java.time.LocalDateTime
 
 class DefaultReviewServiceTest {
@@ -40,7 +41,7 @@ class DefaultReviewServiceTest {
         val savedReview = slot<Review>()
         val persistedReview = mockk<Review>()
 
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns null
         every { orderApi.findReviewablePurchase(1L, 10L) } returns listOf(ReviewablePurchase(200L, "BLACK", "M"))
         every { reviewRepository.save(capture(savedReview)) } returns persistedReview
@@ -66,7 +67,7 @@ class DefaultReviewServiceTest {
     fun `상품 리뷰 목록은 애플리케이션 페이징 타입으로 조회한다`() {
         val pageQuery = slot<PageQuery>()
 
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every {
             reviewRepository.findByProductId(
                 productId = 10L,
@@ -93,7 +94,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `활성 리뷰가 이미 있으면 중복 작성에 실패한다`() {
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns review()
 
         val exception =
@@ -105,7 +106,7 @@ class DefaultReviewServiceTest {
                 )
             }
 
-        exception.errorCode shouldBe ErrorCode.REVIEW_ALREADY_EXISTS
+        exception.errorCode shouldBe ReviewErrorCode.REVIEW_ALREADY_EXISTS
         verify(exactly = 0) { reviewRepository.save(any()) }
         verify(exactly = 0) { orderApi.findReviewablePurchase(any(), any()) }
     }
@@ -115,7 +116,7 @@ class DefaultReviewServiceTest {
         val deletedReview = review()
         deletedReview.delete(LocalDateTime.of(2026, 3, 21, 12, 30))
 
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns deletedReview
         every { reviewRepository.save(deletedReview) } returns deletedReview
 
@@ -138,7 +139,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `구매 확정 주문상품이 없으면 리뷰 작성에 실패한다`() {
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns null
         every { orderApi.findReviewablePurchase(1L, 10L) } returns emptyList()
 
@@ -151,13 +152,13 @@ class DefaultReviewServiceTest {
                 )
             }
 
-        exception.errorCode shouldBe ErrorCode.REVIEW_PURCHASE_REQUIRED
+        exception.errorCode shouldBe ReviewErrorCode.REVIEW_PURCHASE_REQUIRED
         verify(exactly = 0) { reviewRepository.save(any()) }
     }
 
     @Test
     fun `내 리뷰 조회는 최신 닉네임을 함께 반환한다`() {
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every { reviewRepository.findActiveByMemberIdAndProductId(1L, 10L) } returns review()
         every { memberApi.findProfileById(1L) } returns MemberProfile(1L, "latest-reviewer")
 
@@ -170,7 +171,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `리뷰 목록 조회 중 최신 닉네임을 찾지 못하면 실패한다`() {
-        every { catalogApi.existsProduct(10L) } returns true
+        every { catalogApi.assertProductExists(10L) } returns Unit
         every {
             reviewRepository.findByProductId(
                 productId = 10L,
@@ -183,14 +184,14 @@ class DefaultReviewServiceTest {
             totalElements = 1,
             totalPages = 1,
         )
-        every { memberApi.findProfilesByIds(setOf(1L)) } returns emptyMap()
+        every { memberApi.findProfilesByIds(setOf(1L)) } throws BusinessException(MemberErrorCode.MEMBER_NOT_FOUND)
 
         val exception =
             shouldThrow<BusinessException> {
                 reviewService.getProductReviews(productId = 10L, page = 0, size = 20)
             }
 
-        exception.errorCode shouldBe ErrorCode.MEMBER_NOT_FOUND
+        exception.errorCode shouldBe MemberErrorCode.MEMBER_NOT_FOUND
     }
 
     private fun review(): Review {

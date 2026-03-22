@@ -24,7 +24,7 @@ import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.payment.domain.PaymentStatus
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.payment.PaymentErrorCode
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 
@@ -103,7 +103,7 @@ class DefaultPaymentServiceTest {
                 )
             }
 
-        exception.errorCode shouldBe ErrorCode.PAYMENT_AMOUNT_MISMATCH
+        exception.errorCode shouldBe PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH
     }
 
     @Test
@@ -190,7 +190,7 @@ class DefaultPaymentServiceTest {
                 )
             }
 
-        exception.errorCode shouldBe ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED
+        exception.errorCode shouldBe PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED
         payment.status shouldBe PaymentStatus.FAILED
         payment.failureReason shouldBe "토스 승인 실패"
         verify(exactly = 1) { orderApi.markPaymentReady(10L) }

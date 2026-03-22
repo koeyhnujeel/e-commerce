@@ -13,19 +13,21 @@ import zoonza.commerce.catalog.application.dto.ProductSummary
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.catalog.application.port.out.ProductRepository
 import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.common.PageQuery
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.like.LikeApi
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.catalog.CatalogErrorCode
 
 @Service
 class DefaultCatalogService(
     private val productRepository: ProductRepository,
     private val likeApi: LikeApi,
 ) : CatalogApi, CatalogService {
-    override fun existsProduct(id: Long): Boolean {
-        return productRepository.existsById(id)
+    override fun assertProductExists(id: Long) {
+        if (!productRepository.existsById(id)) {
+            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
+        }
     }
 
     @Transactional(readOnly = true)
@@ -79,10 +81,10 @@ class DefaultCatalogService(
         memberId: Long?,
     ): ProductDetail {
         val product = productRepository.findById(productId)
-            ?: throw BusinessException(ErrorCode.PRODUCT_NOT_FOUND)
+            ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
 
         if (!product.isAvailableForSale()) {
-            throw BusinessException(ErrorCode.PRODUCT_NOT_FOUND)
+            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
 
         val images = productRepository.findImagesByProductId(productId)
@@ -119,7 +121,7 @@ class DefaultCatalogService(
 
     override fun findProductOptionSnapshot(productOptionId: Long): ProductOptionSnapshot {
         val option = productRepository.findOptionById(productOptionId)
-            ?: throw BusinessException(ErrorCode.PRODUCT_OPTION_NOT_FOUND)
+            ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
 
         return ProductOptionSnapshot(
             color = option.color,
@@ -132,17 +134,17 @@ class DefaultCatalogService(
         productOptionId: Long,
     ): OrderProductSnapshot {
         val product = productRepository.findById(productId)
-            ?: throw BusinessException(ErrorCode.PRODUCT_NOT_FOUND)
+            ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
 
         if (!product.isAvailableForSale()) {
-            throw BusinessException(ErrorCode.PRODUCT_NOT_FOUND)
+            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
 
         val option = productRepository.findOptionByIdAndProductId(productOptionId, productId)
-            ?: throw BusinessException(ErrorCode.PRODUCT_OPTION_NOT_FOUND)
+            ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
 
         if (!option.isOrderable()) {
-            throw BusinessException(ErrorCode.PRODUCT_OPTION_NOT_FOUND)
+            throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
         }
 
         return OrderProductSnapshot(

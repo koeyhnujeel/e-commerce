@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.member.AuthenticatedMember
 import zoonza.commerce.member.MemberApi
+import zoonza.commerce.member.MemberErrorCode
 import zoonza.commerce.member.MemberProfile
 import zoonza.commerce.member.application.dto.SignupCommand
 import zoonza.commerce.member.application.port.`in`.MemberService
@@ -11,10 +12,10 @@ import zoonza.commerce.member.application.port.out.MemberRepository
 import zoonza.commerce.member.application.port.out.NicknameGenerator
 import zoonza.commerce.member.domain.Member
 import zoonza.commerce.member.domain.PasswordEncoder
+import zoonza.commerce.shared.AuthErrorCode
 import zoonza.commerce.shared.AuthException
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
 import zoonza.commerce.verification.VerificationApi
 import java.time.LocalDateTime
 
@@ -34,7 +35,7 @@ class DefaultMemberService(
         val emailVO = Email(email)
 
         if (memberRepository.existsByEmail(emailVO)) {
-            throw BusinessException(ErrorCode.DUPLICATE_EMAIL)
+            throw BusinessException(MemberErrorCode.DUPLICATE_EMAIL)
         }
 
         verificationApi.createSignupEmailVerificationCode(emailVO)
@@ -53,11 +54,11 @@ class DefaultMemberService(
         val emailVO = Email(command.email)
 
         if (memberRepository.existsByEmail(emailVO)) {
-            throw BusinessException(ErrorCode.DUPLICATE_EMAIL)
+            throw BusinessException(MemberErrorCode.DUPLICATE_EMAIL)
         }
 
         if (memberRepository.existsByPhoneNumber(command.phoneNumber)) {
-            throw BusinessException(ErrorCode.DUPLICATE_PHONE_NUMBER)
+            throw BusinessException(MemberErrorCode.DUPLICATE_PHONE_NUMBER)
         }
 
         verificationApi.assertVerifiedSignupEmail(emailVO)
@@ -77,10 +78,10 @@ class DefaultMemberService(
     @Transactional
     override fun authenticate(email: Email, password: String): AuthenticatedMember {
         val member = memberRepository.findByEmail(email)
-            ?: throw AuthException(ErrorCode.INVALID_CREDENTIALS)
+            ?: throw AuthException(AuthErrorCode.INVALID_CREDENTIALS)
 
         if (!member.verifyPassword(password, passwordEncoder)) {
-            throw AuthException(ErrorCode.INVALID_CREDENTIALS)
+            throw AuthException(AuthErrorCode.INVALID_CREDENTIALS)
         }
 
         member.recordLogin(LocalDateTime.now())
@@ -97,7 +98,7 @@ class DefaultMemberService(
     @Transactional(readOnly = true)
     override fun findProfileById(id: Long): MemberProfile {
         val member = memberRepository.findById(id)
-            ?: throw BusinessException(ErrorCode.MEMBER_NOT_FOUND)
+            ?: throw BusinessException(MemberErrorCode.MEMBER_NOT_FOUND)
 
         return MemberProfile(member.id, member.nickname)
     }
@@ -108,8 +109,14 @@ class DefaultMemberService(
             return emptyMap()
         }
 
-        return memberRepository.findAllByIds(ids)
+        val profiles = memberRepository.findAllByIds(ids)
             .associate { member -> member.id to MemberProfile(member.id, member.nickname) }
+
+        if (profiles.size != ids.size) {
+            throw BusinessException(MemberErrorCode.MEMBER_NOT_FOUND)
+        }
+
+        return profiles
     }
 
     private fun generateUniqueNickname(): String {

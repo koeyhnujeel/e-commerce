@@ -20,7 +20,7 @@ import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.order.OrderErrorCode
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 
@@ -100,7 +100,7 @@ class DefaultOrderServiceTest {
                 orderService.getOrder(memberId = 1L, orderId = 10L)
             }
 
-        exception.errorCode shouldBe ErrorCode.ORDER_NOT_FOUND
+        exception.errorCode shouldBe OrderErrorCode.ORDER_NOT_FOUND
     }
 
     @Test
@@ -186,7 +186,7 @@ class DefaultOrderServiceTest {
                 )
             }
 
-        exception.errorCode shouldBe ErrorCode.ORDER_MODIFICATION_NOT_ALLOWED
+        exception.errorCode shouldBe OrderErrorCode.ORDER_MODIFICATION_NOT_ALLOWED
     }
 
     @Test
@@ -218,7 +218,7 @@ class DefaultOrderServiceTest {
                 orderService.deleteOrder(memberId = 1L, orderId = 10L)
             }
 
-        exception.errorCode shouldBe ErrorCode.ORDER_DELETION_NOT_ALLOWED
+        exception.errorCode shouldBe OrderErrorCode.ORDER_DELETION_NOT_ALLOWED
     }
 
     private fun order(

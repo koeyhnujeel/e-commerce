@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.verification.VerificationErrorCode
 import java.time.LocalDateTime
 
 class VerificationCodeTest {
@@ -29,7 +29,7 @@ class VerificationCodeTest {
                 verificationCode.verify("654 321", LocalDateTime.of(2026, 3, 21, 10, 1))
             }
 
-        exception.errorCode shouldBe ErrorCode.INVALID_VERIFICATION_CODE
+        exception.errorCode shouldBe VerificationErrorCode.INVALID_VERIFICATION_CODE
         verificationCode.verifiedAt.shouldBeNull()
     }
 
@@ -49,7 +49,7 @@ class VerificationCodeTest {
                 verificationCode.verify("123 456", LocalDateTime.of(2026, 3, 21, 10, 6))
             }
 
-        exception.errorCode shouldBe ErrorCode.EXPIRED_VERIFICATION_CODE
+        exception.errorCode shouldBe VerificationErrorCode.EXPIRED_VERIFICATION_CODE
     }
 
     @Test
@@ -81,7 +81,7 @@ class VerificationCodeTest {
                 verificationCode.assertVerified()
             }
 
-        exception.errorCode shouldBe ErrorCode.EMAIL_NOT_VERIFIED
+        exception.errorCode shouldBe VerificationErrorCode.EMAIL_NOT_VERIFIED
     }
 
     private fun createVerificationCode(): VerificationCode {

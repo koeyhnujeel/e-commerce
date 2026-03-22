@@ -1,6 +1,6 @@
 package zoonza.commerce.review.application.port.`in`
 
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.review.application.dto.CreateReviewCommand
 import zoonza.commerce.review.application.dto.ReviewDetail
 import zoonza.commerce.review.application.dto.ReviewSummary

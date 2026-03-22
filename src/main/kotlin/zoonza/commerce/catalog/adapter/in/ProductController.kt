@@ -18,8 +18,8 @@ import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.dto.ProductOptionDetail
 import zoonza.commerce.catalog.application.dto.ProductSummary
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
-import zoonza.commerce.common.ApiResponse
-import zoonza.commerce.common.PageResponse
+import zoonza.commerce.support.web.ApiResponse
+import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.security.CurrentMemberInfo
 
 @Validated

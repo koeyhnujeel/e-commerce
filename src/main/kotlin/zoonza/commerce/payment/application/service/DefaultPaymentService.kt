@@ -21,7 +21,7 @@ import zoonza.commerce.payment.application.port.out.TossPaymentsConfiguration
 import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentMethod
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.payment.PaymentErrorCode
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 
@@ -44,7 +44,7 @@ class DefaultPaymentService(
         validateCreatable(order, command.amount)
 
         if (paymentRepository.existsActiveByOrderId(order.orderId)) {
-            throw BusinessException(ErrorCode.ACTIVE_PAYMENT_ALREADY_EXISTS)
+            throw BusinessException(PaymentErrorCode.ACTIVE_PAYMENT_ALREADY_EXISTS)
         }
 
         val payment = paymentRepository.save(
@@ -94,7 +94,7 @@ class DefaultPaymentService(
         paymentId: Long,
     ): PaymentDetail {
         val payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
-            ?: throw BusinessException(ErrorCode.PAYMENT_NOT_FOUND)
+            ?: throw BusinessException(PaymentErrorCode.PAYMENT_NOT_FOUND)
 
         return toPaymentDetail(payment)
     }
@@ -106,10 +106,10 @@ class DefaultPaymentService(
         command: ConfirmPaymentCommand,
     ): PaymentDetail {
         val payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
-            ?: throw BusinessException(ErrorCode.PAYMENT_NOT_FOUND)
+            ?: throw BusinessException(PaymentErrorCode.PAYMENT_NOT_FOUND)
 
         if (!payment.canConfirm()) {
-            throw BusinessException(ErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED)
+            throw BusinessException(PaymentErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED)
         }
 
         validateConfirmRequest(payment, command)
@@ -142,8 +142,8 @@ class DefaultPaymentService(
 
             toPaymentDetail(payment)
         } catch (e: TossPaymentsClientException) {
-            failPayment(payment, e.message ?: ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message)
-            throw BusinessException(ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
+            failPayment(payment, e.message ?: PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message)
+            throw BusinessException(PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
         }
     }
 
@@ -154,14 +154,14 @@ class DefaultPaymentService(
         command: CancelPaymentCommand,
     ): PaymentDetail {
         val payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
-            ?: throw BusinessException(ErrorCode.PAYMENT_NOT_FOUND)
+            ?: throw BusinessException(PaymentErrorCode.PAYMENT_NOT_FOUND)
 
         if (!payment.canCancel()) {
-            throw BusinessException(ErrorCode.PAYMENT_CANCELLATION_NOT_ALLOWED)
+            throw BusinessException(PaymentErrorCode.PAYMENT_CANCELLATION_NOT_ALLOWED)
         }
 
         val paymentKey = payment.paymentKey
-            ?: throw BusinessException(ErrorCode.PAYMENT_CANCELLATION_NOT_ALLOWED)
+            ?: throw BusinessException(PaymentErrorCode.PAYMENT_CANCELLATION_NOT_ALLOWED)
 
         return try {
             val canceledPayment =
@@ -187,7 +187,7 @@ class DefaultPaymentService(
 
             toPaymentDetail(payment)
         } catch (e: TossPaymentsClientException) {
-            throw BusinessException(ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: ErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
+            throw BusinessException(PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED, e.message ?: PaymentErrorCode.EXTERNAL_PAYMENT_REQUEST_FAILED.message, e)
         }
     }
 
@@ -213,11 +213,11 @@ class DefaultPaymentService(
         amount: Long,
     ) {
         if (!order.payable) {
-            throw BusinessException(ErrorCode.PAYMENT_CREATION_NOT_ALLOWED)
+            throw BusinessException(PaymentErrorCode.PAYMENT_CREATION_NOT_ALLOWED)
         }
 
         if (order.totalAmount.amount != amount) {
-            throw BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH)
+            throw BusinessException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH)
         }
     }
 
@@ -227,12 +227,12 @@ class DefaultPaymentService(
     ) {
         if (payment.orderNumber != command.orderId) {
             failPayment(payment, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
-            throw BusinessException(ErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
+            throw BusinessException(PaymentErrorCode.PAYMENT_CONFIRMATION_NOT_ALLOWED, "토스 승인 요청의 주문번호가 일치하지 않습니다.")
         }
 
         if (payment.amount.amount != command.amount) {
-            failPayment(payment, ErrorCode.PAYMENT_AMOUNT_MISMATCH.message)
-            throw BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH)
+            failPayment(payment, PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH.message)
+            throw BusinessException(PaymentErrorCode.PAYMENT_AMOUNT_MISMATCH)
         }
     }
 

@@ -1,7 +1,7 @@
 package zoonza.commerce.review.application.port.out
 
-import zoonza.commerce.common.PageQuery
-import zoonza.commerce.common.PageResult
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResult
 import zoonza.commerce.review.domain.Review
 
 interface ReviewRepository {

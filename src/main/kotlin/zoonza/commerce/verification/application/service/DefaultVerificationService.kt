@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.verification.VerificationErrorCode
 import zoonza.commerce.verification.VerificationApi
 import zoonza.commerce.verification.VerificationCodeCreated
 import zoonza.commerce.verification.application.port.out.VerificationCodeRepository
@@ -51,7 +51,7 @@ class DefaultVerificationService(
         val purpose = VerificationPurpose.SIGNUP
 
         val verification = verificationCodeRepository.findByEmailAndPurpose(email, purpose)
-            ?: throw BusinessException(ErrorCode.EMAIL_VERIFICATION_NOT_FOUND)
+            ?: throw BusinessException(VerificationErrorCode.EMAIL_VERIFICATION_NOT_FOUND)
 
         verification.verify(code, LocalDateTime.now())
 
@@ -63,7 +63,7 @@ class DefaultVerificationService(
         val purpose = VerificationPurpose.SIGNUP
 
         val verification = verificationCodeRepository.findByEmailAndPurpose(email, purpose)
-            ?: throw BusinessException(ErrorCode.EMAIL_NOT_VERIFIED)
+            ?: throw BusinessException(VerificationErrorCode.EMAIL_NOT_VERIFIED)
 
         verification.assertVerified()
     }

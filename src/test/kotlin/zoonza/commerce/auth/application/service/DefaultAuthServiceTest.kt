@@ -14,7 +14,7 @@ import zoonza.commerce.member.MemberApi
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.shared.AuthException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.shared.AuthErrorCode
 import java.time.LocalDateTime
 
 class DefaultAuthServiceTest {
@@ -125,7 +125,7 @@ class DefaultAuthServiceTest {
                 authService.refresh("missing-token")
             }
 
-        exception.errorCode shouldBe ErrorCode.INVALID_TOKEN
+        exception.errorCode shouldBe AuthErrorCode.INVALID_TOKEN
     }
 
     @Test
@@ -145,7 +145,7 @@ class DefaultAuthServiceTest {
                 authService.refresh("expired-token")
             }
 
-        exception.errorCode shouldBe ErrorCode.EXPIRED_TOKEN
+        exception.errorCode shouldBe AuthErrorCode.EXPIRED_TOKEN
         verify(exactly = 1) { refreshTokenRepository.deleteByToken("expired-token") }
     }
 

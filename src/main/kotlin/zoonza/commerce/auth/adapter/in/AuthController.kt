@@ -9,9 +9,9 @@ import zoonza.commerce.auth.adapter.`in`.request.LoginRequest
 import zoonza.commerce.auth.adapter.`in`.response.LoginResponse
 import zoonza.commerce.auth.application.dto.LoginCommand
 import zoonza.commerce.auth.application.port.`in`.AuthService
-import zoonza.commerce.common.ApiResponse
+import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.shared.AuthException
-import zoonza.commerce.shared.ErrorCode
+import zoonza.commerce.shared.AuthErrorCode
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,7 +43,7 @@ class AuthController(
         response: HttpServletResponse,
     ): ApiResponse<LoginResponse> {
         val result = authService.refresh(
-                refreshToken ?: throw AuthException(ErrorCode.UNAUTHORIZED),
+                refreshToken ?: throw AuthException(AuthErrorCode.UNAUTHORIZED),
             )
 
         response.addHeader(
