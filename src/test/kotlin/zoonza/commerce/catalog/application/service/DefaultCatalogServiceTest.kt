@@ -15,6 +15,7 @@ import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
 import zoonza.commerce.like.LikeApi
 import zoonza.commerce.shared.Money
+import java.lang.reflect.Field
 
 class DefaultCatalogServiceTest {
     private val productRepository = mockk<ProductRepository>()
@@ -45,8 +46,11 @@ class DefaultCatalogServiceTest {
             totalPages = 1,
         )
         every {
-            productRepository.findPrimaryImagesByProductIds(listOf(20L, 10L))
-        } returns listOf(expensiveProduct.primaryImage(), cheapProduct.primaryImage())
+            productRepository.findPrimaryImageUrlsByProductIds(listOf(20L, 10L))
+        } returns mapOf(
+            20L to expensiveProduct.primaryImage().imageUrl,
+            10L to cheapProduct.primaryImage().imageUrl,
+        )
         every { likeApi.countProductLikes(listOf(20L, 10L)) } returns mapOf(20L to 5L, 10L to 2L)
         every { likeApi.findLikedProductIds(1L, listOf(20L, 10L)) } returns setOf(20L)
 
@@ -82,7 +86,7 @@ class DefaultCatalogServiceTest {
             totalElements = 1,
             totalPages = 1,
         )
-        every { productRepository.findPrimaryImagesByProductIds(listOf(10L)) } returns listOf(product.primaryImage())
+        every { productRepository.findPrimaryImageUrlsByProductIds(listOf(10L)) } returns mapOf(10L to product.primaryImage().imageUrl)
         every { likeApi.countProductLikes(listOf(10L)) } returns mapOf(10L to 3L)
 
         val result = catalogService.getProducts(
@@ -102,8 +106,6 @@ class DefaultCatalogServiceTest {
         val product = product(id = 10L, price = 19_900, categoryIds = listOf(20L, 10L))
 
         every { productRepository.findById(10L) } returns product
-        every { productRepository.findImagesByProductId(10L) } returns product.images
-        every { productRepository.findOptionsByProductId(10L) } returns product.options
         every { likeApi.countProductLikes(listOf(10L)) } returns mapOf(10L to 7L)
         every { likeApi.findLikedProductIds(1L, listOf(10L)) } returns setOf(10L)
 
@@ -128,7 +130,6 @@ class DefaultCatalogServiceTest {
         categoryIds: List<Long>,
     ): Product {
         return Product.create(
-            id = id,
             brandId = 1L,
             name = "상품$id",
             description = "상품 설명$id",
@@ -160,6 +161,18 @@ class DefaultCatalogServiceTest {
                         stockId = id * 10 + 1,
                     ),
                 ),
-        )
+        ).applyId(id)
+    }
+
+    private fun Product.applyId(id: Long): Product {
+        productIdField.setLong(this, id)
+        return this
+    }
+
+    companion object {
+        private val productIdField: Field =
+            Product::class.java.getDeclaredField("id").apply {
+                isAccessible = true
+            }
     }
 }

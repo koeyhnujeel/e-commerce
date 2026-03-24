@@ -2,8 +2,6 @@ package zoonza.commerce.catalog.application.port.out
 
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.catalog.domain.ProductImage
-import zoonza.commerce.catalog.domain.ProductOption
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
 
@@ -18,16 +16,7 @@ interface ProductRepository {
 
     fun findById(id: Long): Product?
 
-    fun findPrimaryImagesByProductIds(productIds: Collection<Long>): List<ProductImage>
+    fun findPrimaryImageUrlsByProductIds(productIds: Collection<Long>): Map<Long, String>
 
-    fun findImagesByProductId(productId: Long): List<ProductImage>
-
-    fun findOptionsByProductId(productId: Long): List<ProductOption>
-
-    fun findOptionById(productOptionId: Long): ProductOption?
-
-    fun findOptionByIdAndProductId(
-        productOptionId: Long,
-        productId: Long,
-    ): ProductOption?
+    fun findByOptionId(productOptionId: Long): Product?
 }

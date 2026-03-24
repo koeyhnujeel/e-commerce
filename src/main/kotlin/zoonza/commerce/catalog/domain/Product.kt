@@ -54,11 +54,13 @@ class Product private constructor(
     @Column(name = "category_id", nullable = false)
     val categoryIds: MutableSet<Long>,
 
-    @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "product_id", nullable = false)
     @OrderBy("sortOrder ASC")
     val images: MutableList<ProductImage>,
 
-    @OneToMany(mappedBy = "product", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "product_id", nullable = false)
     val options: MutableList<ProductOption>,
 ) {
     companion object {
@@ -70,9 +72,7 @@ class Product private constructor(
             categoryIds: Collection<Long>,
             images: List<ProductImage>,
             options: List<ProductOption>,
-            id: Long = 0,
         ): Product {
-            require(id >= 0) { "상품 ID는 0 이상이어야 합니다." }
             require(brandId > 0) { "브랜드 ID는 1 이상이어야 합니다." }
 
             val normalizedName = normalizeName(name)
@@ -83,7 +83,6 @@ class Product private constructor(
             validateOptions(options)
 
             val product = Product(
-                    id = id,
                     brandId = brandId,
                     name = normalizedName,
                     description = normalizedDescription,
@@ -183,7 +182,6 @@ class Product private constructor(
         this.images.clear()
 
         images.sortedBy(ProductImage::sortOrder)
-            .onEach { it.belongTo(this) }
             .forEach(this.images::add)
 
         check(this.images.size == images.size) { "상품 이미지 목록이 올바르지 않습니다." }
@@ -193,8 +191,7 @@ class Product private constructor(
         validateOptions(options)
 
         this.options.clear()
-        options.onEach { it.belongTo(this) }
-            .forEach(this.options::add)
+        options.forEach(this.options::add)
 
         check(this.options.size == options.size) { "상품 옵션 목록이 올바르지 않습니다." }
     }
