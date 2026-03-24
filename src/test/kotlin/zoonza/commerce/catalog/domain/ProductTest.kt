@@ -42,8 +42,7 @@ class ProductTest {
             )
 
         product.images.map { it.sortOrder } shouldBe listOf(0, 1)
-        product.images.all { it.product === product } shouldBe true
-        product.options.all { it.product === product } shouldBe true
+        product.options.map { it.color to it.size } shouldBe listOf("BLACK" to "M", "BLACK" to "L")
     }
 
     @Test

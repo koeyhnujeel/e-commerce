@@ -8,9 +8,9 @@ import org.springframework.stereotype.Repository
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.out.ProductRepository
 import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.catalog.domain.ProductImage
-import zoonza.commerce.catalog.domain.ProductOption
 import zoonza.commerce.catalog.domain.QProduct.Companion.product
+import zoonza.commerce.catalog.domain.QProductImage.Companion.productImage
+import zoonza.commerce.catalog.domain.QProductOption.Companion.productOption
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
 import kotlin.math.ceil
@@ -19,8 +19,6 @@ import kotlin.math.ceil
 class ProductRepositoryAdapter(
     private val queryFactory: JPAQueryFactory,
     private val productJpaRepository: ProductJpaRepository,
-    private val productImageJpaRepository: ProductImageJpaRepository,
-    private val productOptionJpaRepository: ProductOptionJpaRepository,
 ) : ProductRepository {
     override fun existsById(id: Long): Boolean {
         return productJpaRepository.existsById(id)
@@ -67,31 +65,32 @@ class ProductRepositoryAdapter(
         return productJpaRepository.findByIdOrNull(id)
     }
 
-    override fun findPrimaryImagesByProductIds(productIds: Collection<Long>): List<ProductImage> {
+    override fun findPrimaryImageUrlsByProductIds(productIds: Collection<Long>): Map<Long, String> {
         if (productIds.isEmpty()) {
-            return emptyList()
+            return emptyMap()
         }
 
-        return productImageJpaRepository.findPrimaryImagesByProductIds(productIds)
+        return queryFactory
+            .select(product.id, productImage.imageUrl)
+            .from(product)
+            .join(product.images, productImage)
+            .where(
+                product.id.`in`(productIds),
+                productImage.isPrimary.isTrue,
+            )
+            .fetch()
+            .associate { tuple ->
+                tuple.get(product.id)!! to tuple.get(productImage.imageUrl)!!
+            }
     }
 
-    override fun findImagesByProductId(productId: Long): List<ProductImage> {
-        return productImageJpaRepository.findAllByProductId(productId)
-    }
-
-    override fun findOptionsByProductId(productId: Long): List<ProductOption> {
-        return productOptionJpaRepository.findAllByProductId(productId)
-    }
-
-    override fun findOptionById(productOptionId: Long): ProductOption? {
-        return productOptionJpaRepository.findByIdOrNull(productOptionId)
-    }
-
-    override fun findOptionByIdAndProductId(
-        productOptionId: Long,
-        productId: Long,
-    ): ProductOption? {
-        return productOptionJpaRepository.findByIdAndProductId(productOptionId, productId)
+    override fun findByOptionId(productOptionId: Long): Product? {
+        return queryFactory
+            .selectDistinct(product)
+            .from(product)
+            .join(product.options, productOption)
+            .where(productOption.id.eq(productOptionId))
+            .fetchOne()
     }
 
     private fun categoryIdEq(categoryId: Long?): BooleanExpression? {

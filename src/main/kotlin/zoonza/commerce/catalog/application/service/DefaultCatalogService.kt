@@ -44,14 +44,7 @@ class DefaultCatalogService(
             sort = sort,
         )
         val productIds = productPage.items.map(Product::id)
-        val primaryImageUrls =
-            productRepository.findPrimaryImagesByProductIds(productIds)
-                .associate { productImage ->
-                    val productId = productImage.product?.id
-                        ?: throw IllegalStateException("상품 이미지에 상품 정보가 없습니다.")
-
-                    productId to productImage.imageUrl
-                }
+        val primaryImageUrls = productRepository.findPrimaryImageUrlsByProductIds(productIds)
         val likeCounts = likeApi.countProductLikes(productIds.toList())
         val likedProductIds = likedProductIds(memberId, productIds)
 
@@ -87,8 +80,6 @@ class DefaultCatalogService(
             throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
 
-        val images = productRepository.findImagesByProductId(productId)
-        val options = productRepository.findOptionsByProductId(productId)
         val likedByMe = memberId?.let { productId in likeApi.findLikedProductIds(it, listOf(productId)) } ?: false
         val likeCount = likeApi.countProductLikes(listOf(productId))[productId] ?: 0L
 
@@ -98,14 +89,14 @@ class DefaultCatalogService(
             description = product.description,
             basePrice = product.basePrice.amount,
             categoryIds = product.categoryIds.toList().sorted(),
-            images = images.map { image ->
+            images = product.images.map { image ->
                 ProductImageDetail(
                     imageUrl = image.imageUrl,
                     isPrimary = image.isPrimary,
                     sortOrder = image.sortOrder,
                 )
             },
-            options = options.map { option ->
+            options = product.options.map { option ->
                 ProductOptionDetail(
                     productOptionId = option.id,
                     color = option.color,
@@ -121,7 +112,9 @@ class DefaultCatalogService(
     }
 
     override fun findProductOptionSnapshot(productOptionId: Long): ProductOptionSnapshot {
-        val option = productRepository.findOptionById(productOptionId)
+        val product = productRepository.findByOptionId(productOptionId)
+            ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
+        val option = product.options.firstOrNull { it.id == productOptionId }
             ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
 
         return ProductOptionSnapshot(
@@ -141,7 +134,7 @@ class DefaultCatalogService(
             throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
 
-        val option = productRepository.findOptionByIdAndProductId(productOptionId, productId)
+        val option = product.options.firstOrNull { it.id == productOptionId }
             ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
 
         if (!option.isOrderable()) {

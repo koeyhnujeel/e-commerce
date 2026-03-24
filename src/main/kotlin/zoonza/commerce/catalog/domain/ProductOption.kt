@@ -2,12 +2,9 @@ package zoonza.commerce.catalog.domain
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 
@@ -37,10 +34,6 @@ class ProductOption private constructor(
 
     @Column(name = "stock_id", nullable = false)
     val stockId: Long,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    var product: Product? = null,
 ) {
     companion object {
         fun create(
@@ -77,11 +70,6 @@ class ProductOption private constructor(
             return stockId
         }
     }
-
-    internal fun belongTo(product: Product) {
-        this.product = product
-    }
-
     fun isOrderable(): Boolean {
         return true
     }
