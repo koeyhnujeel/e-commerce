@@ -1,7 +1,7 @@
 package zoonza.commerce.catalog.adapter.`in`
 
 import jakarta.validation.constraints.Positive
-import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -20,7 +20,7 @@ import zoonza.commerce.catalog.application.dto.ProductSummary
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.support.pagination.PageResponse
-import zoonza.commerce.security.CurrentMemberInfo
+import zoonza.commerce.security.CurrentMember
 
 @Validated
 @RestController
@@ -41,9 +41,10 @@ class ProductController(
         categoryId: Long?,
         @RequestParam(defaultValue = "LATEST")
         sort: ProductListSort,
+        @AuthenticationPrincipal currentMember: CurrentMember?,
     ): ApiResponse<PageResponse<ProductSummaryResponse>> {
         val products = catalogService.getProducts(
-            memberId = currentMemberIdOrNull(),
+            memberId = currentMember?.memberId,
             page = page - 1,
             size = size,
             categoryId = categoryId,
@@ -64,17 +65,14 @@ class ProductController(
     @GetMapping("/{productId}")
     fun getProduct(
         @PathVariable productId: Long,
+        @AuthenticationPrincipal currentMember: CurrentMember?,
     ): ApiResponse<ProductDetailResponse> {
         val product = catalogService.getProduct(
             productId = productId,
-            memberId = currentMemberIdOrNull(),
+            memberId = currentMember?.memberId,
         )
 
         return ApiResponse.success(toProductDetailResponse(product))
-    }
-
-    private fun currentMemberIdOrNull(): Long? {
-        return (SecurityContextHolder.getContext().authentication?.principal as? CurrentMemberInfo)?.memberId
     }
 
     private fun toProductSummaryResponse(product: ProductSummary): ProductSummaryResponse {

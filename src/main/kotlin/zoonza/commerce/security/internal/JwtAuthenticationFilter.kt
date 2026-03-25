@@ -10,7 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
-import zoonza.commerce.security.CurrentMemberInfo
+import zoonza.commerce.security.CurrentMember
 import zoonza.commerce.shared.AuthErrorCode
 
 @Component
@@ -72,12 +72,12 @@ class JwtAuthenticationFilter(
         val authMember = jwtAccessTokenProvider.parse(accessToken)
 
         val authentication = CustomAuthenticationToken(
-            CurrentMemberInfo(
+            CurrentMember(
                 authMember.memberId,
                 authMember.email,
-                authMember.role
+                authMember.role,
             ),
-            listOf(SimpleGrantedAuthority("ROLE_${authMember.role}"))
+            listOf(SimpleGrantedAuthority("ROLE_${authMember.role}")),
         )
 
         SecurityContextHolder.getContext().authentication = authentication

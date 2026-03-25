@@ -2,6 +2,7 @@ package zoonza.commerce.review.adapter.`in`
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Positive
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,7 +26,6 @@ import zoonza.commerce.review.application.dto.ReviewSummary
 import zoonza.commerce.review.application.dto.UpdateReviewCommand
 import zoonza.commerce.review.application.port.`in`.ReviewService
 import zoonza.commerce.security.CurrentMember
-import zoonza.commerce.security.CurrentMemberInfo
 
 @Validated
 @RestController
@@ -35,7 +35,7 @@ class ReviewController(
 ) {
     @PostMapping
     fun createReview(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
         @Valid @RequestBody request: CreateReviewRequest,
     ): ApiResponse<CreateReviewResponse> {
@@ -76,7 +76,7 @@ class ReviewController(
 
     @GetMapping("/me")
     fun getMyReview(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
     ): ApiResponse<MyReviewResponse> {
         val review = reviewService.getMyReview(currentMember.memberId, productId)
@@ -86,7 +86,7 @@ class ReviewController(
 
     @PutMapping("/me")
     fun updateReview(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
         @Valid @RequestBody request: UpdateReviewRequest,
     ): ApiResponse<Nothing> {
@@ -104,7 +104,7 @@ class ReviewController(
 
     @DeleteMapping("/me")
     fun deleteReview(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
     ): ApiResponse<Nothing> {
         reviewService.delete(currentMember.memberId, productId)
