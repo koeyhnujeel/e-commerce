@@ -1,5 +1,6 @@
 package zoonza.commerce.catalog.adapter.out.persistence
 
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
 import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
@@ -17,23 +18,31 @@ class ProductStatisticRepositoryAdapter(
         productId: Long,
         delta: Long,
     ) {
-        val statistic = productStatisticJpaRepository.findByIdOrNull(productId)
+        if (delta == 0L) {
+            return
+        }
 
-        if (statistic == null) {
-            if (delta <= 0L) {
-                return
-            }
+        val updated = productStatisticJpaRepository.updateLikeCount(
+            productId = productId,
+            delta = delta,
+        )
 
+        if (updated > 0 || delta < 0L) {
+            return
+        }
+
+        try {
             productStatisticJpaRepository.save(
                 ProductStatistic.create(
                     productId = productId,
                     likeCount = delta,
                 ),
             )
-            return
+        } catch (_: DataIntegrityViolationException) {
+            productStatisticJpaRepository.updateLikeCount(
+                productId = productId,
+                delta = delta,
+            )
         }
-
-        statistic.applyLikeCountDelta(delta)
-        productStatisticJpaRepository.save(statistic)
     }
 }

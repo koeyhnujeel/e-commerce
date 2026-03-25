@@ -4,6 +4,7 @@ import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
+import org.springframework.stereotype.Repository
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryResult
 import zoonza.commerce.catalog.domain.ProductSaleStatus
@@ -14,6 +15,7 @@ import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
 import kotlin.math.ceil
 
+@Repository
 class ProductQueryRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : ProductQueryRepository {

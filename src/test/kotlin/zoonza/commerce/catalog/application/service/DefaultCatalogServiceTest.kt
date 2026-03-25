@@ -10,7 +10,6 @@ import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
 import zoonza.commerce.catalog.application.port.out.ProductRepository
 import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
-import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryRepository
 import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryResult
 import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.catalog.domain.ProductImage
@@ -23,14 +22,12 @@ import java.lang.reflect.Field
 
 class DefaultCatalogServiceTest {
     private val productRepository = mockk<ProductRepository>()
-    private val productSummaryQueryRepository = mockk<ProductSummaryQueryRepository>()
     private val categoryHierarchyRepository = mockk<CategoryHierarchyRepository>()
     private val productStatisticRepository = mockk<ProductStatisticRepository>()
     private val likeApi = mockk<LikeApi>()
     private val catalogService =
         DefaultCatalogService(
             productRepository = productRepository,
-            productSummaryQueryRepository = productSummaryQueryRepository,
             categoryHierarchyRepository = categoryHierarchyRepository,
             productStatisticRepository = productStatisticRepository,
             likeApi = likeApi,
@@ -42,7 +39,7 @@ class DefaultCatalogServiceTest {
         every { categoryHierarchyRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L, 2L)
 
         every {
-            productSummaryQueryRepository.findPageByCategoryIds(
+            productRepository.findPageByCategoryIds(
                 categoryIds = linkedSetOf(1L, 2L),
                 pageQuery = capture(pageQuery),
                 sort = ProductListSort.PRICE_DESC,
@@ -93,7 +90,7 @@ class DefaultCatalogServiceTest {
         val product = product(id = 10L, price = 19_900, categoryIds = listOf(1L))
 
         every {
-            productSummaryQueryRepository.findPageByCategoryIds(
+            productRepository.findPageByCategoryIds(
                 categoryIds = null,
                 pageQuery = PageQuery(page = 0, size = 20),
                 sort = ProductListSort.LATEST,

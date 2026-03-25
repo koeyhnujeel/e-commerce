@@ -14,7 +14,6 @@ import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.catalog.application.port.out.ProductRepository
 import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
-import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryRepository
 import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResponse
@@ -25,7 +24,6 @@ import zoonza.commerce.shared.BusinessException
 @Service
 class DefaultCatalogService(
     private val productRepository: ProductRepository,
-    private val productSummaryQueryRepository: ProductSummaryQueryRepository,
     private val categoryHierarchyRepository: CategoryHierarchyRepository,
     private val productStatisticRepository: ProductStatisticRepository,
     private val likeApi: LikeApi,
@@ -45,7 +43,7 @@ class DefaultCatalogService(
         sort: ProductListSort,
     ): PageResponse<ProductSummary> {
         val categoryIds = categoryId?.let(categoryHierarchyRepository::findSelfAndDescendantIds)
-        val productPage = productSummaryQueryRepository.findPageByCategoryIds(
+        val productPage = productRepository.findPageByCategoryIds(
             categoryIds = categoryIds,
             pageQuery = PageQuery(page = page, size = size),
             sort = sort,
