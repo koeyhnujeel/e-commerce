@@ -2,10 +2,10 @@ package zoonza.commerce.security.internal
 
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.GrantedAuthority
-import zoonza.commerce.security.CurrentMemberInfo
+import zoonza.commerce.security.CurrentMember
 
 class CustomAuthenticationToken(
-    val currentMemberInfo: CurrentMemberInfo,
+    val currentMember: CurrentMember,
     authorities: Collection<GrantedAuthority>,
 ) : AbstractAuthenticationToken(authorities) {
 
@@ -15,5 +15,5 @@ class CustomAuthenticationToken(
 
     override fun getCredentials(): Any?  = null
 
-    override fun getPrincipal(): CurrentMemberInfo = currentMemberInfo
+    override fun getPrincipal(): CurrentMember = currentMember
 }

@@ -1,5 +1,6 @@
 package zoonza.commerce.like.adapter.`in`
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -8,7 +9,6 @@ import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.like.application.port.`in`.LikeService
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.security.CurrentMember
-import zoonza.commerce.security.CurrentMemberInfo
 
 @RestController
 @RequestMapping("/api/products")
@@ -17,7 +17,7 @@ class LikeController(
 ) {
     @PostMapping("/{productId}/likes")
     fun likeProduct(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
     ): ApiResponse<Nothing> {
         likeService.like(
@@ -31,7 +31,7 @@ class LikeController(
 
     @PostMapping("/{productId}/likes/cancel")
     fun cancelProductLike(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
     ): ApiResponse<Nothing> {
         likeService.cancelLike(

@@ -1,6 +1,7 @@
 package zoonza.commerce.order.adapter.`in`
 
 import jakarta.validation.Valid
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -25,7 +26,6 @@ import zoonza.commerce.order.application.dto.UpdateOrderCommand
 import zoonza.commerce.order.application.dto.UpdateOrderItemCommand
 import zoonza.commerce.order.application.port.`in`.OrderService
 import zoonza.commerce.security.CurrentMember
-import zoonza.commerce.security.CurrentMemberInfo
 
 @RestController
 @RequestMapping("/api/orders")
@@ -34,7 +34,7 @@ class OrderManagementController(
 ) {
     @PostMapping
     fun createOrder(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @Valid @RequestBody request: CreateOrderRequest,
     ): ApiResponse<CreateOrderResponse> {
         val createdOrder = orderService.createOrder(
@@ -61,7 +61,7 @@ class OrderManagementController(
 
     @GetMapping
     fun getOrders(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
     ): ApiResponse<List<OrderSummaryResponse>> {
         val orders = orderService.getOrders(currentMember.memberId)
 
@@ -70,7 +70,7 @@ class OrderManagementController(
 
     @PatchMapping("/{orderId}")
     fun updateOrder(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable orderId: Long,
         @Valid @RequestBody request: UpdateOrderRequest,
     ): ApiResponse<OrderDetailResponse> {
@@ -93,7 +93,7 @@ class OrderManagementController(
 
     @DeleteMapping("/{orderId}")
     fun deleteOrder(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable orderId: Long,
     ): ApiResponse<Nothing> {
         orderService.deleteOrder(
@@ -106,7 +106,7 @@ class OrderManagementController(
 
     @GetMapping("/{orderId}")
     fun getOrder(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable orderId: Long,
     ): ApiResponse<OrderDetailResponse> {
         val order = orderService.getOrder(

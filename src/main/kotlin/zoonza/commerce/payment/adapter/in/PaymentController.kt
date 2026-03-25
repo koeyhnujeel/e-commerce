@@ -1,6 +1,7 @@
 package zoonza.commerce.payment.adapter.`in`
 
 import jakarta.validation.Valid
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -18,7 +19,6 @@ import zoonza.commerce.payment.application.dto.ConfirmPaymentCommand
 import zoonza.commerce.payment.application.dto.CreatePaymentCommand
 import zoonza.commerce.payment.application.port.`in`.PaymentService
 import zoonza.commerce.security.CurrentMember
-import zoonza.commerce.security.CurrentMemberInfo
 
 @RestController
 class PaymentController(
@@ -26,7 +26,7 @@ class PaymentController(
 ) {
     @PostMapping("/api/orders/{orderId}/payments")
     fun createPayment(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable orderId: Long,
         @Valid @RequestBody request: CreatePaymentRequest,
     ): ApiResponse<CreatePaymentResponse> {
@@ -55,7 +55,7 @@ class PaymentController(
 
     @PostMapping("/api/payments/{paymentId}/confirm")
     fun confirmPayment(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable paymentId: Long,
         @Valid @RequestBody request: ConfirmPaymentRequest,
     ): ApiResponse<PaymentDetailResponse> {
@@ -75,7 +75,7 @@ class PaymentController(
 
     @PostMapping("/api/payments/{paymentId}/cancel")
     fun cancelPayment(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable paymentId: Long,
         @Valid @RequestBody request: CancelPaymentRequest,
     ): ApiResponse<PaymentDetailResponse> {
@@ -90,7 +90,7 @@ class PaymentController(
 
     @GetMapping("/api/payments/{paymentId}")
     fun getPayment(
-        @CurrentMember currentMember: CurrentMemberInfo,
+        @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable paymentId: Long,
     ): ApiResponse<PaymentDetailResponse> {
         val payment = paymentService.getPayment(
