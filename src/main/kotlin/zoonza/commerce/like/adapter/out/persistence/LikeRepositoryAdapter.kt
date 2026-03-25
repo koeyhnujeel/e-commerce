@@ -18,20 +18,6 @@ class LikeRepositoryAdapter(
             .findByMemberIdAndTargetIdAndTargetType(memberId, targetId, targetType)
     }
 
-    override fun countByTargetIds(
-        targetIds: Collection<Long>,
-        targetType: LikeTargetType,
-    ): Map<Long, Long> {
-        if (targetIds.isEmpty()) {
-            return emptyMap()
-        }
-
-        return memberLikeJpaRepository.countActiveByTargetTypeAndTargetIdIn(
-            targetType = targetType,
-            targetIds = targetIds,
-        ).associate { it.targetId to it.likeCount }
-    }
-
     override fun findActiveTargetIds(
         memberId: Long,
         targetIds: Collection<Long>,

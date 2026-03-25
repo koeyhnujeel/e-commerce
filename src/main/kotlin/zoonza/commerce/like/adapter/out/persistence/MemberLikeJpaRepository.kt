@@ -10,10 +10,4 @@ interface MemberLikeJpaRepository : JpaRepository<MemberLike, Long>, MemberLikeQ
         targetId: Long,
         targetType: LikeTargetType,
     ): MemberLike?
-
-    fun countByMemberIdAndTargetTypeAndTargetId(
-        memberId: Long,
-        targetType: LikeTargetType,
-        targetId: Long,
-    ): Long
 }

@@ -67,4 +67,8 @@ class MemberLike private constructor(
         this.likedAt = LocalDateTime.now()
         this.deletedAt = null
     }
+
+    fun isActive(): Boolean {
+        return deletedAt == null
+    }
 }
