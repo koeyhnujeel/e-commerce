@@ -26,7 +26,7 @@ class ProductRepositoryAdapter(
     }
 
     override fun findPageByCategoryIds(
-        categoryIds: Set<Long>?,
+        categoryIds: Set<Long>,
         pageQuery: PageQuery,
         sort: ProductListSort,
     ): PageResult<ProductSummaryQueryResult> {

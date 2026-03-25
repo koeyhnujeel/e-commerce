@@ -14,7 +14,7 @@ interface ProductRepository {
     fun findByOptionId(productOptionId: Long): Product?
 
     fun findPageByCategoryIds(
-        categoryIds: Set<Long>?,
+        categoryIds: Set<Long>,
         pageQuery: PageQuery,
         sort: ProductListSort,
     ): PageResult<ProductSummaryQueryResult>

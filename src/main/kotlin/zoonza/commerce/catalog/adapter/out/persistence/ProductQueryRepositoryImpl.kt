@@ -20,11 +20,11 @@ class ProductQueryRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : ProductQueryRepository {
     override fun findPageByCategoryIds(
-        categoryIds: Set<Long>?,
+        categoryIds: Set<Long>,
         pageQuery: PageQuery,
         sort: ProductListSort,
     ): PageResult<ProductSummaryQueryResult> {
-        if (categoryIds?.isEmpty() == true) {
+        if (categoryIds.isEmpty()) {
             return PageResult(
                 items = emptyList(),
                 page = pageQuery.page,
@@ -88,8 +88,8 @@ class ProductQueryRepositoryImpl(
         )
     }
 
-    private fun categoryIdsIn(categoryIds: Set<Long>?): BooleanExpression? {
-        return categoryIds?.let(product.categoryIds.any()::`in`)
+    private fun categoryIdsIn(categoryIds: Set<Long>): BooleanExpression {
+        return product.categoryIds.any().`in`(categoryIds)
     }
 
     private fun orderSpecifiers(sort: ProductListSort): Array<OrderSpecifier<*>> {

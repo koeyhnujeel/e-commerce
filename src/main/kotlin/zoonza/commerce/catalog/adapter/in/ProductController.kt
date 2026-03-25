@@ -36,9 +36,9 @@ class ProductController(
         @RequestParam(defaultValue = "20")
         @Positive(message = "페이지 크기는 1 이상이어야 합니다.")
         size: Int,
-        @RequestParam(required = false)
+        @RequestParam
         @Positive(message = "카테고리 ID는 1 이상이어야 합니다.")
-        categoryId: Long?,
+        categoryId: Long,
         @RequestParam(defaultValue = "LATEST")
         sort: ProductListSort,
         @AuthenticationPrincipal currentMember: CurrentMember?,

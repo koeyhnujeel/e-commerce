@@ -89,9 +89,11 @@ class DefaultCatalogServiceTest {
     fun `비로그인 상품 목록 조회는 likedByMe를 false로 반환한다`() {
         val product = product(id = 10L, price = 19_900, categoryIds = listOf(1L))
 
+        every { categoryHierarchyRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L)
+
         every {
             productRepository.findPageByCategoryIds(
-                categoryIds = null,
+                categoryIds = linkedSetOf(1L),
                 pageQuery = PageQuery(page = 0, size = 20),
                 sort = ProductListSort.LATEST,
             )
@@ -116,12 +118,12 @@ class DefaultCatalogServiceTest {
             memberId = null,
             page = 0,
             size = 20,
-            categoryId = null,
+            categoryId = 1L,
             sort = ProductListSort.LATEST,
         )
 
         result.items.single().likedByMe shouldBe false
-        verify(exactly = 0) { categoryHierarchyRepository.findSelfAndDescendantIds(any()) }
+        verify(exactly = 1) { categoryHierarchyRepository.findSelfAndDescendantIds(1L) }
         verify(exactly = 0) { likeApi.findLikedProductIds(any(), any()) }
     }
 

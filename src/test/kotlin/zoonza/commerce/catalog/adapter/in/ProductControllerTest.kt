@@ -100,8 +100,9 @@ class ProductControllerTest {
 
     @Test
     fun `로그인 사용자는 상품 목록에서 likedByMe를 확인할 수 있다`() {
-        val likedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(1L)))
-        val unlikedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 2, price = 29_900, categoryIds = listOf(1L)))
+        val category = categoryJpaRepository.save(Category.createRoot(name = "상의", sortOrder = 0))
+        val likedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(category.id)))
+        val unlikedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 2, price = 29_900, categoryIds = listOf(category.id)))
         productStatisticJpaRepository.save(ProductStatistic.create(productId = likedProduct.id, likeCount = 2L))
         productStatisticJpaRepository.save(ProductStatistic.create(productId = unlikedProduct.id, likeCount = 1L))
 
@@ -112,6 +113,7 @@ class ProductControllerTest {
         mockMvc
             .get("/api/products") {
                 header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
+                param("categoryId", category.id.toString())
                 param("sort", "LATEST")
             }.andExpect {
                 status { isOk() }
@@ -164,14 +166,26 @@ class ProductControllerTest {
 
     @Test
     fun `통계 row가 없으면 상품 목록의 likeCount는 0이다`() {
-        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(1L)))
+        val category = categoryJpaRepository.save(Category.createRoot(name = "상의", sortOrder = 0))
+        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(category.id)))
 
         mockMvc
-            .get("/api/products")
+            .get("/api/products") {
+                param("categoryId", category.id.toString())
+            }
             .andExpect {
                 status { isOk() }
                 jsonPath("$.data.items[0].productId") { value(product.id) }
                 jsonPath("$.data.items[0].likeCount") { value(0) }
+            }
+    }
+
+    @Test
+    fun `카테고리 ID 없이 상품 목록을 조회할 수 없다`() {
+        mockMvc
+            .get("/api/products")
+            .andExpect {
+                status { isBadRequest() }
             }
     }
 }

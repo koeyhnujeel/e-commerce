@@ -7,7 +7,7 @@ import zoonza.commerce.support.pagination.PageResult
 
 interface ProductQueryRepository {
     fun findPageByCategoryIds(
-        categoryIds: Set<Long>?,
+        categoryIds: Set<Long>,
         pageQuery: PageQuery,
         sort: ProductListSort,
     ): PageResult<ProductSummaryQueryResult>

@@ -10,7 +10,7 @@ interface CatalogService {
         memberId: Long?,
         page: Int,
         size: Int,
-        categoryId: Long?,
+        categoryId: Long,
         sort: ProductListSort,
     ): PageResponse<ProductSummary>
 
