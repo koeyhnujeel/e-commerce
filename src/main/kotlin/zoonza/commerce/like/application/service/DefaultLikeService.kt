@@ -4,7 +4,8 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.like.LikeApi
-import zoonza.commerce.like.ProductLikeCountChanged
+import zoonza.commerce.like.ProductLikeCanceled
+import zoonza.commerce.like.ProductLiked
 import zoonza.commerce.like.application.port.`in`.LikeService
 import zoonza.commerce.like.application.port.out.LikeRepository
 import zoonza.commerce.like.domain.LikeTargetType
@@ -36,12 +37,12 @@ class DefaultLikeService(
             like.restore()
             likeRepository.save(like)
             if (!wasActive) {
-                publishLikeCountChanged(targetId, 1L)
+                publishProductLiked(targetId)
             }
         } else {
             val newMemberLike = MemberLike.create(memberId, targetId, targetType)
             likeRepository.save(newMemberLike)
-            publishLikeCountChanged(targetId, 1L)
+            publishProductLiked(targetId)
         }
     }
 
@@ -55,22 +56,30 @@ class DefaultLikeService(
             ?: return
 
         val wasActive = like.isActive()
+
         like.cancel()
 
         likeRepository.save(like)
+
         if (wasActive) {
-            publishLikeCountChanged(targetId, -1L)
+            publishProductLikeCanceled(targetId)
         }
     }
 
-    private fun publishLikeCountChanged(
+    private fun publishProductLiked(
         productId: Long,
-        delta: Long,
     ) {
         eventPublisher.publishEvent(
-            ProductLikeCountChanged(
+            ProductLiked(
                 productId = productId,
-                delta = delta,
+            ),
+        )
+    }
+
+    private fun publishProductLikeCanceled(productId: Long) {
+        eventPublisher.publishEvent(
+            ProductLikeCanceled(
+                productId = productId,
             ),
         )
     }

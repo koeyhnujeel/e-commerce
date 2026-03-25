@@ -1,6 +1,5 @@
 package zoonza.commerce.like
 
-data class ProductLikeCountChanged(
+data class ProductLikeCanceled(
     val productId: Long,
-    val delta: Long,
 )

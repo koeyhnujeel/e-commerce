@@ -6,7 +6,8 @@ import io.kotest.matchers.shouldBe
 import io.mockk.*
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
-import zoonza.commerce.like.ProductLikeCountChanged
+import zoonza.commerce.like.ProductLikeCanceled
+import zoonza.commerce.like.ProductLiked
 import zoonza.commerce.like.application.port.out.LikeRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
@@ -27,7 +28,7 @@ class DefaultLikeServiceTest {
         savedMemberLike.captured.memberId shouldBe 1L
         savedMemberLike.captured.targetId shouldBe 10L
         savedMemberLike.captured.deletedAt.shouldBeNull()
-        verify(exactly = 1) { eventPublisher.publishEvent(ProductLikeCountChanged(productId = 10L, delta = 1L)) }
+        verify(exactly = 1) { eventPublisher.publishEvent(ProductLiked(productId = 10L)) }
     }
 
     @Test
@@ -41,7 +42,7 @@ class DefaultLikeServiceTest {
 
         existingMemberLike.deletedAt.shouldBeNull()
         verify(exactly = 1) { likeRepository.save(existingMemberLike) }
-        verify(exactly = 1) { eventPublisher.publishEvent(ProductLikeCountChanged(productId = 10L, delta = 1L)) }
+        verify(exactly = 1) { eventPublisher.publishEvent(ProductLiked(productId = 10L)) }
     }
 
     @Test
@@ -52,7 +53,8 @@ class DefaultLikeServiceTest {
 
         likeService.like(memberId = 1L, targetId = 10L, targetType = LikeTargetType.PRODUCT)
 
-        verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLikeCountChanged>()) }
+        verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLiked>()) }
+        verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLikeCanceled>()) }
     }
 
     @Test
@@ -65,7 +67,7 @@ class DefaultLikeServiceTest {
 
         existingMemberLike.deletedAt.shouldNotBeNull()
         verify(exactly = 1) { likeRepository.save(existingMemberLike) }
-        verify(exactly = 1) { eventPublisher.publishEvent(ProductLikeCountChanged(productId = 10L, delta = -1L)) }
+        verify(exactly = 1) { eventPublisher.publishEvent(ProductLikeCanceled(productId = 10L)) }
     }
 
     @Test
@@ -75,6 +77,7 @@ class DefaultLikeServiceTest {
         likeService.cancelLike(memberId = 1L, targetId = 10L, targetType = LikeTargetType.PRODUCT)
 
         verify(exactly = 0) { likeRepository.save(any()) }
-        verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLikeCountChanged>()) }
+        verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLiked>()) }
+        verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLikeCanceled>()) }
     }
 }
