@@ -10,8 +10,11 @@ import zoonza.commerce.catalog.application.dto.ProductImageDetail
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.dto.ProductOptionDetail
 import zoonza.commerce.catalog.application.dto.ProductSummary
+import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.catalog.application.port.out.ProductRepository
+import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
+import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryRepository
 import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResponse
@@ -22,6 +25,9 @@ import zoonza.commerce.shared.BusinessException
 @Service
 class DefaultCatalogService(
     private val productRepository: ProductRepository,
+    private val productSummaryQueryRepository: ProductSummaryQueryRepository,
+    private val categoryHierarchyRepository: CategoryHierarchyRepository,
+    private val productStatisticRepository: ProductStatisticRepository,
     private val likeApi: LikeApi,
 ) : CatalogApi, CatalogService {
     override fun assertProductExists(id: Long) {
@@ -31,34 +37,32 @@ class DefaultCatalogService(
     }
 
     @Transactional(readOnly = true)
-    override fun getProducts(
+    override fun getProductsByCategory(
         memberId: Long?,
         page: Int,
         size: Int,
         categoryId: Long?,
         sort: ProductListSort,
     ): PageResponse<ProductSummary> {
-        val productPage = productRepository.findAll(
-            categoryId = categoryId,
+        val categoryIds = categoryId?.let(categoryHierarchyRepository::findSelfAndDescendantIds)
+        val productPage = productSummaryQueryRepository.findPageByCategoryIds(
+            categoryIds = categoryIds,
             pageQuery = PageQuery(page = page, size = size),
             sort = sort,
         )
-        val productIds = productPage.items.map(Product::id)
-        val primaryImageUrls = productRepository.findPrimaryImageUrlsByProductIds(productIds)
-        val likeCounts = likeApi.countProductLikes(productIds.toList())
+        val productIds = productPage.items.map { it.productId }
         val likedProductIds = likedProductIds(memberId, productIds)
 
         return PageResponse(
             items = productPage.items.map { product ->
                 ProductSummary(
-                    productId = product.id,
+                    productId = product.productId,
                     name = product.name,
-                    primaryImageUrl = primaryImageUrls[product.id]
-                        ?: throw IllegalStateException("대표 상품 이미지를 찾을 수 없습니다."),
-                    basePrice = product.basePrice.amount,
-                    likeCount = likeCounts[product.id] ?: 0L,
-                    likedByMe = product.id in likedProductIds,
-                    saleStatus = product.saleStatus(),
+                    primaryImageUrl = product.primaryImageUrl,
+                    basePrice = product.basePrice,
+                    likeCount = product.likeCount,
+                    likedByMe = product.productId in likedProductIds,
+                    saleStatus = product.saleStatus,
                 )
             },
             page = productPage.page,
@@ -81,7 +85,7 @@ class DefaultCatalogService(
         }
 
         val likedByMe = memberId?.let { productId in likeApi.findLikedProductIds(it, listOf(productId)) } ?: false
-        val likeCount = likeApi.countProductLikes(listOf(productId))[productId] ?: 0L
+        val likeCount = productStatisticRepository.findLikeCount(productId)
 
         return ProductDetail(
             productId = product.id,

@@ -29,7 +29,7 @@ class ProductController(
     private val catalogService: CatalogService,
 ) {
     @GetMapping
-    fun getProducts(
+    fun getProductsByCategory(
         @RequestParam(defaultValue = "1")
         @Positive(message = "페이지 번호는 1 이상이어야 합니다.")
         page: Int,
@@ -43,7 +43,7 @@ class ProductController(
         sort: ProductListSort,
         @AuthenticationPrincipal currentMember: CurrentMember?,
     ): ApiResponse<PageResponse<ProductSummaryResponse>> {
-        val products = catalogService.getProducts(
+        val products = catalogService.getProductsByCategory(
             memberId = currentMember?.memberId,
             page = page - 1,
             size = size,

@@ -7,7 +7,11 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.application.dto.ProductListSort
+import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
 import zoonza.commerce.catalog.application.port.out.ProductRepository
+import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
+import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryRepository
+import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryResult
 import zoonza.commerce.catalog.domain.Product
 import zoonza.commerce.catalog.domain.ProductImage
 import zoonza.commerce.catalog.domain.ProductSaleStatus
@@ -19,42 +23,57 @@ import java.lang.reflect.Field
 
 class DefaultCatalogServiceTest {
     private val productRepository = mockk<ProductRepository>()
+    private val productSummaryQueryRepository = mockk<ProductSummaryQueryRepository>()
+    private val categoryHierarchyRepository = mockk<CategoryHierarchyRepository>()
+    private val productStatisticRepository = mockk<ProductStatisticRepository>()
     private val likeApi = mockk<LikeApi>()
     private val catalogService =
         DefaultCatalogService(
             productRepository = productRepository,
+            productSummaryQueryRepository = productSummaryQueryRepository,
+            categoryHierarchyRepository = categoryHierarchyRepository,
+            productStatisticRepository = productStatisticRepository,
             likeApi = likeApi,
         )
 
     @Test
     fun `상품 목록 조회는 정렬과 좋아요 정보를 함께 조합한다`() {
         val pageQuery = slot<PageQuery>()
-        val expensiveProduct = product(id = 20L, price = 39_900, categoryIds = listOf(1L))
-        val cheapProduct = product(id = 10L, price = 19_900, categoryIds = listOf(1L))
+        every { categoryHierarchyRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L, 2L)
 
         every {
-            productRepository.findAll(
-                categoryId = 1L,
+            productSummaryQueryRepository.findPageByCategoryIds(
+                categoryIds = linkedSetOf(1L, 2L),
                 pageQuery = capture(pageQuery),
                 sort = ProductListSort.PRICE_DESC,
             )
         } returns PageResult(
-            items = listOf(expensiveProduct, cheapProduct),
+            items = listOf(
+                ProductSummaryQueryResult(
+                    productId = 20L,
+                    name = "상품20",
+                    primaryImageUrl = "https://cdn.example.com/product-20-primary.jpg",
+                    basePrice = 39_900,
+                    likeCount = 5L,
+                    saleStatus = ProductSaleStatus.AVAILABLE,
+                ),
+                ProductSummaryQueryResult(
+                    productId = 10L,
+                    name = "상품10",
+                    primaryImageUrl = "https://cdn.example.com/product-10-primary.jpg",
+                    basePrice = 19_900,
+                    likeCount = 2L,
+                    saleStatus = ProductSaleStatus.AVAILABLE,
+                ),
+            ),
             page = 0,
             size = 20,
             totalElements = 2,
             totalPages = 1,
         )
-        every {
-            productRepository.findPrimaryImageUrlsByProductIds(listOf(20L, 10L))
-        } returns mapOf(
-            20L to expensiveProduct.primaryImage().imageUrl,
-            10L to cheapProduct.primaryImage().imageUrl,
-        )
-        every { likeApi.countProductLikes(listOf(20L, 10L)) } returns mapOf(20L to 5L, 10L to 2L)
         every { likeApi.findLikedProductIds(1L, listOf(20L, 10L)) } returns setOf(20L)
 
-        val result = catalogService.getProducts(
+        val result = catalogService.getProductsByCategory(
             memberId = 1L,
             page = 0,
             size = 20,
@@ -74,22 +93,29 @@ class DefaultCatalogServiceTest {
         val product = product(id = 10L, price = 19_900, categoryIds = listOf(1L))
 
         every {
-            productRepository.findAll(
-                categoryId = null,
+            productSummaryQueryRepository.findPageByCategoryIds(
+                categoryIds = null,
                 pageQuery = PageQuery(page = 0, size = 20),
                 sort = ProductListSort.LATEST,
             )
         } returns PageResult(
-            items = listOf(product),
+            items = listOf(
+                ProductSummaryQueryResult(
+                    productId = 10L,
+                    name = product.name,
+                    primaryImageUrl = product.primaryImage().imageUrl,
+                    basePrice = product.basePrice.amount,
+                    likeCount = 3L,
+                    saleStatus = ProductSaleStatus.AVAILABLE,
+                ),
+            ),
             page = 0,
             size = 20,
             totalElements = 1,
             totalPages = 1,
         )
-        every { productRepository.findPrimaryImageUrlsByProductIds(listOf(10L)) } returns mapOf(10L to product.primaryImage().imageUrl)
-        every { likeApi.countProductLikes(listOf(10L)) } returns mapOf(10L to 3L)
 
-        val result = catalogService.getProducts(
+        val result = catalogService.getProductsByCategory(
             memberId = null,
             page = 0,
             size = 20,
@@ -98,6 +124,7 @@ class DefaultCatalogServiceTest {
         )
 
         result.items.single().likedByMe shouldBe false
+        verify(exactly = 0) { categoryHierarchyRepository.findSelfAndDescendantIds(any()) }
         verify(exactly = 0) { likeApi.findLikedProductIds(any(), any()) }
     }
 
@@ -106,7 +133,7 @@ class DefaultCatalogServiceTest {
         val product = product(id = 10L, price = 19_900, categoryIds = listOf(20L, 10L))
 
         every { productRepository.findById(10L) } returns product
-        every { likeApi.countProductLikes(listOf(10L)) } returns mapOf(10L to 7L)
+        every { productStatisticRepository.findLikeCount(10L) } returns 7L
         every { likeApi.findLikedProductIds(1L, listOf(10L)) } returns setOf(10L)
 
         val result = catalogService.getProduct(productId = 10L, memberId = 1L)

@@ -6,7 +6,7 @@ import zoonza.commerce.catalog.application.dto.ProductSummary
 import zoonza.commerce.support.pagination.PageResponse
 
 interface CatalogService {
-    fun getProducts(
+    fun getProductsByCategory(
         memberId: Long?,
         page: Int,
         size: Int,
