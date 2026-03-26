@@ -14,7 +14,7 @@ interface CatalogService {
         sort: ProductListSort,
     ): PageResponse<ProductSummary>
 
-    fun getProduct(
+    fun getProductDetails(
         productId: Long,
         memberId: Long?,
     ): ProductDetail

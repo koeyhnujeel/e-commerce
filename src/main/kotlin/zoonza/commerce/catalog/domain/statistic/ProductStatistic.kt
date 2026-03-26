@@ -1,4 +1,4 @@
-package zoonza.commerce.catalog.domain
+package zoonza.commerce.catalog.domain.statistic
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

@@ -1,6 +1,6 @@
 package zoonza.commerce.catalog.adapter.`in`.response
 
-import zoonza.commerce.catalog.domain.ProductSaleStatus
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 
 data class ProductSummaryResponse(
     val productId: Long,

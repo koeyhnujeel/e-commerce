@@ -7,8 +7,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
-import zoonza.commerce.catalog.domain.ProductStatistic
+import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaRepository
+import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticRepositoryAdapter
+import zoonza.commerce.catalog.domain.statistic.ProductStatistic
+import zoonza.commerce.catalog.domain.statistic.ProductStatisticRepository
 import zoonza.commerce.support.MySqlTestContainerConfig
 import zoonza.commerce.support.persistence.QuerydslConfig
 

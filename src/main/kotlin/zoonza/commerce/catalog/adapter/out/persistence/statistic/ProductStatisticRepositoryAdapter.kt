@@ -1,10 +1,10 @@
-package zoonza.commerce.catalog.adapter.out.persistence
+package zoonza.commerce.catalog.adapter.out.persistence.statistic
 
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
-import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
-import zoonza.commerce.catalog.domain.ProductStatistic
+import zoonza.commerce.catalog.domain.statistic.ProductStatistic
+import zoonza.commerce.catalog.domain.statistic.ProductStatisticRepository
 
 @Repository
 class ProductStatisticRepositoryAdapter(

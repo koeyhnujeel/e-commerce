@@ -1,6 +1,6 @@
 package zoonza.commerce.catalog.application.dto
 
-import zoonza.commerce.catalog.domain.ProductSaleStatus
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 
 data class ProductSummary(
     val productId: Long,

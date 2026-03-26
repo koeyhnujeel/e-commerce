@@ -3,29 +3,25 @@ package zoonza.commerce.catalog.application.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.CatalogApi
+import zoonza.commerce.catalog.CatalogErrorCode
 import zoonza.commerce.catalog.OrderProductSnapshot
 import zoonza.commerce.catalog.ProductOptionSnapshot
-import zoonza.commerce.catalog.application.dto.ProductDetail
-import zoonza.commerce.catalog.application.dto.ProductImageDetail
-import zoonza.commerce.catalog.application.dto.ProductListSort
-import zoonza.commerce.catalog.application.dto.ProductOptionDetail
-import zoonza.commerce.catalog.application.dto.ProductSummary
-import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
+import zoonza.commerce.catalog.application.dto.*
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
-import zoonza.commerce.catalog.application.port.out.ProductRepository
-import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
-import zoonza.commerce.catalog.domain.Product
+import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
+import zoonza.commerce.catalog.domain.category.CategoryRepository
+import zoonza.commerce.catalog.domain.product.ProductRepository
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
+import zoonza.commerce.like.LikeApi
+import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResponse
-import zoonza.commerce.like.LikeApi
-import zoonza.commerce.catalog.CatalogErrorCode
-import zoonza.commerce.shared.BusinessException
 
 @Service
 class DefaultCatalogService(
     private val productRepository: ProductRepository,
-    private val categoryHierarchyRepository: CategoryHierarchyRepository,
-    private val productStatisticRepository: ProductStatisticRepository,
+    private val productQueryRepository: ProductQueryRepository,
+    private val categoryRepository: CategoryRepository,
     private val likeApi: LikeApi,
 ) : CatalogApi, CatalogService {
     override fun assertProductExists(id: Long) {
@@ -42,8 +38,8 @@ class DefaultCatalogService(
         categoryId: Long,
         sort: ProductListSort,
     ): PageResponse<ProductSummary> {
-        val categoryIds = categoryHierarchyRepository.findSelfAndDescendantIds(categoryId)
-        val productPage = productRepository.findPageByCategoryIds(
+        val categoryIds = categoryRepository.findSelfAndDescendantIds(categoryId)
+        val productPage = productQueryRepository.findPageByCategoryIds(
             categoryIds = categoryIds,
             pageQuery = PageQuery(page = page, size = size),
             sort = sort,
@@ -71,26 +67,32 @@ class DefaultCatalogService(
     }
 
     @Transactional(readOnly = true)
-    override fun getProduct(
+    override fun getProductDetails(
         productId: Long,
         memberId: Long?,
     ): ProductDetail {
-        val product = productRepository.findById(productId)
+        val product = productQueryRepository.findProductDetailsById(productId)
             ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
 
-        if (!product.isAvailableForSale()) {
+        val saleStatus =
+            if (product.options.isNotEmpty()) {
+                ProductSaleStatus.AVAILABLE
+            } else {
+                ProductSaleStatus.UNAVAILABLE
+            }
+
+        if (saleStatus != ProductSaleStatus.AVAILABLE) {
             throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
 
         val likedByMe = memberId?.let { productId in likeApi.findLikedProductIds(it, listOf(productId)) } ?: false
-        val likeCount = productStatisticRepository.findLikeCount(productId)
 
         return ProductDetail(
-            productId = product.id,
+            productId = product.productId,
             name = product.name,
             description = product.description,
-            basePrice = product.basePrice.amount,
-            categoryIds = product.categoryIds.toList().sorted(),
+            basePrice = product.basePrice,
+            categoryId = product.categoryId,
             images = product.images.map { image ->
                 ProductImageDetail(
                     imageUrl = image.imageUrl,
@@ -100,16 +102,16 @@ class DefaultCatalogService(
             },
             options = product.options.map { option ->
                 ProductOptionDetail(
-                    productOptionId = option.id,
+                    productOptionId = option.productOptionId,
                     color = option.color,
                     size = option.size,
-                    stockId = option.stockId,
-                    orderable = option.isOrderable(),
+                    sortOrder = option.sortOrder,
+                    additionalPrice = option.additionalPrice,
                 )
             },
-            likeCount = likeCount,
+            likeCount = product.likeCount,
             likedByMe = likedByMe,
-            saleStatus = product.saleStatus(),
+            saleStatus = saleStatus,
         )
     }
 
@@ -132,21 +134,13 @@ class DefaultCatalogService(
         val product = productRepository.findById(productId)
             ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
 
-        if (!product.isAvailableForSale()) {
-            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
-        }
-
         val option = product.options.firstOrNull { it.id == productOptionId }
             ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
-
-        if (!option.isOrderable()) {
-            throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
-        }
 
         return OrderProductSnapshot(
             productName = product.name,
             option = ProductOptionSnapshot(color = option.color, size = option.size),
-            unitPrice = product.basePrice,
+            unitPrice = product.basePrice + option.additionalPrice,
         )
     }
 

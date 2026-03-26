@@ -1,13 +1,13 @@
 package zoonza.commerce.catalog.adapter.`in`.response
 
-import zoonza.commerce.catalog.domain.ProductSaleStatus
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 
 data class ProductDetailResponse(
     val productId: Long,
     val name: String,
     val description: String,
     val basePrice: Long,
-    val categoryIds: List<Long>,
+    val categoryId: Long,
     val images: List<ProductImageResponse>,
     val options: List<ProductOptionResponse>,
     val likeCount: Long,
@@ -25,6 +25,6 @@ data class ProductOptionResponse(
     val productOptionId: Long,
     val color: String,
     val size: String,
-    val stockId: Long,
-    val orderable: Boolean,
+    val sortOrder: Int,
+    val additionalPrice: Long,
 )

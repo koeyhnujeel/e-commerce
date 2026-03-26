@@ -1,13 +1,13 @@
-package zoonza.commerce.catalog.adapter.out.persistence
+package zoonza.commerce.catalog.adapter.out.persistence.category
 
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Repository
-import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
+import zoonza.commerce.catalog.domain.category.CategoryRepository
 
 @Repository
-class CategoryHierarchyRepositoryAdapter(
+class CategoryRepositoryAdapter(
     private val entityManager: EntityManager,
-) : CategoryHierarchyRepository {
+) : CategoryRepository {
     override fun findSelfAndDescendantIds(categoryId: Long): Set<Long> {
         val query = entityManager.createNativeQuery(
             """

@@ -1,7 +1,7 @@
 package zoonza.commerce.support.fixture
 
-import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.catalog.domain.ProductOption
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductEntity
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductOptionEntity
 import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderStatus
@@ -11,13 +11,13 @@ import java.time.LocalDateTime
 object OrderFixture {
     fun create(
         memberId: Long,
-        product: Product,
+        product: ProductEntity,
         orderNumber: String,
         orderedAt: LocalDateTime,
         status: OrderStatus = OrderStatus.CREATED,
         deliveredAt: LocalDateTime? = null,
         quantity: Int = 1,
-        productOption: ProductOption = product.options.first(),
+        productOption: ProductOptionEntity = product.options.first(),
         orderPrice: Money = product.basePrice,
     ): Order {
         return Order.create(
@@ -43,11 +43,11 @@ object OrderFixture {
 
     fun createDelivered(
         memberId: Long,
-        product: Product,
+        product: ProductEntity,
         orderNumber: String,
         deliveredAt: LocalDateTime,
         quantity: Int = 1,
-        productOption: ProductOption = product.options.first(),
+        productOption: ProductOptionEntity = product.options.first(),
         orderPrice: Money = product.basePrice,
     ): Order {
         return create(
@@ -65,12 +65,12 @@ object OrderFixture {
 
     fun createPurchaseConfirmed(
         memberId: Long,
-        product: Product,
+        product: ProductEntity,
         orderNumber: String,
         deliveredAt: LocalDateTime,
         confirmedAt: LocalDateTime,
         quantity: Int = 1,
-        productOption: ProductOption = product.options.first(),
+        productOption: ProductOptionEntity = product.options.first(),
         orderPrice: Money = product.basePrice,
     ): Order {
         val order =

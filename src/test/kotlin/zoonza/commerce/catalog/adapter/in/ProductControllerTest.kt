@@ -10,11 +10,11 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.adapter.out.persistence.CategoryJpaRepository
-import zoonza.commerce.catalog.adapter.out.persistence.ProductJpaRepository
-import zoonza.commerce.catalog.adapter.out.persistence.ProductStatisticJpaRepository
-import zoonza.commerce.catalog.domain.Category
-import zoonza.commerce.catalog.domain.ProductStatistic
+import zoonza.commerce.catalog.adapter.out.persistence.category.CategoryJpaRepository
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaRepository
+import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaRepository
+import zoonza.commerce.catalog.domain.category.Category
+import zoonza.commerce.catalog.domain.statistic.ProductStatistic
 import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
@@ -58,14 +58,14 @@ class ProductControllerTest {
             ProductFixture.createCatalogProduct(
                 index = 1,
                 price = 19_900,
-                categoryIds = listOf(savedChildCategory.id),
+                categoryId = savedChildCategory.id,
             ),
         )
         val expensiveProduct = productJpaRepository.save(
             ProductFixture.createCatalogProduct(
                 index = 2,
                 price = 39_900,
-                categoryIds = listOf(savedRootCategory.id),
+                categoryId = savedRootCategory.id,
             ),
         )
         val otherCategory = categoryJpaRepository.save(Category.createRoot(name = "하의", sortOrder = 1))
@@ -73,7 +73,7 @@ class ProductControllerTest {
             ProductFixture.createCatalogProduct(
                 index = 3,
                 price = 9_900,
-                categoryIds = listOf(otherCategory.id),
+                categoryId = otherCategory.id,
             ),
         )
 
@@ -101,8 +101,8 @@ class ProductControllerTest {
     @Test
     fun `로그인 사용자는 상품 목록에서 likedByMe를 확인할 수 있다`() {
         val category = categoryJpaRepository.save(Category.createRoot(name = "상의", sortOrder = 0))
-        val likedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(category.id)))
-        val unlikedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 2, price = 29_900, categoryIds = listOf(category.id)))
+        val likedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
+        val unlikedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 2, price = 29_900, categoryId = category.id))
         productStatisticJpaRepository.save(ProductStatistic.create(productId = likedProduct.id, likeCount = 2L))
         productStatisticJpaRepository.save(ProductStatistic.create(productId = unlikedProduct.id, likeCount = 1L))
 
@@ -127,7 +127,8 @@ class ProductControllerTest {
 
     @Test
     fun `비로그인 사용자는 상품 상세를 조회할 수 있다`() {
-        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(20L, 10L)))
+        val category = categoryJpaRepository.save(Category.createRoot(name = "셔츠", sortOrder = 0))
+        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
         productStatisticJpaRepository.save(ProductStatistic.create(productId = product.id, likeCount = 1L))
 
         mockMvc
@@ -136,10 +137,11 @@ class ProductControllerTest {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
                 jsonPath("$.data.productId") { value(product.id) }
-                jsonPath("$.data.categoryIds[0]") { value(10) }
+                jsonPath("$.data.categoryId") { value(category.id) }
                 jsonPath("$.data.images.length()") { value(2) }
                 jsonPath("$.data.options.length()") { value(2) }
-                jsonPath("$.data.options[0].orderable") { value(true) }
+                jsonPath("$.data.options[0].sortOrder") { value(0) }
+                jsonPath("$.data.options[1].additionalPrice") { value(1000) }
                 jsonPath("$.data.likeCount") { value(1) }
                 jsonPath("$.data.likedByMe") { value(false) }
                 jsonPath("$.data.saleStatus") { value("AVAILABLE") }
@@ -148,7 +150,8 @@ class ProductControllerTest {
 
     @Test
     fun `로그인 사용자는 상품 상세에서 likedByMe를 확인할 수 있다`() {
-        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(1L)))
+        val category = categoryJpaRepository.save(Category.createRoot(name = "바지", sortOrder = 0))
+        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
         productStatisticJpaRepository.save(ProductStatistic.create(productId = product.id, likeCount = 1L))
 
         memberLikeJpaRepository.save(MemberLike.create(memberId = 7L, targetId = product.id, targetType = LikeTargetType.PRODUCT))
@@ -165,9 +168,23 @@ class ProductControllerTest {
     }
 
     @Test
+    fun `통계 row가 없으면 상품 상세의 likeCount는 0이다`() {
+        val category = categoryJpaRepository.save(Category.createRoot(name = "아우터", sortOrder = 0))
+        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
+
+        mockMvc
+            .get("/api/products/${product.id}")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.data.productId") { value(product.id) }
+                jsonPath("$.data.likeCount") { value(0) }
+            }
+    }
+
+    @Test
     fun `통계 row가 없으면 상품 목록의 likeCount는 0이다`() {
         val category = categoryJpaRepository.save(Category.createRoot(name = "상의", sortOrder = 0))
-        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryIds = listOf(category.id)))
+        val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
 
         mockMvc
             .get("/api/products") {

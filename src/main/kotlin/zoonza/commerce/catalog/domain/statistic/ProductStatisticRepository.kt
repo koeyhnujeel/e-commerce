@@ -1,4 +1,4 @@
-package zoonza.commerce.catalog.application.port.out
+package zoonza.commerce.catalog.domain.statistic
 
 interface ProductStatisticRepository {
     fun findLikeCount(productId: Long): Long

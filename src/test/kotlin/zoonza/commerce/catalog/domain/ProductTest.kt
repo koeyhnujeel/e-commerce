@@ -1,138 +1,38 @@
 package zoonza.commerce.catalog.domain
 
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import zoonza.commerce.catalog.domain.product.Product
+import zoonza.commerce.catalog.domain.product.ProductImage
+import zoonza.commerce.catalog.domain.product.ProductOption
 import zoonza.commerce.shared.Money
 
 class ProductTest {
     @Test
-    fun `상품을 생성하면 기본 정보를 정규화한다`() {
-        val product =
-            Product.create(
-                brandId = 1L,
-                name = "  반팔 티셔츠  ",
-                description = "  여름 기본 아이템  ",
-                basePrice = Money(19_900),
-                categoryIds = listOf(10L, 20L),
-                images = listOf(primaryImage(), secondaryImage()),
-                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
-            )
+    fun `상품은 현재 도메인 필드를 그대로 보관한다`() {
+        val product = product()
 
+        product.id shouldBe 1L
         product.name shouldBe "반팔 티셔츠"
-        product.description shouldBe "여름 기본 아이템"
-        product.categoryIds shouldBe mutableSetOf(10L, 20L)
+        product.categoryId shouldBe 10L
+        product.images.map { it.imageUrl } shouldBe
+            listOf(
+                "https://cdn.example.com/primary.jpg",
+                "https://cdn.example.com/secondary.jpg",
+            )
+        product.options.map { it.additionalPrice.amount } shouldBe listOf(0L, 1_000L)
     }
 
     @Test
-    fun `상품을 생성하면 이미지와 옵션이 상품에 연결된다`() {
-        val product =
-            Product.create(
-                brandId = 1L,
-                name = "반팔 티셔츠",
-                description = "여름 기본 아이템",
-                basePrice = Money(19_900),
-                categoryIds = listOf(10L, 20L),
-                images = listOf(secondaryImage(), primaryImage()),
-                options =
-                    listOf(
-                        option(color = "BLACK", size = "M", stockId = 1L),
-                        option(color = "BLACK", size = "L", stockId = 2L),
-                    ),
-            )
+    fun `상품 옵션은 추가 금액과 정렬 순서를 가진다`() {
+        val option = option(color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L)
 
-        product.images.map { it.sortOrder } shouldBe listOf(0, 1)
-        product.options.map { it.color to it.size } shouldBe listOf("BLACK" to "M", "BLACK" to "L")
-    }
-
-    @Test
-    fun `상품 카테고리는 최소 하나 이상이어야 한다`() {
-        shouldThrow<IllegalArgumentException> {
-            Product.create(
-                brandId = 1L,
-                name = "반팔 티셔츠",
-                description = "여름 기본 아이템",
-                basePrice = Money(19_900),
-                categoryIds = emptyList(),
-                images = listOf(primaryImage()),
-                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
-            )
-        }
-    }
-
-    @Test
-    fun `대표 상품 이미지는 정확히 하나여야 한다`() {
-        shouldThrow<IllegalArgumentException> {
-            Product.create(
-                brandId = 1L,
-                name = "반팔 티셔츠",
-                description = "여름 기본 아이템",
-                basePrice = Money(19_900),
-                categoryIds = listOf(10L),
-                images = listOf(primaryImage(), ProductImage.create("https://cdn.example.com/primary-2.jpg", true, 1)),
-                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
-            )
-        }
-    }
-
-    @Test
-    fun `중복된 옵션 조합은 허용하지 않는다`() {
-        val product =
-            Product.create(
-                brandId = 1L,
-                name = "반팔 티셔츠",
-                description = "여름 기본 아이템",
-                basePrice = Money(19_900),
-                categoryIds = listOf(10L),
-                images = listOf(primaryImage()),
-                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
-            )
-
-        shouldThrow<IllegalArgumentException> {
-            product.replaceOptions(
-                listOf(
-                    option(color = "BLACK", size = "M", stockId = 1L),
-                    option(color = "BLACK", size = "M", stockId = 2L),
-                ),
-            )
-        }
-    }
-
-    @Test
-    fun `상품은 대표 이미지를 조회할 수 있다`() {
-        val product =
-            Product.create(
-                brandId = 1L,
-                name = "반팔 티셔츠",
-                description = "여름 기본 아이템",
-                basePrice = Money(19_900),
-                categoryIds = listOf(10L),
-                images = listOf(secondaryImage(), primaryImage()),
-                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
-            )
-
-        product.primaryImage().imageUrl shouldBe "https://cdn.example.com/primary.jpg"
-    }
-
-    @Test
-    fun `주문 가능한 옵션이 있으면 판매 가능 상품이다`() {
-        val product =
-            Product.create(
-                brandId = 1L,
-                name = "반팔 티셔츠",
-                description = "여름 기본 아이템",
-                basePrice = Money(19_900),
-                categoryIds = listOf(10L),
-                images = listOf(primaryImage()),
-                options = listOf(option(color = "BLACK", size = "M", stockId = 1L)),
-            )
-
-        product.isAvailableForSale() shouldBe true
-        product.saleStatus() shouldBe ProductSaleStatus.AVAILABLE
+        option.sortOder shouldBe 1
+        option.additionalPrice.amount shouldBe 1_000L
     }
 
     private fun primaryImage(): ProductImage {
-        return ProductImage.create(
+        return ProductImage(
             imageUrl = "https://cdn.example.com/primary.jpg",
             isPrimary = true,
             sortOrder = 0,
@@ -140,7 +40,7 @@ class ProductTest {
     }
 
     private fun secondaryImage(): ProductImage {
-        return ProductImage.create(
+        return ProductImage(
             imageUrl = "https://cdn.example.com/secondary.jpg",
             isPrimary = false,
             sortOrder = 1,
@@ -150,12 +50,31 @@ class ProductTest {
     private fun option(
         color: String,
         size: String,
-        stockId: Long,
+        sortOrder: Int,
+        additionalPrice: Long = 0L,
     ): ProductOption {
-        return ProductOption.create(
+        return ProductOption(
             color = color,
             size = size,
-            stockId = stockId,
+            sortOder = sortOrder,
+            additionalPrice = Money(additionalPrice),
+        )
+    }
+
+    private fun product(): Product {
+        return Product(
+            id = 1L,
+            brandId = 1L,
+            name = "반팔 티셔츠",
+            description = "여름 기본 아이템",
+            basePrice = Money(19_900),
+            categoryId = 10L,
+            images = mutableListOf(primaryImage(), secondaryImage()),
+            options =
+                mutableListOf(
+                    option(color = "BLACK", size = "M", sortOrder = 0),
+                    option(color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L),
+                ),
         )
     }
 }

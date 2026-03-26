@@ -3,24 +3,16 @@ package zoonza.commerce.catalog.adapter.`in`
 import jakarta.validation.constraints.Positive
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import zoonza.commerce.catalog.adapter.`in`.response.ProductDetailResponse
 import zoonza.commerce.catalog.adapter.`in`.response.ProductImageResponse
 import zoonza.commerce.catalog.adapter.`in`.response.ProductOptionResponse
 import zoonza.commerce.catalog.adapter.`in`.response.ProductSummaryResponse
-import zoonza.commerce.catalog.application.dto.ProductDetail
-import zoonza.commerce.catalog.application.dto.ProductImageDetail
-import zoonza.commerce.catalog.application.dto.ProductListSort
-import zoonza.commerce.catalog.application.dto.ProductOptionDetail
-import zoonza.commerce.catalog.application.dto.ProductSummary
+import zoonza.commerce.catalog.application.dto.*
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
-import zoonza.commerce.support.web.ApiResponse
-import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.security.CurrentMember
+import zoonza.commerce.support.pagination.PageResponse
+import zoonza.commerce.support.web.ApiResponse
 
 @Validated
 @RestController
@@ -63,11 +55,11 @@ class ProductController(
     }
 
     @GetMapping("/{productId}")
-    fun getProduct(
+    fun getProductDetails(
         @PathVariable productId: Long,
         @AuthenticationPrincipal currentMember: CurrentMember?,
     ): ApiResponse<ProductDetailResponse> {
-        val product = catalogService.getProduct(
+        val product = catalogService.getProductDetails(
             productId = productId,
             memberId = currentMember?.memberId,
         )
@@ -93,7 +85,7 @@ class ProductController(
             name = product.name,
             description = product.description,
             basePrice = product.basePrice,
-            categoryIds = product.categoryIds,
+            categoryId = product.categoryId,
             images = product.images.map(::toProductImageResponse),
             options = product.options.map(::toProductOptionResponse),
             likeCount = product.likeCount,
@@ -115,8 +107,8 @@ class ProductController(
             productOptionId = option.productOptionId,
             color = option.color,
             size = option.size,
-            stockId = option.stockId,
-            orderable = option.orderable,
+            sortOrder = option.sortOrder,
+            additionalPrice = option.additionalPrice,
         )
     }
 }

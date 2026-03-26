@@ -3,7 +3,7 @@ package zoonza.commerce.catalog.application.service
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
-import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
+import zoonza.commerce.catalog.domain.statistic.ProductStatisticRepository
 import zoonza.commerce.like.ProductLikeCanceled
 import zoonza.commerce.like.ProductLiked
 

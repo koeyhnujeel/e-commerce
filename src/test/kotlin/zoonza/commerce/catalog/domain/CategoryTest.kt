@@ -3,6 +3,7 @@ package zoonza.commerce.catalog.domain
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import zoonza.commerce.catalog.domain.category.Category
 
 class CategoryTest {
     @Test
