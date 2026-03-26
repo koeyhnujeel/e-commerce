@@ -5,9 +5,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.verification.VerificationErrorCode
 import zoonza.commerce.verification.VerificationApi
 import zoonza.commerce.verification.VerificationCodeCreated
+import zoonza.commerce.verification.VerificationErrorCode
 import zoonza.commerce.verification.application.port.out.VerificationCodeRepository
 import zoonza.commerce.verification.domain.VerificationCode
 import zoonza.commerce.verification.domain.VerificationPurpose

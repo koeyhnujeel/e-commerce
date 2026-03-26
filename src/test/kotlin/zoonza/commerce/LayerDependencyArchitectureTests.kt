@@ -4,8 +4,8 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.TestFactory
 
 class LayerDependencyArchitectureTests {
     private val threeLayerModules = listOf(
