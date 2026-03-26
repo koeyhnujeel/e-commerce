@@ -3,7 +3,7 @@ package zoonza.commerce.payment.adapter.out.toss
 import org.springframework.stereotype.Component
 import zoonza.commerce.payment.application.port.out.PaymentGatewayConfiguration
 import java.nio.charset.StandardCharsets
-import java.util.Base64
+import java.util.*
 
 @Component
 class TossAuthorizationHeaderProvider(

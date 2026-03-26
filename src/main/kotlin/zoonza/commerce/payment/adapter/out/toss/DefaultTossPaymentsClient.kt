@@ -9,13 +9,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestClientResponseException
-import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.PaymentCancelResult
-import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
-import zoonza.commerce.payment.application.port.out.PaymentConfirmResult
-import zoonza.commerce.payment.application.port.out.PaymentGatewayClient
-import zoonza.commerce.payment.application.port.out.PaymentGatewayClientException
-import zoonza.commerce.payment.application.port.out.PaymentGatewayConfiguration
+import zoonza.commerce.payment.application.port.out.*
 import java.time.LocalDateTime
 
 @Component

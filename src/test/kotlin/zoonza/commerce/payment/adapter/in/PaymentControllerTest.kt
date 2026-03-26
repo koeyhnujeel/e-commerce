@@ -2,6 +2,7 @@ package zoonza.commerce.payment.adapter.`in`
 
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -9,22 +10,17 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
-import org.mockito.BDDMockito.given
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.adapter.out.persistence.ProductJpaRepository
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaRepository
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
 import zoonza.commerce.order.adapter.out.persistence.OrderJpaRepository
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.payment.adapter.out.persistence.PaymentJpaRepository
-import zoonza.commerce.payment.application.port.out.PaymentCancelRequest
-import zoonza.commerce.payment.application.port.out.PaymentCancelResult
-import zoonza.commerce.payment.application.port.out.PaymentConfirmRequest
-import zoonza.commerce.payment.application.port.out.PaymentConfirmResult
-import zoonza.commerce.payment.application.port.out.PaymentGatewayClient
+import zoonza.commerce.payment.application.port.out.*
 import zoonza.commerce.payment.domain.PaymentStatus
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.support.MySqlTestContainerConfig
