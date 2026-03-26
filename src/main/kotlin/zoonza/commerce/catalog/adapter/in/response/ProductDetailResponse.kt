@@ -1,5 +1,8 @@
 package zoonza.commerce.catalog.adapter.`in`.response
 
+import zoonza.commerce.catalog.application.dto.ProductDetail
+import zoonza.commerce.catalog.application.dto.ProductImageDetail
+import zoonza.commerce.catalog.application.dto.ProductOptionDetail
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 
 data class ProductDetailResponse(
@@ -13,13 +16,40 @@ data class ProductDetailResponse(
     val likeCount: Long,
     val likedByMe: Boolean,
     val saleStatus: ProductSaleStatus,
-)
+) {
+    companion object {
+        fun from(product: ProductDetail): ProductDetailResponse {
+            return ProductDetailResponse(
+                productId = product.productId,
+                name = product.name,
+                description = product.description,
+                basePrice = product.basePrice,
+                categoryId = product.categoryId,
+                images = product.images.map(ProductImageResponse::from),
+                options = product.options.map(ProductOptionResponse::from),
+                likeCount = product.likeCount,
+                likedByMe = product.likedByMe,
+                saleStatus = product.saleStatus,
+            )
+        }
+    }
+}
 
 data class ProductImageResponse(
     val imageUrl: String,
     val isPrimary: Boolean,
     val sortOrder: Int,
-)
+) {
+    companion object {
+        fun from(image: ProductImageDetail): ProductImageResponse {
+            return ProductImageResponse(
+                imageUrl = image.imageUrl,
+                isPrimary = image.isPrimary,
+                sortOrder = image.sortOrder,
+            )
+        }
+    }
+}
 
 data class ProductOptionResponse(
     val productOptionId: Long,
@@ -27,4 +57,16 @@ data class ProductOptionResponse(
     val size: String,
     val sortOrder: Int,
     val additionalPrice: Long,
-)
+) {
+    companion object {
+        fun from(option: ProductOptionDetail): ProductOptionResponse {
+            return ProductOptionResponse(
+                productOptionId = option.productOptionId,
+                color = option.color,
+                size = option.size,
+                sortOrder = option.sortOrder,
+                additionalPrice = option.additionalPrice,
+            )
+        }
+    }
+}

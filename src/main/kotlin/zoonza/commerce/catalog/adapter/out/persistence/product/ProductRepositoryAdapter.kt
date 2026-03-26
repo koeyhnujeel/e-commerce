@@ -14,10 +14,10 @@ class ProductRepositoryAdapter(
     }
 
     override fun findById(id: Long): Product? {
-        return productJpaRepository.findByIdOrNull(id)?.let(ProductMapper::toDomain)
+        return productJpaRepository.findByIdOrNull(id)?.toDomain()
     }
 
     override fun findByOptionId(productOptionId: Long): Product? {
-        return productJpaRepository.findByOptionId(productOptionId)?.let(ProductMapper::toDomain)
+        return productJpaRepository.findByOptionId(productOptionId)?.toDomain()
     }
 }

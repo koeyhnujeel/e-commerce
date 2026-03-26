@@ -1,7 +1,6 @@
 package zoonza.commerce.support.fixture
 
-import zoonza.commerce.catalog.adapter.out.persistence.product.ProductEntity
-import zoonza.commerce.catalog.adapter.out.persistence.product.ProductMapper
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaEntity
 import zoonza.commerce.catalog.domain.product.Product
 import zoonza.commerce.catalog.domain.product.ProductImage
 import zoonza.commerce.catalog.domain.product.ProductOption
@@ -18,8 +17,8 @@ object ProductFixture {
         color: String = "BLACK",
         size: String = "M",
         additionalPrice: Long = 0,
-    ): ProductEntity {
-        return ProductMapper.toEntity(
+    ): ProductJpaEntity {
+        return ProductJpaEntity.from(
             Product(
                 brandId = 1L,
                 name = "$namePrefix$index",
@@ -54,8 +53,8 @@ object ProductFixture {
         namePrefix: String = "상품",
         descriptionPrefix: String = "상품 설명",
         imagePrefix: String = "product",
-    ): ProductEntity {
-        return ProductMapper.toEntity(
+    ): ProductJpaEntity {
+        return ProductJpaEntity.from(
             Product(
                 brandId = 1L,
                 name = "$namePrefix$index",

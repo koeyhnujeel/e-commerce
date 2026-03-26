@@ -5,10 +5,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import zoonza.commerce.catalog.adapter.`in`.response.ProductDetailResponse
-import zoonza.commerce.catalog.adapter.`in`.response.ProductImageResponse
-import zoonza.commerce.catalog.adapter.`in`.response.ProductOptionResponse
 import zoonza.commerce.catalog.adapter.`in`.response.ProductSummaryResponse
-import zoonza.commerce.catalog.application.dto.*
+import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.security.CurrentMember
 import zoonza.commerce.support.pagination.PageResponse
@@ -45,7 +43,7 @@ class ProductController(
 
         return ApiResponse.success(
             PageResponse(
-                items = products.items.map(::toProductSummaryResponse),
+                items = products.items.map(ProductSummaryResponse::from),
                 page = products.page + 1,
                 size = products.size,
                 totalElements = products.totalElements,
@@ -64,51 +62,6 @@ class ProductController(
             memberId = currentMember?.memberId,
         )
 
-        return ApiResponse.success(toProductDetailResponse(product))
-    }
-
-    private fun toProductSummaryResponse(product: ProductSummary): ProductSummaryResponse {
-        return ProductSummaryResponse(
-            productId = product.productId,
-            name = product.name,
-            primaryImageUrl = product.primaryImageUrl,
-            basePrice = product.basePrice,
-            likeCount = product.likeCount,
-            likedByMe = product.likedByMe,
-            saleStatus = product.saleStatus,
-        )
-    }
-
-    private fun toProductDetailResponse(product: ProductDetail): ProductDetailResponse {
-        return ProductDetailResponse(
-            productId = product.productId,
-            name = product.name,
-            description = product.description,
-            basePrice = product.basePrice,
-            categoryId = product.categoryId,
-            images = product.images.map(::toProductImageResponse),
-            options = product.options.map(::toProductOptionResponse),
-            likeCount = product.likeCount,
-            likedByMe = product.likedByMe,
-            saleStatus = product.saleStatus,
-        )
-    }
-
-    private fun toProductImageResponse(image: ProductImageDetail): ProductImageResponse {
-        return ProductImageResponse(
-            imageUrl = image.imageUrl,
-            isPrimary = image.isPrimary,
-            sortOrder = image.sortOrder,
-        )
-    }
-
-    private fun toProductOptionResponse(option: ProductOptionDetail): ProductOptionResponse {
-        return ProductOptionResponse(
-            productOptionId = option.productOptionId,
-            color = option.color,
-            size = option.size,
-            sortOrder = option.sortOrder,
-            additionalPrice = option.additionalPrice,
-        )
+        return ApiResponse.success(ProductDetailResponse.from(product))
     }
 }

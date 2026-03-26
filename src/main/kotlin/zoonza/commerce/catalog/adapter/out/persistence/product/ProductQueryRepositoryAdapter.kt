@@ -5,9 +5,9 @@ import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
-import zoonza.commerce.catalog.adapter.out.persistence.product.QProductEntity.Companion.productEntity
-import zoonza.commerce.catalog.adapter.out.persistence.product.QProductImageEntity.Companion.productImageEntity
-import zoonza.commerce.catalog.adapter.out.persistence.product.QProductOptionEntity.Companion.productOptionEntity
+import zoonza.commerce.catalog.adapter.out.persistence.product.QProductJpaEntity.Companion.productJpaEntity
+import zoonza.commerce.catalog.adapter.out.persistence.product.QProductImageJpaEntity.Companion.productImageJpaEntity
+import zoonza.commerce.catalog.adapter.out.persistence.product.QProductOptionJpaEntity.Companion.productOptionJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductImageDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductOptionDetailProjection
@@ -32,48 +32,48 @@ class ProductQueryRepositoryAdapter(
         val productDetail = queryFactory
             .select(
                 QProductDetailProjection(
-                    productEntity.id,
-                    productEntity.name,
-                    productEntity.description,
-                    productEntity.basePrice.amount,
-                    productEntity.categoryId,
+                    productJpaEntity.id,
+                    productJpaEntity.name,
+                    productJpaEntity.description,
+                    productJpaEntity.basePrice.amount,
+                    productJpaEntity.categoryId,
                     productStatistic.likeCount.coalesce(0L),
                 ),
             )
-            .from(productEntity)
-            .leftJoin(productStatistic).on(productStatistic.productId.eq(productEntity.id))
-            .where(productEntity.id.eq(id))
+            .from(productJpaEntity)
+            .leftJoin(productStatistic).on(productStatistic.productId.eq(productJpaEntity.id))
+            .where(productJpaEntity.id.eq(id))
             .fetchOne()
             ?: return null
 
         val images = queryFactory
             .select(
                 QProductImageDetailProjection(
-                    productImageEntity.imageUrl,
-                    productImageEntity.isPrimary,
-                    productImageEntity.sortOrder,
+                    productImageJpaEntity.imageUrl,
+                    productImageJpaEntity.isPrimary,
+                    productImageJpaEntity.sortOrder,
                 ),
             )
-            .from(productEntity)
-            .join(productEntity.images, productImageEntity)
-            .where(productEntity.id.eq(id))
-            .orderBy(productImageEntity.sortOrder.asc())
+            .from(productJpaEntity)
+            .join(productJpaEntity.images, productImageJpaEntity)
+            .where(productJpaEntity.id.eq(id))
+            .orderBy(productImageJpaEntity.sortOrder.asc())
             .fetch()
 
         val options = queryFactory
             .select(
                 QProductOptionDetailProjection(
-                    productOptionEntity.id,
-                    productOptionEntity.color,
-                    productOptionEntity.size,
-                    productOptionEntity.sortOrder,
-                    productOptionEntity.additionalPrice.amount,
+                    productOptionJpaEntity.id,
+                    productOptionJpaEntity.color,
+                    productOptionJpaEntity.size,
+                    productOptionJpaEntity.sortOrder,
+                    productOptionJpaEntity.additionalPrice.amount,
                 ),
             )
-            .from(productEntity)
-            .join(productEntity.options, productOptionEntity)
-            .where(productEntity.id.eq(id))
-            .orderBy(productOptionEntity.sortOrder.asc())
+            .from(productJpaEntity)
+            .join(productJpaEntity.options, productOptionJpaEntity)
+            .where(productJpaEntity.id.eq(id))
+            .orderBy(productOptionJpaEntity.sortOrder.asc())
             .fetch()
 
         return ProductDetailQueryResult(
@@ -120,20 +120,20 @@ class ProductQueryRepositoryAdapter(
         val items = queryFactory
             .select(
                 QProductSummaryProjection(
-                    productEntity.id,
-                    productEntity.name,
-                    productImageEntity.imageUrl,
-                    productEntity.basePrice.amount,
+                    productJpaEntity.id,
+                    productJpaEntity.name,
+                    productImageJpaEntity.imageUrl,
+                    productJpaEntity.basePrice.amount,
                     productStatistic.likeCount.coalesce(0L),
                     Expressions.constant(ProductSaleStatus.AVAILABLE),
                 ),
             )
-            .from(productEntity)
-            .join(productEntity.images, productImageEntity)
-            .leftJoin(productStatistic).on(productStatistic.productId.eq(productEntity.id))
+            .from(productJpaEntity)
+            .join(productJpaEntity.images, productImageJpaEntity)
+            .leftJoin(productStatistic).on(productStatistic.productId.eq(productJpaEntity.id))
             .where(
                 categoryIdsIn(categoryIds),
-                productImageEntity.isPrimary.isTrue,
+                productImageJpaEntity.isPrimary.isTrue,
             )
             .orderBy(*orderSpecifiers(sort))
             .offset((pageQuery.page * pageQuery.size).toLong())
@@ -141,8 +141,8 @@ class ProductQueryRepositoryAdapter(
             .fetch()
 
         val totalElements = queryFactory
-            .select(productEntity.count())
-            .from(productEntity)
+            .select(productJpaEntity.count())
+            .from(productJpaEntity)
             .where(categoryIdsIn(categoryIds))
             .fetchOne() ?: 0L
 
@@ -172,14 +172,14 @@ class ProductQueryRepositoryAdapter(
     }
 
     private fun categoryIdsIn(categoryIds: Set<Long>): BooleanExpression {
-        return productEntity.categoryId.`in`(categoryIds)
+        return productJpaEntity.categoryId.`in`(categoryIds)
     }
 
     private fun orderSpecifiers(sort: ProductListSort): Array<OrderSpecifier<*>> {
         return when (sort) {
-            ProductListSort.LATEST -> arrayOf(productEntity.id.desc())
-            ProductListSort.PRICE_ASC -> arrayOf(productEntity.basePrice.amount.asc(), productEntity.id.desc())
-            ProductListSort.PRICE_DESC -> arrayOf(productEntity.basePrice.amount.desc(), productEntity.id.desc())
+            ProductListSort.LATEST -> arrayOf(productJpaEntity.id.desc())
+            ProductListSort.PRICE_ASC -> arrayOf(productJpaEntity.basePrice.amount.asc(), productJpaEntity.id.desc())
+            ProductListSort.PRICE_DESC -> arrayOf(productJpaEntity.basePrice.amount.desc(), productJpaEntity.id.desc())
         }
     }
 }
