@@ -12,9 +12,9 @@ import zoonza.commerce.auth.domain.RefreshToken
 import zoonza.commerce.member.AuthenticatedMember
 import zoonza.commerce.member.MemberApi
 import zoonza.commerce.security.AccessTokenProvider
+import zoonza.commerce.shared.AuthErrorCode
 import zoonza.commerce.shared.AuthException
 import zoonza.commerce.shared.Email
-import zoonza.commerce.shared.AuthErrorCode
 import java.time.LocalDateTime
 
 class DefaultAuthServiceTest {

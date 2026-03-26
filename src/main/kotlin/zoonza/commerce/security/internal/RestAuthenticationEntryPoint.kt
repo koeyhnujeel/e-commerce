@@ -8,9 +8,9 @@ import org.springframework.http.MediaType
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.stereotype.Component
+import zoonza.commerce.shared.AuthErrorCode
 import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.support.web.ErrorResponse
-import zoonza.commerce.shared.AuthErrorCode
 import java.nio.charset.StandardCharsets
 
 @Component

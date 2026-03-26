@@ -4,14 +4,13 @@ import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.web.bind.annotation.*
-import zoonza.commerce.auth.adapter.`in`.RefreshTokenCookieManager
 import zoonza.commerce.auth.adapter.`in`.request.LoginRequest
 import zoonza.commerce.auth.adapter.`in`.response.LoginResponse
 import zoonza.commerce.auth.application.dto.LoginCommand
 import zoonza.commerce.auth.application.port.`in`.AuthService
-import zoonza.commerce.support.web.ApiResponse
-import zoonza.commerce.shared.AuthException
 import zoonza.commerce.shared.AuthErrorCode
+import zoonza.commerce.shared.AuthException
+import zoonza.commerce.support.web.ApiResponse
 
 @RestController
 @RequestMapping("/api/auth")

@@ -5,13 +5,13 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import zoonza.commerce.support.web.ApiResponse
 import zoonza.commerce.member.adapter.`in`.request.SendSignupEmailVerificationCodeRequest
 import zoonza.commerce.member.adapter.`in`.request.SignupMemberRequest
 import zoonza.commerce.member.adapter.`in`.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.member.adapter.`in`.response.SignupMemberResponse
 import zoonza.commerce.member.application.dto.SignupCommand
 import zoonza.commerce.member.application.port.`in`.MemberService
+import zoonza.commerce.support.web.ApiResponse
 
 @RestController
 @RequestMapping("/api/members")

@@ -1,8 +1,8 @@
 package zoonza.commerce.auth.adapter.out.persistence
 
 import org.springframework.stereotype.Repository
-import zoonza.commerce.auth.domain.RefreshToken
 import zoonza.commerce.auth.application.port.out.RefreshTokenRepository
+import zoonza.commerce.auth.domain.RefreshToken
 
 @Repository
 class RefreshTokenRepositoryAdapter(
