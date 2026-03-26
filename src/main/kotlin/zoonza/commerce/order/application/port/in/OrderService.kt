@@ -1,10 +1,6 @@
 package zoonza.commerce.order.application.port.`in`
 
-import zoonza.commerce.order.application.dto.CreateOrderCommand
-import zoonza.commerce.order.application.dto.CreateOrderResult
-import zoonza.commerce.order.application.dto.OrderDetail
-import zoonza.commerce.order.application.dto.OrderSummary
-import zoonza.commerce.order.application.dto.UpdateOrderCommand
+import zoonza.commerce.order.application.dto.*
 
 interface OrderService {
     fun createOrder(

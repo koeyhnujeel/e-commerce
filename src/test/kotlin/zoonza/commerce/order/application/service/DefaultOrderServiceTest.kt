@@ -6,11 +6,11 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.catalog.OrderProductSnapshot
 import zoonza.commerce.catalog.ProductOptionSnapshot
+import zoonza.commerce.order.OrderErrorCode
 import zoonza.commerce.order.application.dto.CreateOrderCommand
 import zoonza.commerce.order.application.dto.CreateOrderItemCommand
 import zoonza.commerce.order.application.dto.UpdateOrderCommand
@@ -21,7 +21,6 @@ import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderStatus
 import zoonza.commerce.shared.BusinessException
-import zoonza.commerce.order.OrderErrorCode
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 

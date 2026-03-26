@@ -10,13 +10,9 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.delete
-import org.springframework.test.web.servlet.get
-import org.springframework.test.web.servlet.patch
-import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.*
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.adapter.out.persistence.ProductJpaRepository
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaRepository
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
 import zoonza.commerce.order.adapter.out.persistence.OrderJpaRepository
 import zoonza.commerce.order.domain.OrderItemStatus
