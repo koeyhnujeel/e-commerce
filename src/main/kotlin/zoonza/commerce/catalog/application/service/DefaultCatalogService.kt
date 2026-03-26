@@ -38,7 +38,7 @@ class DefaultCatalogService(
         categoryId: Long,
         sort: ProductListSort,
     ): PageResponse<ProductSummary> {
-        val categoryIds = categoryRepository.findSelfAndDescendantIds(categoryId)
+        val categoryIds = categoryRepository.findAllDescendantIds(categoryId)
         val productPage = productQueryRepository.findPageByCategoryIds(
             categoryIds = categoryIds,
             pageQuery = PageQuery(page = page, size = size),

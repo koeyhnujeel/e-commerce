@@ -8,14 +8,16 @@ import zoonza.commerce.catalog.domain.category.CategoryRepository
 class CategoryRepositoryAdapter(
     private val entityManager: EntityManager,
 ) : CategoryRepository {
-    override fun findSelfAndDescendantIds(categoryId: Long): Set<Long> {
+    override fun findAllDescendantIds(categoryId: Long): Set<Long> {
         val query = entityManager.createNativeQuery(
             """
             WITH RECURSIVE category_tree AS (
                 SELECT id
                 FROM category
                 WHERE id = :categoryId
+                
                 UNION ALL
+                
                 SELECT child.id
                 FROM category child
                 INNER JOIN category_tree parent_tree ON child.parent_id = parent_tree.id

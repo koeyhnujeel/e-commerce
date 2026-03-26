@@ -35,7 +35,7 @@ class DefaultCatalogServiceTest {
     @Test
     fun `상품 목록 조회는 정렬과 좋아요 정보를 함께 조합한다`() {
         val pageQuery = slot<PageQuery>()
-        every { categoryRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L, 2L)
+        every { categoryRepository.findAllDescendantIds(1L) } returns linkedSetOf(1L, 2L)
 
         every {
             productQueryRepository.findPageByCategoryIds(
@@ -88,7 +88,7 @@ class DefaultCatalogServiceTest {
     fun `비로그인 상품 목록 조회는 likedByMe를 false로 반환한다`() {
         val product = product(id = 10L, price = 19_900, categoryId = 1L)
 
-        every { categoryRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L)
+        every { categoryRepository.findAllDescendantIds(1L) } returns linkedSetOf(1L)
 
         every {
             productQueryRepository.findPageByCategoryIds(
@@ -122,7 +122,7 @@ class DefaultCatalogServiceTest {
         )
 
         result.items.single().likedByMe shouldBe false
-        verify(exactly = 1) { categoryRepository.findSelfAndDescendantIds(1L) }
+        verify(exactly = 1) { categoryRepository.findAllDescendantIds(1L) }
         verify(exactly = 0) { likeApi.findLikedProductIds(any(), any()) }
     }
 
