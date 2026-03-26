@@ -2,7 +2,6 @@ package zoonza.commerce.like.adapter.`in`
 
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
-import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -13,9 +12,9 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
+import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
-import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaRepository
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.support.MySqlTestContainerConfig
 import zoonza.commerce.support.fixture.AuthFixture

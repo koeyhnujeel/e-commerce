@@ -1,7 +1,7 @@
 package zoonza.commerce.like.application.port.out
 
-import zoonza.commerce.like.domain.MemberLike
 import zoonza.commerce.like.domain.LikeTargetType
+import zoonza.commerce.like.domain.MemberLike
 
 interface LikeRepository {
     fun findByMemberIdAndTargetId(
