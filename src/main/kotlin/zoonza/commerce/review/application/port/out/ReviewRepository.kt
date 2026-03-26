@@ -1,8 +1,8 @@
 package zoonza.commerce.review.application.port.out
 
+import zoonza.commerce.review.domain.Review
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
-import zoonza.commerce.review.domain.Review
 
 interface ReviewRepository {
     fun findByMemberIdAndProductId(

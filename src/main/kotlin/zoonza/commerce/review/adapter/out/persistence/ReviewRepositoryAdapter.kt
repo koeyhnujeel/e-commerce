@@ -3,10 +3,10 @@ package zoonza.commerce.review.adapter.out.persistence
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Repository
-import zoonza.commerce.support.pagination.PageQuery
-import zoonza.commerce.support.pagination.PageResult
 import zoonza.commerce.review.application.port.out.ReviewRepository
 import zoonza.commerce.review.domain.Review
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResult
 
 @Repository
 class ReviewRepositoryAdapter(

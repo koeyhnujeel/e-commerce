@@ -1,10 +1,10 @@
 package zoonza.commerce.review.application.port.`in`
 
-import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.review.application.dto.CreateReviewCommand
 import zoonza.commerce.review.application.dto.ReviewDetail
 import zoonza.commerce.review.application.dto.ReviewSummary
 import zoonza.commerce.review.application.dto.UpdateReviewCommand
+import zoonza.commerce.support.pagination.PageResponse
 
 interface ReviewService {
     fun create(
