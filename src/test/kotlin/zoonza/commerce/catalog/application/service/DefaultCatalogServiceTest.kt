@@ -7,39 +7,38 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.application.dto.ProductListSort
-import zoonza.commerce.catalog.application.port.out.CategoryHierarchyRepository
-import zoonza.commerce.catalog.application.port.out.ProductRepository
-import zoonza.commerce.catalog.application.port.out.ProductStatisticRepository
+import zoonza.commerce.catalog.application.port.out.ProductDetailQueryResult
+import zoonza.commerce.catalog.application.port.out.ProductImageQueryResult
+import zoonza.commerce.catalog.application.port.out.ProductOptionQueryResult
+import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
 import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryResult
-import zoonza.commerce.catalog.domain.Product
-import zoonza.commerce.catalog.domain.ProductImage
-import zoonza.commerce.catalog.domain.ProductSaleStatus
-import zoonza.commerce.support.pagination.PageQuery
-import zoonza.commerce.support.pagination.PageResult
+import zoonza.commerce.catalog.domain.category.CategoryRepository
+import zoonza.commerce.catalog.domain.product.*
 import zoonza.commerce.like.LikeApi
 import zoonza.commerce.shared.Money
-import java.lang.reflect.Field
+import zoonza.commerce.support.pagination.PageQuery
+import zoonza.commerce.support.pagination.PageResult
 
 class DefaultCatalogServiceTest {
     private val productRepository = mockk<ProductRepository>()
-    private val categoryHierarchyRepository = mockk<CategoryHierarchyRepository>()
-    private val productStatisticRepository = mockk<ProductStatisticRepository>()
+    private val productQueryRepository = mockk<ProductQueryRepository>()
+    private val categoryRepository = mockk<CategoryRepository>()
     private val likeApi = mockk<LikeApi>()
     private val catalogService =
         DefaultCatalogService(
             productRepository = productRepository,
-            categoryHierarchyRepository = categoryHierarchyRepository,
-            productStatisticRepository = productStatisticRepository,
+            productQueryRepository = productQueryRepository,
+            categoryRepository = categoryRepository,
             likeApi = likeApi,
         )
 
     @Test
     fun `상품 목록 조회는 정렬과 좋아요 정보를 함께 조합한다`() {
         val pageQuery = slot<PageQuery>()
-        every { categoryHierarchyRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L, 2L)
+        every { categoryRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L, 2L)
 
         every {
-            productRepository.findPageByCategoryIds(
+            productQueryRepository.findPageByCategoryIds(
                 categoryIds = linkedSetOf(1L, 2L),
                 pageQuery = capture(pageQuery),
                 sort = ProductListSort.PRICE_DESC,
@@ -87,12 +86,12 @@ class DefaultCatalogServiceTest {
 
     @Test
     fun `비로그인 상품 목록 조회는 likedByMe를 false로 반환한다`() {
-        val product = product(id = 10L, price = 19_900, categoryIds = listOf(1L))
+        val product = product(id = 10L, price = 19_900, categoryId = 1L)
 
-        every { categoryHierarchyRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L)
+        every { categoryRepository.findSelfAndDescendantIds(1L) } returns linkedSetOf(1L)
 
         every {
-            productRepository.findPageByCategoryIds(
+            productQueryRepository.findPageByCategoryIds(
                 categoryIds = linkedSetOf(1L),
                 pageQuery = PageQuery(page = 0, size = 20),
                 sort = ProductListSort.LATEST,
@@ -102,7 +101,7 @@ class DefaultCatalogServiceTest {
                 ProductSummaryQueryResult(
                     productId = 10L,
                     name = product.name,
-                    primaryImageUrl = product.primaryImage().imageUrl,
+                    primaryImageUrl = product.images.first { it.isPrimary }.imageUrl,
                     basePrice = product.basePrice.amount,
                     likeCount = 3L,
                     saleStatus = ProductSaleStatus.AVAILABLE,
@@ -123,28 +122,61 @@ class DefaultCatalogServiceTest {
         )
 
         result.items.single().likedByMe shouldBe false
-        verify(exactly = 1) { categoryHierarchyRepository.findSelfAndDescendantIds(1L) }
+        verify(exactly = 1) { categoryRepository.findSelfAndDescendantIds(1L) }
         verify(exactly = 0) { likeApi.findLikedProductIds(any(), any()) }
     }
 
     @Test
     fun `상품 상세 조회는 이미지 옵션 좋아요 정보를 함께 반환한다`() {
-        val product = product(id = 10L, price = 19_900, categoryIds = listOf(20L, 10L))
-
-        every { productRepository.findById(10L) } returns product
-        every { productStatisticRepository.findLikeCount(10L) } returns 7L
+        every { productQueryRepository.findProductDetailsById(10L) } returns ProductDetailQueryResult(
+            productId = 10L,
+            name = "상품10",
+            description = "상품 설명10",
+            basePrice = 19_900,
+            categoryId = 10L,
+            images = listOf(
+                ProductImageQueryResult(
+                    imageUrl = "https://cdn.example.com/product-10-primary.jpg",
+                    isPrimary = true,
+                    sortOrder = 0,
+                ),
+                ProductImageQueryResult(
+                    imageUrl = "https://cdn.example.com/product-10-secondary.jpg",
+                    isPrimary = false,
+                    sortOrder = 1,
+                ),
+            ),
+            options = listOf(
+                ProductOptionQueryResult(
+                    productOptionId = 101L,
+                    color = "BLACK",
+                    size = "M",
+                    sortOrder = 0,
+                    additionalPrice = 0L,
+                ),
+                ProductOptionQueryResult(
+                    productOptionId = 102L,
+                    color = "WHITE",
+                    size = "L",
+                    sortOrder = 1,
+                    additionalPrice = 1_000L,
+                ),
+            ),
+            likeCount = 7L,
+        )
         every { likeApi.findLikedProductIds(1L, listOf(10L)) } returns setOf(10L)
 
-        val result = catalogService.getProduct(productId = 10L, memberId = 1L)
+        val result = catalogService.getProductDetails(productId = 10L, memberId = 1L)
 
         result.productId shouldBe 10L
-        result.categoryIds shouldBe listOf(10L, 20L)
+        result.categoryId shouldBe 10L
         result.images.map { it.imageUrl } shouldBe
             listOf(
                 "https://cdn.example.com/product-10-primary.jpg",
                 "https://cdn.example.com/product-10-secondary.jpg",
             )
-        result.options.map { it.productOptionId } shouldBe listOf(0L, 0L)
+        result.options.map { it.productOptionId } shouldBe listOf(101L, 102L)
+        result.options.map { it.additionalPrice } shouldBe listOf(0L, 1_000L)
         result.likeCount shouldBe 7L
         result.likedByMe shouldBe true
         result.saleStatus shouldBe ProductSaleStatus.AVAILABLE
@@ -153,52 +185,43 @@ class DefaultCatalogServiceTest {
     private fun product(
         id: Long,
         price: Long,
-        categoryIds: List<Long>,
+        categoryId: Long,
     ): Product {
-        return Product.create(
+        return Product(
+            id = id,
             brandId = 1L,
             name = "상품$id",
             description = "상품 설명$id",
             basePrice = Money(price),
-            categoryIds = categoryIds,
+            categoryId = categoryId,
             images =
-                listOf(
-                    ProductImage.create(
+                mutableListOf(
+                    ProductImage(
                         imageUrl = "https://cdn.example.com/product-$id-primary.jpg",
                         isPrimary = true,
                         sortOrder = 0,
                     ),
-                    ProductImage.create(
+                    ProductImage(
                         imageUrl = "https://cdn.example.com/product-$id-secondary.jpg",
                         isPrimary = false,
                         sortOrder = 1,
                     ),
                 ),
             options =
-                listOf(
-                    zoonza.commerce.catalog.domain.ProductOption.create(
+                mutableListOf(
+                    ProductOption(
                         color = "BLACK",
                         size = "M",
-                        stockId = id * 10,
+                        sortOder = 0,
+                        additionalPrice = Money(0),
                     ),
-                    zoonza.commerce.catalog.domain.ProductOption.create(
+                    ProductOption(
                         color = "WHITE",
                         size = "L",
-                        stockId = id * 10 + 1,
+                        sortOder = 1,
+                        additionalPrice = Money(1_000),
                     ),
                 ),
-        ).applyId(id)
-    }
-
-    private fun Product.applyId(id: Long): Product {
-        productIdField.setLong(this, id)
-        return this
-    }
-
-    companion object {
-        private val productIdField: Field =
-            Product::class.java.getDeclaredField("id").apply {
-                isAccessible = true
-            }
+        )
     }
 }
