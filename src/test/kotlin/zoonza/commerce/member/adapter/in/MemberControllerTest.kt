@@ -26,6 +26,7 @@ import zoonza.commerce.notification.application.port.out.EmailSender
 import zoonza.commerce.support.MySqlTestContainerConfig
 import zoonza.commerce.support.fixture.MemberFixture
 import zoonza.commerce.support.fixture.VerificationCodeFixture
+import zoonza.commerce.verification.adapter.out.persistence.VerificationCodeJpaEntity
 import zoonza.commerce.verification.adapter.out.persistence.VerificationCodeJpaRepository
 import zoonza.commerce.verification.domain.VerificationPurpose
 import java.time.LocalDateTime
@@ -78,7 +79,7 @@ class MemberControllerTest {
     @Test
     fun `이미 사용 중인 이메일이면 충돌 응답을 반환한다`() {
         memberJapRepository.save(
-            MemberFixture.create(
+            MemberFixture.createJpa(
                 email = "member@example.com",
                 passwordHash = passwordEncoder.encode("Password123!"),
                 name = "기존회원",
@@ -104,7 +105,7 @@ class MemberControllerTest {
     @Test
     fun `회원가입 이메일 인증 코드 검증에 성공한다`() {
         verificationCodeJpaRepository.save(
-            VerificationCodeFixture.create(
+            VerificationCodeFixture.createJpa(
                 email = "member@example.com",
                 code = "123 456",
                 issuedAt = LocalDateTime.now().minusMinutes(1),
@@ -139,16 +140,14 @@ class MemberControllerTest {
     @Test
     fun `검증된 이메일이면 회원가입에 성공한다`() {
         val verification =
-            verificationCodeJpaRepository.save(
-                VerificationCodeFixture.create(
-                    email = "member@example.com",
-                    code = "123 456",
-                    issuedAt = LocalDateTime.now().minusMinutes(1),
-                    expiresAt = LocalDateTime.now().plusMinutes(4),
-                ),
+            VerificationCodeFixture.create(
+                email = "member@example.com",
+                code = "123 456",
+                issuedAt = LocalDateTime.now().minusMinutes(1),
+                expiresAt = LocalDateTime.now().plusMinutes(4),
             )
         verification.verify("123 456", LocalDateTime.now())
-        verificationCodeJpaRepository.save(verification)
+        verificationCodeJpaRepository.save(VerificationCodeJpaEntity.from(verification))
 
         mockMvc
             .post("/api/members/signup") {

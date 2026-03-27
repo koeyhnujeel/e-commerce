@@ -1,45 +1,17 @@
 package zoonza.commerce.member.domain
 
-import jakarta.persistence.*
 import zoonza.commerce.shared.Email
 import java.time.LocalDateTime
 
-@Entity
-@Table(
-    uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_member_email",
-            columnNames = ["email"],
-        ),
-    ],
-)
-class Member private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class Member(
     val id: Long = 0,
-
-    @Embedded
     val email: Email,
-
-    @Column(nullable = false)
     val passwordHash: String,
-
-    @Column(nullable = false)
     val name: String,
-
-    @Column(unique = true, nullable = false)
     val nickname: String,
-
-    @Column(unique = true, nullable = false)
     val phoneNumber: String,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50, columnDefinition = "VARCHAR(50) NOT NULL DEFAULT 'CUSTOMER'")
     val role: Role = Role.CUSTOMER,
-
-    @Column(nullable = false)
     val registeredAt: LocalDateTime,
-
-    @Column
     var lastLoginAt: LocalDateTime? = null,
 ) {
     companion object {
@@ -64,6 +36,7 @@ class Member private constructor(
                 lastLoginAt = lastLoginAt,
             )
         }
+
     }
 
     fun recordLogin(lastLoginAt: LocalDateTime) {

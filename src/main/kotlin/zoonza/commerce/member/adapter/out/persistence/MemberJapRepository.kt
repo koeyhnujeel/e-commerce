@@ -1,16 +1,15 @@
 package zoonza.commerce.member.adapter.out.persistence
 
 import org.springframework.data.jpa.repository.JpaRepository
-import zoonza.commerce.member.domain.Member
 
-interface MemberJapRepository : JpaRepository<Member, Long> {
+interface MemberJapRepository : JpaRepository<MemberJpaEntity, Long> {
     fun existsByEmailAddress(email: String): Boolean
 
     fun existsByPhoneNumber(phoneNumber: String): Boolean
 
     fun existsByNickname(nickname: String): Boolean
 
-    fun findByEmailAddress(email: String): Member?
+    fun findByEmailAddress(email: String): MemberJpaEntity?
 
-    fun findAllByIdIn(ids: Collection<Long>): List<Member>
+    fun findAllByIdIn(ids: Collection<Long>): List<MemberJpaEntity>
 }

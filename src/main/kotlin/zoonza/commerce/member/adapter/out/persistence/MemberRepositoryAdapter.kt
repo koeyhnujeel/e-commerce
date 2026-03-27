@@ -23,11 +23,11 @@ class MemberRepositoryAdapter(
     }
 
     override fun findByEmail(email: Email): Member? {
-        return memberJapRepository.findByEmailAddress(email.address)
+        return memberJapRepository.findByEmailAddress(email.address)?.toDomain()
     }
 
     override fun findById(id: Long): Member? {
-        return memberJapRepository.findByIdOrNull(id)
+        return memberJapRepository.findByIdOrNull(id)?.toDomain()
     }
 
     override fun findAllByIds(ids: Set<Long>): List<Member> {
@@ -35,10 +35,10 @@ class MemberRepositoryAdapter(
             return emptyList()
         }
 
-        return memberJapRepository.findAllByIdIn(ids)
+        return memberJapRepository.findAllByIdIn(ids).map(MemberJpaEntity::toDomain)
     }
 
     override fun save(member: Member): Member {
-        return memberJapRepository.save(member)
+        return memberJapRepository.save(MemberJpaEntity.from(member)).toDomain()
     }
 }
