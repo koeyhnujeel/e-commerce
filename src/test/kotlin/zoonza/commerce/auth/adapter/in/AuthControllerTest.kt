@@ -48,7 +48,7 @@ class AuthControllerTest {
     fun `로그인에 성공하면 access 토큰과 refresh 토큰 쿠키를 반환한다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.create(
+                MemberFixture.createJpa(
                     email = "member@example.com",
                     passwordHash = passwordEncoder.encode("Password123!"),
                     name = "주문자",
@@ -83,7 +83,7 @@ class AuthControllerTest {
     @Test
     fun `로그인 정보가 잘못되면 인증 실패 응답을 반환한다`() {
         memberJapRepository.save(
-            MemberFixture.create(
+            MemberFixture.createJpa(
                 email = "member@example.com",
                 passwordHash = passwordEncoder.encode("Password123!"),
                 name = "주문자",
@@ -113,7 +113,7 @@ class AuthControllerTest {
     fun `refresh 쿠키가 있으면 access 토큰과 refresh 토큰을 다시 발급한다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.create(
+                MemberFixture.createJpa(
                     email = "member@example.com",
                     passwordHash = passwordEncoder.encode("Password123!"),
                     name = "주문자",
@@ -160,7 +160,7 @@ class AuthControllerTest {
     @Test
     fun `logout하면 refresh 토큰을 삭제하고 만료 쿠키를 반환한다`() {
         memberJapRepository.save(
-            MemberFixture.create(
+            MemberFixture.createJpa(
                 email = "member@example.com",
                 passwordHash = passwordEncoder.encode("Password123!"),
                 name = "주문자",

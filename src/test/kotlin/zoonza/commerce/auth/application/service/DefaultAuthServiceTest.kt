@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 import zoonza.commerce.auth.application.dto.IssuedToken
 import zoonza.commerce.auth.application.dto.LoginCommand
 import zoonza.commerce.auth.application.port.out.RefreshTokenProvider
-import zoonza.commerce.auth.application.port.out.RefreshTokenRepository
 import zoonza.commerce.auth.domain.RefreshToken
+import zoonza.commerce.auth.domain.RefreshTokenRepository
 import zoonza.commerce.member.AuthenticatedMember
 import zoonza.commerce.member.MemberApi
 import zoonza.commerce.security.AccessTokenProvider

@@ -1,23 +1,23 @@
 package zoonza.commerce.auth.adapter.out.persistence
 
 import org.springframework.stereotype.Repository
-import zoonza.commerce.auth.application.port.out.RefreshTokenRepository
 import zoonza.commerce.auth.domain.RefreshToken
+import zoonza.commerce.auth.domain.RefreshTokenRepository
 
 @Repository
 class RefreshTokenRepositoryAdapter(
     private val refreshTokenJpaRepository: RefreshTokenJpaRepository,
 ) : RefreshTokenRepository {
     override fun findByMemberId(memberId: Long): RefreshToken? {
-        return refreshTokenJpaRepository.findByMemberId(memberId)
+        return refreshTokenJpaRepository.findByMemberId(memberId)?.toDomain()
     }
 
     override fun findByToken(token: String): RefreshToken? {
-        return refreshTokenJpaRepository.findByToken(token)
+        return refreshTokenJpaRepository.findByToken(token)?.toDomain()
     }
 
     override fun save(refreshToken: RefreshToken): RefreshToken {
-        return refreshTokenJpaRepository.save(refreshToken)
+        return refreshTokenJpaRepository.save(RefreshTokenJpaEntity.from(refreshToken)).toDomain()
     }
 
     override fun deleteByMemberId(memberId: Long) {

@@ -1,12 +1,11 @@
 package zoonza.commerce.auth.adapter.out.persistence
 
 import org.springframework.data.jpa.repository.JpaRepository
-import zoonza.commerce.auth.domain.RefreshToken
 
-interface RefreshTokenJpaRepository : JpaRepository<RefreshToken, Long> {
-    fun findByMemberId(memberId: Long): RefreshToken?
+interface RefreshTokenJpaRepository : JpaRepository<RefreshTokenJpaEntity, Long> {
+    fun findByMemberId(memberId: Long): RefreshTokenJpaEntity?
 
-    fun findByToken(token: String): RefreshToken?
+    fun findByToken(token: String): RefreshTokenJpaEntity?
 
     fun deleteByMemberId(memberId: Long)
 

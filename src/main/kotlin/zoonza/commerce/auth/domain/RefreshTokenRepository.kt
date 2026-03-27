@@ -1,6 +1,4 @@
-package zoonza.commerce.auth.application.port.out
-
-import zoonza.commerce.auth.domain.RefreshToken
+package zoonza.commerce.auth.domain
 
 interface RefreshTokenRepository {
     fun findByMemberId(memberId: Long): RefreshToken?
