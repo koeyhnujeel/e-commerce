@@ -1,10 +1,8 @@
 package zoonza.commerce.like.application.service
 
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.like.LikeApi
 import zoonza.commerce.like.ProductLiked
 import zoonza.commerce.like.ProductUnliked
@@ -17,8 +15,6 @@ import zoonza.commerce.shared.BusinessException
 
 @Service
 class DefaultLikeService(
-    @Lazy
-    private val catalogApi: CatalogApi,
     private val likeRepository: LikeRepository,
     private val eventPublisher: ApplicationEventPublisher,
 ) : LikeApi, LikeService {
@@ -32,8 +28,6 @@ class DefaultLikeService(
 
     @Transactional
     override fun likeProduct(memberId: Long, targetId: Long) {
-        catalogApi.validateProductExists(targetId)
-
         val existingLike = likeRepository.findByMemberIdAndTargetId(memberId, targetId, LikeTargetType.PRODUCT)
 
         if (existingLike != null) {
@@ -51,8 +45,6 @@ class DefaultLikeService(
 
     @Transactional
     override fun unlikeProduct(memberId: Long, targetId: Long) {
-        catalogApi.validateProductExists(targetId)
-
         val existingLike = likeRepository.findByMemberIdAndTargetId(memberId, targetId, LikeTargetType.PRODUCT)
             ?: throw BusinessException(LikeErrorCode.LIKE_NOT_FOUND)
 
