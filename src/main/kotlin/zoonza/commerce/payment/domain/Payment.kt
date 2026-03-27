@@ -1,70 +1,22 @@
 package zoonza.commerce.payment.domain
 
-import jakarta.persistence.*
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 
-@Entity
-@Table(
-    name = "payment",
-    uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_payment_payment_key",
-            columnNames = ["payment_key"],
-        ),
-        UniqueConstraint(
-            name = "uk_payment_order_active",
-            columnNames = ["order_id", "active_marker"],
-        ),
-    ],
-)
-class Payment private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class Payment(
     val id: Long = 0,
-
-    @Column(name = "order_id", nullable = false)
     val orderId: Long,
-
-    @Column(name = "member_id", nullable = false)
     val memberId: Long,
-
-    @Column(name = "order_number", nullable = false, length = 64)
     val orderNumber: String,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
     var status: PaymentStatus,
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false, length = 50)
     var paymentMethod: PaymentMethod,
-
-    @Column(name = "payment_key", length = 200)
     var paymentKey: String? = null,
-
-    @Column(name = "provider_reference", nullable = false, length = 100)
     var providerReference: String,
-
-    @Column(name = "failure_reason", length = 500)
     var failureReason: String? = null,
-
-    @Column(name = "approved_at")
     var approvedAt: LocalDateTime? = null,
-
-    @Column(name = "canceled_at")
     var canceledAt: LocalDateTime? = null,
-
-    @Column(name = "active_marker", length = 16)
     var activeMarker: String?,
-
-    @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime,
-
-    @Embedded
-    @AttributeOverride(
-        name = "amount",
-        column = Column(name = "amount", nullable = false),
-    )
     val amount: Money,
 ) {
     companion object {
@@ -99,6 +51,7 @@ class Payment private constructor(
                 amount = amount,
             )
         }
+
     }
 
     fun isActive(): Boolean {

@@ -13,17 +13,17 @@ class PaymentRepositoryAdapter(
     }
 
     override fun findById(paymentId: Long): Payment? {
-        return paymentJpaRepository.findById(paymentId).orElse(null)
+        return paymentJpaRepository.findById(paymentId).orElse(null)?.toDomain()
     }
 
     override fun findByIdAndMemberId(
         paymentId: Long,
         memberId: Long,
     ): Payment? {
-        return paymentJpaRepository.findByIdAndMemberId(paymentId, memberId)
+        return paymentJpaRepository.findByIdAndMemberId(paymentId, memberId)?.toDomain()
     }
 
     override fun save(payment: Payment): Payment {
-        return paymentJpaRepository.save(payment)
+        return paymentJpaRepository.save(PaymentJpaEntity.from(payment)).toDomain()
     }
 }

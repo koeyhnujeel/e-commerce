@@ -61,7 +61,7 @@ class PaymentControllerTest {
     fun `인증된 회원은 주문으로 결제를 생성할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "payment-member",
                     nicknamePrefix = "payment-nickname",
@@ -89,7 +89,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -122,7 +122,7 @@ class PaymentControllerTest {
     fun `인증된 회원은 자신의 결제 상세를 조회할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "payment-member",
                     nicknamePrefix = "payment-nickname",
@@ -150,7 +150,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -167,7 +167,7 @@ class PaymentControllerTest {
 
         mockMvc
             .get("/api/payments/${payment.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -182,7 +182,7 @@ class PaymentControllerTest {
     fun `타인 결제 상세는 조회할 수 없다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "payment-member",
                     nicknamePrefix = "payment-nickname",
@@ -191,7 +191,7 @@ class PaymentControllerTest {
             )
         val otherMember =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 2,
                     emailPrefix = "payment-member",
                     nicknamePrefix = "payment-nickname",
@@ -219,7 +219,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, otherMember))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = otherMember.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -236,7 +236,7 @@ class PaymentControllerTest {
 
         mockMvc
             .get("/api/payments/${payment.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.error.code") { value("NOT_FOUND") }
@@ -247,7 +247,7 @@ class PaymentControllerTest {
     fun `인증된 회원은 토스 승인 결과로 결제를 확정할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "payment-member",
                     nicknamePrefix = "payment-nickname",
@@ -275,7 +275,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"amount": 19900, "paymentMethod": "CARD"}"""
             }.andExpect {
@@ -302,7 +302,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/payments/${payment.id}/confirm") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -329,7 +329,7 @@ class PaymentControllerTest {
     fun `인증된 회원은 결제를 취소할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "payment-member",
                     nicknamePrefix = "payment-nickname",
@@ -357,7 +357,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/orders/${order.id}/payments") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"amount": 19900, "paymentMethod": "CARD"}"""
             }.andExpect {
@@ -384,7 +384,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/payments/${payment.id}/confirm") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -413,7 +413,7 @@ class PaymentControllerTest {
 
         mockMvc
             .post("/api/payments/${payment.id}/cancel") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"reason": "고객 요청"}"""
             }.andExpect {
