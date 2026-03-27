@@ -1,41 +1,17 @@
 package zoonza.commerce.verification.domain
 
-import jakarta.persistence.*
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Email
 import zoonza.commerce.verification.VerificationErrorCode
 import java.time.LocalDateTime
 
-@Entity
-@Table(
-    uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_email_verification_email_purpose",
-            columnNames = ["email", "purpose"],
-        ),
-    ],
-)
-class VerificationCode private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class VerificationCode(
     val id: Long = 0,
-
-    @Embedded
     val email: Email,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
     val purpose: VerificationPurpose,
-
-    @Column(nullable = false)
     var code: String,
-
-    @Column(nullable = false)
     var issuedAt: LocalDateTime,
-
-    @Column(nullable = false)
     var expiresAt: LocalDateTime,
-
-    @Column
     var verifiedAt: LocalDateTime? = null,
 ) {
     companion object {
@@ -54,6 +30,7 @@ class VerificationCode private constructor(
                 expiresAt = expiresAt,
             )
         }
+
     }
 
     fun renew(
