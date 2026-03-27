@@ -114,4 +114,21 @@ class DefaultLikeServiceTest {
         verify(exactly = 0) { catalogApi.validateProductExists(any()) }
         verify(exactly = 0) { likeRepository.findByMemberIdAndTargetId(any(), any(), any()) }
     }
+
+    @Test
+    fun `비로그인 사용자의 상품 좋아요 여부 조회는 모두 false를 반환한다`() {
+        val result = likeService.getProductLikeStatuses(
+            memberId = null,
+            productIds = listOf(20L, 10L),
+        )
+
+        result shouldBe
+            listOf(
+                ProductLikeStatus(productId = 20L, liked = false),
+                ProductLikeStatus(productId = 10L, liked = false),
+            )
+        verify(exactly = 0) { catalogApi.validateProductExists(any()) }
+        verify(exactly = 0) { likeRepository.findLikedProduct(any(), any(), any()) }
+        verify(exactly = 0) { likeRepository.findByMemberIdAndTargetId(any(), any(), any()) }
+    }
 }

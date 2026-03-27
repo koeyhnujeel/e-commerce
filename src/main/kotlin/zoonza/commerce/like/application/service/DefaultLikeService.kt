@@ -52,13 +52,16 @@ class DefaultLikeService(
 
     @Transactional(readOnly = true)
     override fun getProductLikeStatuses(
-        memberId: Long,
+        memberId: Long?,
         productIds: List<Long>
     ): List<ProductLikeStatus> {
+        if (memberId == null) {
+            return productIds.map { ProductLikeStatus(it, false) }
+        }
+
         val likedProductIds = likeRepository.findLikedProduct(memberId, productIds, LikeTargetType.PRODUCT)
 
-        return productIds.map { productId ->
-            ProductLikeStatus(productId, productId in likedProductIds)
+        return productIds.map { ProductLikeStatus(it, it in likedProductIds)
         }
     }
 }

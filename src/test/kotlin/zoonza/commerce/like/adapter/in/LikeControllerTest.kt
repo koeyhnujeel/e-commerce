@@ -66,6 +66,24 @@ class LikeControllerTest {
     }
 
     @Test
+    fun `비로그인 사용자는 상품별 좋아요 여부를 모두 false로 조회할 수 있다`() {
+        val firstProduct = productJpaRepository.save(ProductFixture.createSingleOption(index = 30))
+        val secondProduct = productJpaRepository.save(ProductFixture.createSingleOption(index = 40))
+
+        mockMvc
+            .get("/api/products/likes") {
+                param("productIds", firstProduct.id.toString(), secondProduct.id.toString())
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data[0].productId") { value(firstProduct.id) }
+                jsonPath("$.data[0].liked") { value(false) }
+                jsonPath("$.data[1].productId") { value(secondProduct.id) }
+                jsonPath("$.data[1].liked") { value(false) }
+            }
+    }
+
+    @Test
     fun `인증된 회원은 상품 좋아요를 등록할 수 있다`() {
         val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
 

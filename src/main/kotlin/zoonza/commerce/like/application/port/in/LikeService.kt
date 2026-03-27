@@ -7,5 +7,5 @@ interface LikeService {
 
     fun unlikeProduct(memberId: Long, targetId: Long)
 
-    fun getProductLikeStatuses(memberId: Long, productIds: List<Long>): List<ProductLikeStatus>
+    fun getProductLikeStatuses(memberId: Long?, productIds: List<Long>): List<ProductLikeStatus>
 }

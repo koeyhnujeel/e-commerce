@@ -19,11 +19,11 @@ class LikeController(
 ) {
     @GetMapping("/likes")
     fun getProductLikeStatuses(
-        @AuthenticationPrincipal currentMember: CurrentMember,
+        @AuthenticationPrincipal currentMember: CurrentMember?,
         @RequestParam productIds: List<Long>,
     ): ApiResponse<List<ProductLikeStatusResponse>> {
         val likeStatuses = likeService.getProductLikeStatuses(
-            memberId = currentMember.memberId,
+            memberId = currentMember?.memberId,
             productIds = productIds,
         )
 
