@@ -6,16 +6,16 @@ import zoonza.commerce.like.ProductLiked
 import zoonza.commerce.like.ProductUnliked
 
 @Service
-class ProductLikeEventHandler(
+class LikeEventHandler(
     private val defaultProductStatisticService: DefaultProductStatisticService
 ) {
     @ApplicationModuleListener
     fun handle(event: ProductLiked) {
-        defaultProductStatisticService.incrementLikeCount(event.productId)
+        defaultProductStatisticService.incrementProductLikeCount(event.productId)
     }
 
     @ApplicationModuleListener
     fun handle(event: ProductUnliked) {
-        defaultProductStatisticService.decrementLikeCount(event.productId)
+        defaultProductStatisticService.decrementProductLikeCount(event.productId)
     }
 }
