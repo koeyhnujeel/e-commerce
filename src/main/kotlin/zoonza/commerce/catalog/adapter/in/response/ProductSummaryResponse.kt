@@ -9,7 +9,6 @@ data class ProductSummaryResponse(
     val primaryImageUrl: String,
     val basePrice: Long,
     val likeCount: Long,
-    val likedByMe: Boolean,
     val saleStatus: ProductSaleStatus,
 ) {
     companion object {
@@ -20,7 +19,6 @@ data class ProductSummaryResponse(
                 primaryImageUrl = product.primaryImageUrl,
                 basePrice = product.basePrice,
                 likeCount = product.likeCount,
-                likedByMe = product.likedByMe,
                 saleStatus = product.saleStatus,
             )
         }

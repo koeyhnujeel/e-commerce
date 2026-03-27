@@ -105,7 +105,7 @@ class ProductControllerTest {
                 jsonPath("$.data.page") { value(1) }
                 jsonPath("$.data.items.length()") { value(2) }
                 jsonPath("$.data.items[0].productId") { value(expensiveProduct.id) }
-                jsonPath("$.data.items[0].likedByMe") { value(false) }
+                jsonPath("$.data.items[0].likedByMe") { doesNotExist() }
                 jsonPath("$.data.items[1].productId") { value(cheapProduct.id) }
                 jsonPath("$.data.items[1].likeCount") { value(1) }
                 jsonPath("$.data.items[1].saleStatus") { value("AVAILABLE") }
@@ -113,7 +113,7 @@ class ProductControllerTest {
     }
 
     @Test
-    fun `로그인 사용자는 상품 목록에서 likedByMe를 확인할 수 있다`() {
+    fun `로그인 사용자도 상품 목록 응답에서는 likedByMe를 받지 않는다`() {
         val category = saveCategory(CategoryJpaEntity(name = "상의", depth = 0, sortOrder = 0))
         val likedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
         val unlikedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 2, price = 29_900, categoryId = category.id))
@@ -132,9 +132,9 @@ class ProductControllerTest {
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.data.items[0].productId") { value(unlikedProduct.id) }
-                jsonPath("$.data.items[0].likedByMe") { value(false) }
+                jsonPath("$.data.items[0].likedByMe") { doesNotExist() }
                 jsonPath("$.data.items[1].productId") { value(likedProduct.id) }
-                jsonPath("$.data.items[1].likedByMe") { value(true) }
+                jsonPath("$.data.items[1].likedByMe") { doesNotExist() }
                 jsonPath("$.data.items[1].likeCount") { value(2) }
             }
     }
@@ -157,13 +157,13 @@ class ProductControllerTest {
                 jsonPath("$.data.options[0].sortOrder") { value(0) }
                 jsonPath("$.data.options[1].additionalPrice") { value(1000) }
                 jsonPath("$.data.likeCount") { value(1) }
-                jsonPath("$.data.likedByMe") { value(false) }
+                jsonPath("$.data.likedByMe") { doesNotExist() }
                 jsonPath("$.data.saleStatus") { value("AVAILABLE") }
             }
     }
 
     @Test
-    fun `로그인 사용자는 상품 상세에서 likedByMe를 확인할 수 있다`() {
+    fun `로그인 사용자도 상품 상세 응답에서는 likedByMe를 받지 않는다`() {
         val category = saveCategory(CategoryJpaEntity(name = "바지", depth = 0, sortOrder = 0))
         val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
         productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = product.id, likeCount = 1L)))
@@ -176,7 +176,7 @@ class ProductControllerTest {
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.data.productId") { value(product.id) }
-                jsonPath("$.data.likedByMe") { value(true) }
+                jsonPath("$.data.likedByMe") { doesNotExist() }
                 jsonPath("$.data.likeCount") { value(1) }
             }
     }

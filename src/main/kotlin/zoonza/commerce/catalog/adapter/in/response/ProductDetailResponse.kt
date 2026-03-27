@@ -14,7 +14,6 @@ data class ProductDetailResponse(
     val images: List<ProductImageResponse>,
     val options: List<ProductOptionResponse>,
     val likeCount: Long,
-    val likedByMe: Boolean,
     val saleStatus: ProductSaleStatus,
 ) {
     companion object {
@@ -28,7 +27,6 @@ data class ProductDetailResponse(
                 images = product.images.map(ProductImageResponse::from),
                 options = product.options.map(ProductOptionResponse::from),
                 likeCount = product.likeCount,
-                likedByMe = product.likedByMe,
                 saleStatus = product.saleStatus,
             )
         }

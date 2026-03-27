@@ -12,7 +12,6 @@ import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
 import zoonza.commerce.catalog.domain.category.CategoryRepository
 import zoonza.commerce.catalog.domain.product.ProductRepository
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
-import zoonza.commerce.like.LikeApi
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResponse
@@ -22,24 +21,16 @@ class DefaultCatalogService(
     private val productRepository: ProductRepository,
     private val productQueryRepository: ProductQueryRepository,
     private val categoryRepository: CategoryRepository,
-    private val likeApi: LikeApi,
 ) : CatalogApi, CatalogService {
     @Transactional(readOnly = true)
     override fun getProductsByCategory(
-        memberId: Long?,
         page: Int,
         size: Int,
         categoryId: Long,
         sort: ProductListSort,
     ): PageResponse<ProductSummary> {
         val categoryIds = categoryRepository.findAllDescendantIds(categoryId)
-        val productPage = productQueryRepository.findPageByCategoryIds(
-            categoryIds = categoryIds,
-            pageQuery = PageQuery(page = page, size = size),
-            sort = sort,
-        )
-        val productIds = productPage.items.map { it.productId }
-        val likedProductIds = likedProductIds(memberId, productIds)
+        val productPage = productQueryRepository.findPageByCategoryIds(categoryIds, PageQuery(page, size), sort)
 
         return PageResponse(
             items = productPage.items.map { product ->
@@ -49,7 +40,6 @@ class DefaultCatalogService(
                     primaryImageUrl = product.primaryImageUrl,
                     basePrice = product.basePrice,
                     likeCount = product.likeCount,
-                    likedByMe = product.productId in likedProductIds,
                     saleStatus = product.saleStatus,
                 )
             },
@@ -63,7 +53,6 @@ class DefaultCatalogService(
     @Transactional(readOnly = true)
     override fun getProductDetails(
         productId: Long,
-        memberId: Long?,
     ): ProductDetail {
         val product = productQueryRepository.findProductDetailsById(productId)
             ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
@@ -78,8 +67,6 @@ class DefaultCatalogService(
         if (saleStatus != ProductSaleStatus.AVAILABLE) {
             throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
-
-        val likedByMe = memberId?.let { productId in likeApi.findLikedProductIds(it, listOf(productId)) } ?: false
 
         return ProductDetail(
             productId = product.productId,
@@ -104,7 +91,6 @@ class DefaultCatalogService(
                 )
             },
             likeCount = product.likeCount,
-            likedByMe = likedByMe,
             saleStatus = saleStatus,
         )
     }
@@ -142,16 +128,5 @@ class DefaultCatalogService(
             option = ProductOptionSnapshot(color = option.color, size = option.size),
             unitPrice = product.basePrice + option.additionalPrice,
         )
-    }
-
-    private fun likedProductIds(
-        memberId: Long?,
-        productIds: List<Long>,
-    ): Set<Long> {
-        if (memberId == null) {
-            return emptySet()
-        }
-
-        return likeApi.findLikedProductIds(memberId, productIds)
     }
 }

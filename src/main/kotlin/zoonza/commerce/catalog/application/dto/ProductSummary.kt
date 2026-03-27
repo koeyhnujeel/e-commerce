@@ -8,6 +8,5 @@ data class ProductSummary(
     val primaryImageUrl: String,
     val basePrice: Long,
     val likeCount: Long,
-    val likedByMe: Boolean,
     val saleStatus: ProductSaleStatus,
 )

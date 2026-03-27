@@ -1,14 +1,12 @@
 package zoonza.commerce.catalog.adapter.`in`
 
 import jakarta.validation.constraints.Positive
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import zoonza.commerce.catalog.adapter.`in`.response.ProductDetailResponse
 import zoonza.commerce.catalog.adapter.`in`.response.ProductSummaryResponse
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
-import zoonza.commerce.security.CurrentMember
 import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.support.web.ApiResponse
 
@@ -31,10 +29,8 @@ class ProductController(
         categoryId: Long,
         @RequestParam(defaultValue = "LATEST")
         sort: ProductListSort,
-        @AuthenticationPrincipal currentMember: CurrentMember?,
     ): ApiResponse<PageResponse<ProductSummaryResponse>> {
         val products = catalogService.getProductsByCategory(
-            memberId = currentMember?.memberId,
             page = page - 1,
             size = size,
             categoryId = categoryId,
@@ -55,12 +51,8 @@ class ProductController(
     @GetMapping("/{productId}")
     fun getProductDetails(
         @PathVariable productId: Long,
-        @AuthenticationPrincipal currentMember: CurrentMember?,
     ): ApiResponse<ProductDetailResponse> {
-        val product = catalogService.getProductDetails(
-            productId = productId,
-            memberId = currentMember?.memberId,
-        )
+        val product = catalogService.getProductDetails(productId)
 
         return ApiResponse.success(ProductDetailResponse.from(product))
     }

@@ -7,7 +7,6 @@ import zoonza.commerce.support.pagination.PageResponse
 
 interface CatalogService {
     fun getProductsByCategory(
-        memberId: Long?,
         page: Int,
         size: Int,
         categoryId: Long,
@@ -16,6 +15,5 @@ interface CatalogService {
 
     fun getProductDetails(
         productId: Long,
-        memberId: Long?,
     ): ProductDetail
 }

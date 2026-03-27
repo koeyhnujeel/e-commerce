@@ -11,7 +11,6 @@ data class ProductDetail(
     val images: List<ProductImageDetail>,
     val options: List<ProductOptionDetail>,
     val likeCount: Long,
-    val likedByMe: Boolean,
     val saleStatus: ProductSaleStatus,
 )
 

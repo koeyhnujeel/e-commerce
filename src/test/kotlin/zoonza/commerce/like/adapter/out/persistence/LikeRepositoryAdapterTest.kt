@@ -29,7 +29,7 @@ class LikeRepositoryAdapterTest {
         memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 1L, targetId = 20L, likeTargetType = LikeTargetType.PRODUCT).apply { unlike() }))
         memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 2L, targetId = 30L, likeTargetType = LikeTargetType.PRODUCT)))
 
-        val result = likeRepository.findActiveTargetIds(
+        val result = likeRepository.findLikedProduct(
             memberId = 1L,
             targetIds = listOf(10L, 20L, 30L),
             likeTargetType = LikeTargetType.PRODUCT,

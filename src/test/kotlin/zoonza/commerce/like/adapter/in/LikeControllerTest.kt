@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaRepository
@@ -39,6 +40,30 @@ class LikeControllerTest {
 
     @Autowired
     private lateinit var memberLikeJpaRepository: MemberLikeJpaRepository
+
+    @Test
+    fun `인증된 회원은 상품별 좋아요 여부를 조회할 수 있다`() {
+        val likedProduct = productJpaRepository.save(ProductFixture.createSingleOption(index = 10))
+        val unlikedProduct = productJpaRepository.save(ProductFixture.createSingleOption(index = 20))
+        memberLikeJpaRepository.save(
+            MemberLikeJpaEntity.from(
+                MemberLike.create(memberId = 1L, targetId = likedProduct.id, likeTargetType = LikeTargetType.PRODUCT),
+            ),
+        )
+
+        mockMvc
+            .get("/api/products/likes") {
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
+                param("productIds", likedProduct.id.toString(), unlikedProduct.id.toString())
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data[0].productId") { value(likedProduct.id) }
+                jsonPath("$.data[0].liked") { value(true) }
+                jsonPath("$.data[1].productId") { value(unlikedProduct.id) }
+                jsonPath("$.data[1].liked") { value(false) }
+            }
+    }
 
     @Test
     fun `인증된 회원은 상품 좋아요를 등록할 수 있다`() {

@@ -10,7 +10,6 @@ import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.out.*
 import zoonza.commerce.catalog.domain.category.CategoryRepository
 import zoonza.commerce.catalog.domain.product.*
-import zoonza.commerce.like.LikeApi
 import zoonza.commerce.shared.Money
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
@@ -19,17 +18,15 @@ class DefaultCatalogServiceTest {
     private val productRepository = mockk<ProductRepository>()
     private val productQueryRepository = mockk<ProductQueryRepository>()
     private val categoryRepository = mockk<CategoryRepository>()
-    private val likeApi = mockk<LikeApi>()
     private val catalogService =
         DefaultCatalogService(
             productRepository = productRepository,
             productQueryRepository = productQueryRepository,
             categoryRepository = categoryRepository,
-            likeApi = likeApi,
         )
 
     @Test
-    fun `상품 목록 조회는 정렬과 좋아요 정보를 함께 조합한다`() {
+    fun `상품 목록 조회는 정렬과 좋아요 수를 함께 반환한다`() {
         val pageQuery = slot<PageQuery>()
         every { categoryRepository.findAllDescendantIds(1L) } returns linkedSetOf(1L, 2L)
 
@@ -63,10 +60,8 @@ class DefaultCatalogServiceTest {
             totalElements = 2,
             totalPages = 1,
         )
-        every { likeApi.findLikedProductIds(1L, listOf(20L, 10L)) } returns setOf(20L)
 
         val result = catalogService.getProductsByCategory(
-            memberId = 1L,
             page = 0,
             size = 20,
             categoryId = 1L,
@@ -76,12 +71,11 @@ class DefaultCatalogServiceTest {
         pageQuery.captured shouldBe PageQuery(page = 0, size = 20)
         result.items.map { it.productId } shouldBe listOf(20L, 10L)
         result.items.map { it.likeCount } shouldBe listOf(5L, 2L)
-        result.items.map { it.likedByMe } shouldBe listOf(true, false)
         result.items.map { it.saleStatus } shouldBe listOf(ProductSaleStatus.AVAILABLE, ProductSaleStatus.AVAILABLE)
     }
 
     @Test
-    fun `비로그인 상품 목록 조회는 likedByMe를 false로 반환한다`() {
+    fun `상품 목록 조회는 로그인 여부와 무관하게 동일한 결과를 반환한다`() {
         val product = product(id = 10L, price = 19_900, categoryId = 1L)
 
         every { categoryRepository.findAllDescendantIds(1L) } returns linkedSetOf(1L)
@@ -110,20 +104,18 @@ class DefaultCatalogServiceTest {
         )
 
         val result = catalogService.getProductsByCategory(
-            memberId = null,
             page = 0,
             size = 20,
             categoryId = 1L,
             sort = ProductListSort.LATEST,
         )
 
-        result.items.single().likedByMe shouldBe false
+        result.items.single().productId shouldBe 10L
         verify(exactly = 1) { categoryRepository.findAllDescendantIds(1L) }
-        verify(exactly = 0) { likeApi.findLikedProductIds(any(), any()) }
     }
 
     @Test
-    fun `상품 상세 조회는 이미지 옵션 좋아요 정보를 함께 반환한다`() {
+    fun `상품 상세 조회는 이미지 옵션 좋아요 수를 함께 반환한다`() {
         every { productQueryRepository.findProductDetailsById(10L) } returns ProductDetailQueryResult(
             productId = 10L,
             name = "상품10",
@@ -160,9 +152,8 @@ class DefaultCatalogServiceTest {
             ),
             likeCount = 7L,
         )
-        every { likeApi.findLikedProductIds(1L, listOf(10L)) } returns setOf(10L)
 
-        val result = catalogService.getProductDetails(productId = 10L, memberId = 1L)
+        val result = catalogService.getProductDetails(productId = 10L)
 
         result.productId shouldBe 10L
         result.categoryId shouldBe 10L
@@ -174,7 +165,6 @@ class DefaultCatalogServiceTest {
         result.options.map { it.productOptionId } shouldBe listOf(101L, 102L)
         result.options.map { it.additionalPrice } shouldBe listOf(0L, 1_000L)
         result.likeCount shouldBe 7L
-        result.likedByMe shouldBe true
         result.saleStatus shouldBe ProductSaleStatus.AVAILABLE
     }
 

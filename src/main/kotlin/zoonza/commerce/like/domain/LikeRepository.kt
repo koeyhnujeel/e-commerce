@@ -7,11 +7,11 @@ interface LikeRepository {
         likeTargetType: LikeTargetType,
     ): MemberLike?
 
-    fun findActiveTargetIds(
+    fun findLikedProduct(
         memberId: Long,
         targetIds: Collection<Long>,
-        likeTargetType: LikeTargetType,
-    ): Set<Long>
+        likeTargetType: LikeTargetType
+    ): List<Long>
 
     fun save(memberLike: MemberLike): MemberLike
 }
