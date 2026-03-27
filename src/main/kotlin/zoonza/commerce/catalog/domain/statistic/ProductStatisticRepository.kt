@@ -1,10 +1,7 @@
 package zoonza.commerce.catalog.domain.statistic
 
 interface ProductStatisticRepository {
-    fun findLikeCount(productId: Long): Long
+    fun findByProductId(productId: Long): ProductStatistic?
 
-    fun applyLikeCountDelta(
-        productId: Long,
-        delta: Long,
-    )
+    fun save(productStatistic: ProductStatistic): ProductStatistic
 }

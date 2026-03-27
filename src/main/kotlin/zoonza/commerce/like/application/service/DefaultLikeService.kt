@@ -1,18 +1,24 @@
 package zoonza.commerce.like.application.service
 
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.like.LikeApi
-import zoonza.commerce.like.ProductLikeCanceled
 import zoonza.commerce.like.ProductLiked
+import zoonza.commerce.like.ProductUnliked
 import zoonza.commerce.like.application.port.`in`.LikeService
-import zoonza.commerce.like.application.port.out.LikeRepository
+import zoonza.commerce.like.domain.LikeErrorCode
+import zoonza.commerce.like.domain.LikeRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
+import zoonza.commerce.shared.BusinessException
 
 @Service
 class DefaultLikeService(
+    @Lazy
+    private val catalogApi: CatalogApi,
     private val likeRepository: LikeRepository,
     private val eventPublisher: ApplicationEventPublisher,
 ) : LikeApi, LikeService {
@@ -25,62 +31,36 @@ class DefaultLikeService(
     }
 
     @Transactional
-    override fun like(
-        memberId: Long,
-        targetId: Long,
-        targetType: LikeTargetType,
-    ) {
-        val like = likeRepository.findByMemberIdAndTargetId(memberId, targetId, targetType)
+    override fun likeProduct(memberId: Long, targetId: Long) {
+        catalogApi.validateProductExists(targetId)
 
-        if (like != null) {
-            val wasActive = like.isActive()
-            like.restore()
-            likeRepository.save(like)
-            if (!wasActive) {
-                publishProductLiked(targetId)
-            }
+        val existingLike = likeRepository.findByMemberIdAndTargetId(memberId, targetId, LikeTargetType.PRODUCT)
+
+        if (existingLike != null) {
+            existingLike.like()
+            likeRepository.save(existingLike)
         } else {
-            val newMemberLike = MemberLike.create(memberId, targetId, targetType)
-            likeRepository.save(newMemberLike)
-            publishProductLiked(targetId)
+            val memberLike = MemberLike.create(memberId, targetId, LikeTargetType.PRODUCT)
+            likeRepository.save(memberLike)
         }
+
+        val event = ProductLiked(targetId)
+
+        eventPublisher.publishEvent(event)
     }
 
     @Transactional
-    override fun cancelLike(
-        memberId: Long,
-        targetId: Long,
-        targetType: LikeTargetType,
-    ) {
-        val like = likeRepository.findByMemberIdAndTargetId(memberId, targetId, targetType)
-            ?: return
+    override fun unlikeProduct(memberId: Long, targetId: Long) {
+        catalogApi.validateProductExists(targetId)
 
-        val wasActive = like.isActive()
+        val existingLike = likeRepository.findByMemberIdAndTargetId(memberId, targetId, LikeTargetType.PRODUCT)
+            ?: throw BusinessException(LikeErrorCode.LIKE_NOT_FOUND)
 
-        like.cancel()
+        existingLike.unlike()
+        likeRepository.save(existingLike)
 
-        likeRepository.save(like)
+        val event = ProductUnliked(targetId)
 
-        if (wasActive) {
-            publishProductLikeCanceled(targetId)
-        }
-    }
-
-    private fun publishProductLiked(
-        productId: Long,
-    ) {
-        eventPublisher.publishEvent(
-            ProductLiked(
-                productId = productId,
-            ),
-        )
-    }
-
-    private fun publishProductLikeCanceled(productId: Long) {
-        eventPublisher.publishEvent(
-            ProductLikeCanceled(
-                productId = productId,
-            ),
-        )
+        eventPublisher.publishEvent(event)
     }
 }

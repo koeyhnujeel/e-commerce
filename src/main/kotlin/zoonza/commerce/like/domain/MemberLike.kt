@@ -1,44 +1,20 @@
 package zoonza.commerce.like.domain
 
-import jakarta.persistence.*
 import java.time.LocalDateTime
 
-
-@Entity
-@Table(
-    name = "member_like",
-    uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_member_like_member_id_target_id_target_type",
-            columnNames = ["member_id", "target_id", "target_type"],
-        ),
-    ],
-)
-class MemberLike private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class MemberLike(
     val id: Long = 0,
-
-    @Column(name = "member_id", nullable = false)
     val memberId: Long,
-
-    @Column(name = "target_id", nullable = false)
     val targetId: Long,
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false, length = 50)
-    val targetType: LikeTargetType,
-
-    @Column(name = "liked_at", nullable = false)
+    val likeTargetType: LikeTargetType,
     var likedAt: LocalDateTime = LocalDateTime.now(),
-
-    @Column(name = "deleted_at")
     var deletedAt: LocalDateTime? = null,
 ) {
     companion object {
         fun create(
             memberId: Long,
             targetId: Long,
-            targetType: LikeTargetType,
+            likeTargetType: LikeTargetType,
         ): MemberLike {
             require(memberId > 0) { "회원 ID는 1 이상이어야 합니다." }
             require(targetId > 0) { "좋아요 대상 ID는 1 이상이어야 합니다." }
@@ -46,21 +22,30 @@ class MemberLike private constructor(
             return MemberLike(
                 memberId = memberId,
                 targetId = targetId,
-                targetType = targetType,
+                likeTargetType = likeTargetType,
             )
         }
+
     }
 
-    fun cancel() {
-        this.deletedAt = LocalDateTime.now()
-    }
+    fun like() {
+        check(isUnliked()) { "이미 좋아요 상태입니다." }
 
-    fun restore() {
         this.likedAt = LocalDateTime.now()
         this.deletedAt = null
     }
 
-    fun isActive(): Boolean {
-        return deletedAt == null
+    fun unlike() {
+        check(isLiked()) { "이미 좋아요 해제 상태입니다." }
+
+        this.deletedAt = LocalDateTime.now()
+    }
+
+    private fun isUnliked(): Boolean {
+        return this.deletedAt != null
+    }
+
+    private fun isLiked(): Boolean {
+        return this.deletedAt == null
     }
 }

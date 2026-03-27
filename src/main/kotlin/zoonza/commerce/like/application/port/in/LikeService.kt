@@ -1,17 +1,7 @@
 package zoonza.commerce.like.application.port.`in`
 
-import zoonza.commerce.like.domain.LikeTargetType
-
 interface LikeService {
-    fun like(
-        memberId: Long,
-        targetId: Long,
-        targetType: LikeTargetType,
-    )
+    fun likeProduct(memberId: Long, targetId: Long)
 
-    fun cancelLike(
-        memberId: Long,
-        targetId: Long,
-        targetType: LikeTargetType,
-    )
+    fun unlikeProduct(memberId: Long, targetId: Long)
 }

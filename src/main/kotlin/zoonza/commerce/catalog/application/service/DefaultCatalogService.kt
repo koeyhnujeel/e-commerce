@@ -24,7 +24,7 @@ class DefaultCatalogService(
     private val categoryRepository: CategoryRepository,
     private val likeApi: LikeApi,
 ) : CatalogApi, CatalogService {
-    override fun assertProductExists(id: Long) {
+    override fun validateProductExists(id: Long) {
         if (!productRepository.existsById(id)) {
             throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }

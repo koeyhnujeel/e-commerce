@@ -1,7 +1,7 @@
 package zoonza.commerce.catalog
 
 interface CatalogApi {
-    fun assertProductExists(id: Long)
+    fun validateProductExists(id: Long)
 
     fun findProductOptionSnapshot(productOptionId: Long): ProductOptionSnapshot
 

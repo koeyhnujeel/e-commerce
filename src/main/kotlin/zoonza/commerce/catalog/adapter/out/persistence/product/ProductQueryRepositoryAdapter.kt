@@ -5,21 +5,17 @@ import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
-import zoonza.commerce.catalog.adapter.out.persistence.product.QProductJpaEntity.Companion.productJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductImageJpaEntity.Companion.productImageJpaEntity
+import zoonza.commerce.catalog.adapter.out.persistence.product.QProductJpaEntity.Companion.productJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductOptionJpaEntity.Companion.productOptionJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductImageDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductOptionDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductSummaryProjection
+import zoonza.commerce.catalog.adapter.out.persistence.statistic.QProductStatisticJpaEntity.Companion.productStatisticJpaEntity
 import zoonza.commerce.catalog.application.dto.ProductListSort
-import zoonza.commerce.catalog.application.port.out.ProductDetailQueryResult
-import zoonza.commerce.catalog.application.port.out.ProductImageQueryResult
-import zoonza.commerce.catalog.application.port.out.ProductOptionQueryResult
-import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
-import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryResult
+import zoonza.commerce.catalog.application.port.out.*
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
-import zoonza.commerce.catalog.domain.statistic.QProductStatistic.Companion.productStatistic
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
 import kotlin.math.ceil
@@ -37,11 +33,11 @@ class ProductQueryRepositoryAdapter(
                     productJpaEntity.description,
                     productJpaEntity.basePrice.amount,
                     productJpaEntity.categoryId,
-                    productStatistic.likeCount.coalesce(0L),
+                    productStatisticJpaEntity.likeCount.coalesce(0L),
                 ),
             )
             .from(productJpaEntity)
-            .leftJoin(productStatistic).on(productStatistic.productId.eq(productJpaEntity.id))
+            .leftJoin(productStatisticJpaEntity).on(productStatisticJpaEntity.productId.eq(productJpaEntity.id))
             .where(productJpaEntity.id.eq(id))
             .fetchOne()
             ?: return null
@@ -124,13 +120,13 @@ class ProductQueryRepositoryAdapter(
                     productJpaEntity.name,
                     productImageJpaEntity.imageUrl,
                     productJpaEntity.basePrice.amount,
-                    productStatistic.likeCount.coalesce(0L),
+                    productStatisticJpaEntity.likeCount.coalesce(0L),
                     Expressions.constant(ProductSaleStatus.AVAILABLE),
                 ),
             )
             .from(productJpaEntity)
             .join(productJpaEntity.images, productImageJpaEntity)
-            .leftJoin(productStatistic).on(productStatistic.productId.eq(productJpaEntity.id))
+            .leftJoin(productStatisticJpaEntity).on(productStatisticJpaEntity.productId.eq(productJpaEntity.id))
             .where(
                 categoryIdsIn(categoryIds),
                 productImageJpaEntity.isPrimary.isTrue,

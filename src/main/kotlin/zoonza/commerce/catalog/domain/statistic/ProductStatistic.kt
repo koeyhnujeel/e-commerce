@@ -1,18 +1,7 @@
 package zoonza.commerce.catalog.domain.statistic
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.Table
-
-@Entity
-@Table(name = "product_statistic")
-class ProductStatistic private constructor(
-    @Id
-    @Column(name = "product_id", nullable = false)
+class ProductStatistic(
     val productId: Long,
-
-    @Column(name = "like_count", nullable = false)
     var likeCount: Long,
 ) {
     companion object {
@@ -30,7 +19,13 @@ class ProductStatistic private constructor(
         }
     }
 
-    fun applyLikeCountDelta(delta: Long) {
-        this.likeCount = (likeCount + delta).coerceAtLeast(0L)
+    fun incrementLikeCount() {
+        this.likeCount += 1
+    }
+
+    fun decrementLikeCount() {
+        check(likeCount > 0) { "좋아요 수는 0 보다 작아질 수 없습니다." }
+
+        this.likeCount -= 1
     }
 }

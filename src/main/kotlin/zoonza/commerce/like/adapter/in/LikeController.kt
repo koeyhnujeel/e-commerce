@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import zoonza.commerce.like.application.port.`in`.LikeService
-import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.security.CurrentMember
 import zoonza.commerce.support.web.ApiResponse
 
@@ -20,10 +19,9 @@ class LikeController(
         @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
     ): ApiResponse<Nothing> {
-        likeService.like(
+        likeService.likeProduct(
             memberId = currentMember.memberId,
             targetId = productId,
-            targetType = LikeTargetType.PRODUCT,
         )
 
         return ApiResponse.success()
@@ -34,10 +32,9 @@ class LikeController(
         @AuthenticationPrincipal currentMember: CurrentMember,
         @PathVariable productId: Long,
     ): ApiResponse<Nothing> {
-        likeService.cancelLike(
+        likeService.unlikeProduct(
             memberId = currentMember.memberId,
             targetId = productId,
-            targetType = LikeTargetType.PRODUCT,
         )
 
         return ApiResponse.success()

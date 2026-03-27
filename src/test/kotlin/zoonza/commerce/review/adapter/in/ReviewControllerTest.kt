@@ -19,6 +19,7 @@ import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
 import zoonza.commerce.order.adapter.out.persistence.OrderJpaRepository
 import zoonza.commerce.review.adapter.`in`.request.CreateReviewRequest
 import zoonza.commerce.review.adapter.`in`.request.UpdateReviewRequest
+import zoonza.commerce.review.adapter.out.persistence.ReviewJpaEntity
 import zoonza.commerce.review.adapter.out.persistence.ReviewJpaRepository
 import zoonza.commerce.review.domain.Review
 import zoonza.commerce.security.AccessTokenProvider
@@ -59,7 +60,7 @@ class ReviewControllerTest {
     @Test
     fun `인증된 회원은 가장 최근 구매 확정 주문상품을 근거로 리뷰를 등록할 수 있다`() {
         val member =
-            memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+            memberJapRepository.save(MemberFixture.createIndexedJpa(index = 1))
         val product =
             productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
         orderJpaRepository.save(
@@ -85,7 +86,7 @@ class ReviewControllerTest {
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(
                     CreateReviewRequest(
@@ -131,9 +132,9 @@ class ReviewControllerTest {
     @Test
     fun `상품 리뷰 목록은 공개 조회되고 삭제된 리뷰는 제외된다`() {
         val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
-        val writer1 = memberJapRepository.save(MemberFixture.createIndexed(index = 1))
-        val writer2 = memberJapRepository.save(MemberFixture.createIndexed(index = 2))
-        val deletedWriter = memberJapRepository.save(MemberFixture.createIndexed(index = 3))
+        val writer1 = memberJapRepository.save(MemberFixture.createIndexedJpa(index = 1))
+        val writer2 = memberJapRepository.save(MemberFixture.createIndexedJpa(index = 2))
+        val deletedWriter = memberJapRepository.save(MemberFixture.createIndexedJpa(index = 3))
         val orderItemId1 =
             orderJpaRepository.save(
                 OrderFixture.createPurchaseConfirmed(
@@ -165,7 +166,7 @@ class ReviewControllerTest {
                 ),
             ).items.single().id
 
-        reviewJpaRepository.save(
+        saveReview(
             Review.create(
                 memberId = writer1.id,
                 productId = product.id,
@@ -177,7 +178,7 @@ class ReviewControllerTest {
                 createdAt = LocalDateTime.of(2026, 3, 20, 10, 0),
             ),
         )
-        reviewJpaRepository.save(
+        saveReview(
             Review.create(
                 memberId = writer2.id,
                 productId = product.id,
@@ -190,7 +191,7 @@ class ReviewControllerTest {
             ),
         )
         val deletedReview =
-            reviewJpaRepository.save(
+            saveReview(
                 Review.create(
                     memberId = deletedWriter.id,
                     productId = product.id,
@@ -202,7 +203,9 @@ class ReviewControllerTest {
                     createdAt = LocalDateTime.of(2026, 3, 20, 11, 0),
                 ),
             )
-        deletedReview.delete(LocalDateTime.of(2026, 3, 22, 9, 0))
+        val deletedReviewDomain = deletedReview.toDomain()
+        deletedReviewDomain.delete(LocalDateTime.of(2026, 3, 22, 9, 0))
+        saveReview(deletedReviewDomain)
 
         mockMvc
             .get("/api/products/${product.id}/reviews") {
@@ -224,7 +227,7 @@ class ReviewControllerTest {
 
     @Test
     fun `인증된 회원은 내 리뷰를 조회하고 수정하고 삭제할 수 있다`() {
-        val member = memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+        val member = memberJapRepository.save(MemberFixture.createIndexedJpa(index = 1))
         val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
         val orderItemId =
             orderJpaRepository.save(
@@ -236,7 +239,7 @@ class ReviewControllerTest {
                     confirmedAt = LocalDateTime.of(2026, 3, 22, 9, 0),
                 ),
             ).items.single().id
-        reviewJpaRepository.save(
+        saveReview(
             Review.create(
                 memberId = member.id,
                 productId = product.id,
@@ -251,7 +254,7 @@ class ReviewControllerTest {
 
         mockMvc
             .get("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -263,7 +266,7 @@ class ReviewControllerTest {
 
         mockMvc
             .put("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(
                     UpdateReviewRequest(
@@ -283,7 +286,7 @@ class ReviewControllerTest {
 
         mockMvc
             .delete("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -296,7 +299,7 @@ class ReviewControllerTest {
 
     @Test
     fun `삭제한 리뷰는 다시 작성하면 기존 리뷰를 복원한다`() {
-        val member = memberJapRepository.save(MemberFixture.createIndexed(index = 1))
+        val member = memberJapRepository.save(MemberFixture.createIndexedJpa(index = 1))
         val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
         val order =
             orderJpaRepository.save(
@@ -312,7 +315,7 @@ class ReviewControllerTest {
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(CreateReviewRequest(rating = 5, content = "첫 리뷰"))
             }.andExpect {
@@ -324,14 +327,14 @@ class ReviewControllerTest {
 
         mockMvc
             .delete("/api/products/${product.id}/reviews/me") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
             }
 
         mockMvc
             .post("/api/products/${product.id}/reviews") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(CreateReviewRequest(rating = 3, content = "다시 작성"))
             }.andExpect {
@@ -348,5 +351,9 @@ class ReviewControllerTest {
         restoredReview.rating shouldBe 3
         restoredReview.deletedAt.shouldBeNull()
         reviewJpaRepository.count() shouldBe 1L
+    }
+
+    private fun saveReview(review: Review): ReviewJpaEntity {
+        return reviewJpaRepository.save(ReviewJpaEntity.from(review))
     }
 }

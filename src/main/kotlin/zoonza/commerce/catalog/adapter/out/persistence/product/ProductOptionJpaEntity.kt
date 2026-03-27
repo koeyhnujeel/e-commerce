@@ -1,14 +1,6 @@
 package zoonza.commerce.catalog.adapter.out.persistence.product
 
-import jakarta.persistence.AttributeOverride
-import jakarta.persistence.Column
-import jakarta.persistence.Embedded
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
+import jakarta.persistence.*
 import zoonza.commerce.catalog.domain.product.ProductOption
 import zoonza.commerce.shared.Money
 

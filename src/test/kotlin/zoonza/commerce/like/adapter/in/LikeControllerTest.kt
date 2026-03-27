@@ -12,12 +12,15 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
+import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaRepository
+import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaEntity
 import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
 import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.support.MySqlTestContainerConfig
 import zoonza.commerce.support.fixture.AuthFixture
+import zoonza.commerce.support.fixture.ProductFixture
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,36 +35,46 @@ class LikeControllerTest {
     private lateinit var accessTokenProvider: AccessTokenProvider
 
     @Autowired
+    private lateinit var productJpaRepository: ProductJpaRepository
+
+    @Autowired
     private lateinit var memberLikeJpaRepository: MemberLikeJpaRepository
 
     @Test
     fun `인증된 회원은 상품 좋아요를 등록할 수 있다`() {
+        val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 1))
+
         mockMvc
-            .post("/api/products/10/likes") {
+            .post("/api/products/${product.id}/likes") {
                 header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
             }
 
-        val savedMemberLike = memberLikeJpaRepository.findByMemberIdAndTargetIdAndTargetType(1L, 10L, LikeTargetType.PRODUCT)
+        val savedMemberLike = memberLikeJpaRepository.findByMemberIdAndTargetIdAndLikeTargetType(1L, product.id, LikeTargetType.PRODUCT)
         savedMemberLike.shouldNotBeNull()
         savedMemberLike.deletedAt.shouldBeNull()
     }
 
     @Test
     fun `인증된 회원은 상품 좋아요를 취소할 수 있다`() {
-        memberLikeJpaRepository.save(MemberLike.create(memberId = 1L, targetId = 10L, targetType = LikeTargetType.PRODUCT))
+        val product = productJpaRepository.save(ProductFixture.createSingleOption(index = 2))
+        memberLikeJpaRepository.save(
+            MemberLikeJpaEntity.from(
+                MemberLike.create(memberId = 1L, targetId = product.id, likeTargetType = LikeTargetType.PRODUCT),
+            ),
+        )
 
         mockMvc
-            .post("/api/products/10/likes/cancel") {
+            .post("/api/products/${product.id}/likes/cancel") {
                 header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
             }
 
-        val savedMemberLike = memberLikeJpaRepository.findByMemberIdAndTargetIdAndTargetType(1L, 10L, LikeTargetType.PRODUCT)
+        val savedMemberLike = memberLikeJpaRepository.findByMemberIdAndTargetIdAndLikeTargetType(1L, product.id, LikeTargetType.PRODUCT)
         savedMemberLike.shouldNotBeNull()
         savedMemberLike.deletedAt.shouldNotBeNull()
     }

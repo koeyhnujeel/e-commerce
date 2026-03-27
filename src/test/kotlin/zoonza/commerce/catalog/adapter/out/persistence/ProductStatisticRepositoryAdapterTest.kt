@@ -1,5 +1,6 @@
 package zoonza.commerce.catalog.adapter.out.persistence
 
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -7,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaRepository
 import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticRepositoryAdapter
 import zoonza.commerce.catalog.domain.statistic.ProductStatistic
@@ -26,56 +28,40 @@ class ProductStatisticRepositoryAdapterTest {
     private lateinit var productStatisticJpaRepository: ProductStatisticJpaRepository
 
     @Test
-    fun `기존 통계 row가 있으면 좋아요 수를 원자적으로 증가시킨다`() {
-        productStatisticJpaRepository.save(
+    fun `상품 통계를 저장하고 조회한다`() {
+        productStatisticRepository.save(
             ProductStatistic.create(
                 productId = 10L,
                 likeCount = 3L,
             ),
         )
 
-        productStatisticRepository.applyLikeCountDelta(
-            productId = 10L,
-            delta = 2L,
-        )
+        val found = productStatisticRepository.findByProductId(10L)
 
-        productStatisticRepository.findLikeCount(10L) shouldBe 5L
+        found.shouldNotBeNull()
+        found.productId shouldBe 10L
+        found.likeCount shouldBe 3L
     }
 
     @Test
-    fun `기존 통계 row가 있으면 좋아요 수는 0 아래로 내려가지 않는다`() {
+    fun `기존 상품 통계를 수정 후 저장하면 갱신된다`() {
         productStatisticJpaRepository.save(
-            ProductStatistic.create(
-                productId = 10L,
-                likeCount = 1L,
+            ProductStatisticJpaEntity.from(
+                ProductStatistic.create(
+                    productId = 10L,
+                    likeCount = 1L,
+                ),
             ),
         )
+        val statistic = productStatisticRepository.findByProductId(10L).shouldNotBeNull()
 
-        productStatisticRepository.applyLikeCountDelta(
-            productId = 10L,
-            delta = -2L,
-        )
+        statistic.incrementLikeCount()
+        statistic.incrementLikeCount()
+        productStatisticRepository.save(statistic)
 
-        productStatisticRepository.findLikeCount(10L) shouldBe 0L
-    }
+        val updated = productStatisticRepository.findByProductId(10L)
 
-    @Test
-    fun `통계 row가 없고 양수 delta면 새 row를 생성한다`() {
-        productStatisticRepository.applyLikeCountDelta(
-            productId = 10L,
-            delta = 2L,
-        )
-
-        productStatisticRepository.findLikeCount(10L) shouldBe 2L
-    }
-
-    @Test
-    fun `통계 row가 없고 음수 delta면 아무 일도 하지 않는다`() {
-        productStatisticRepository.applyLikeCountDelta(
-            productId = 10L,
-            delta = -1L,
-        )
-
-        productStatisticRepository.findLikeCount(10L) shouldBe 0L
+        updated.shouldNotBeNull()
+        updated.likeCount shouldBe 3L
     }
 }

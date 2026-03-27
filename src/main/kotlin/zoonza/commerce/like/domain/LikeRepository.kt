@@ -1,19 +1,16 @@
-package zoonza.commerce.like.application.port.out
-
-import zoonza.commerce.like.domain.LikeTargetType
-import zoonza.commerce.like.domain.MemberLike
+package zoonza.commerce.like.domain
 
 interface LikeRepository {
     fun findByMemberIdAndTargetId(
         memberId: Long,
         targetId: Long,
-        targetType: LikeTargetType,
+        likeTargetType: LikeTargetType,
     ): MemberLike?
 
     fun findActiveTargetIds(
         memberId: Long,
         targetIds: Collection<Long>,
-        targetType: LikeTargetType,
+        likeTargetType: LikeTargetType,
     ): Set<Long>
 
     fun save(memberLike: MemberLike): MemberLike

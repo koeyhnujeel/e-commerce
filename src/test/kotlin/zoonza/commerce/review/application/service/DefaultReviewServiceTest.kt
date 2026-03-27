@@ -42,7 +42,7 @@ class DefaultReviewServiceTest {
         val savedReview = slot<Review>()
         val persistedReview = mockk<Review>()
 
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns null
         every { orderApi.findReviewablePurchase(1L, 10L) } returns
             listOf(ReviewablePurchase(200L, ProductOptionSnapshot("BLACK", "M")))
@@ -69,7 +69,7 @@ class DefaultReviewServiceTest {
     fun `상품 리뷰 목록은 애플리케이션 페이징 타입으로 조회한다`() {
         val pageQuery = slot<PageQuery>()
 
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every {
             reviewRepository.findByProductId(
                 productId = 10L,
@@ -96,7 +96,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `활성 리뷰가 이미 있으면 중복 작성에 실패한다`() {
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns review()
 
         val exception =
@@ -118,7 +118,7 @@ class DefaultReviewServiceTest {
         val deletedReview = review()
         deletedReview.delete(LocalDateTime.of(2026, 3, 21, 12, 30))
 
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns deletedReview
         every { reviewRepository.save(deletedReview) } returns deletedReview
 
@@ -141,7 +141,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `구매 확정 주문상품이 없으면 리뷰 작성에 실패한다`() {
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { reviewRepository.findByMemberIdAndProductId(1L, 10L) } returns null
         every { orderApi.findReviewablePurchase(1L, 10L) } returns emptyList()
 
@@ -160,7 +160,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `내 리뷰 조회는 최신 닉네임을 함께 반환한다`() {
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { reviewRepository.findActiveByMemberIdAndProductId(1L, 10L) } returns review()
         every { memberApi.findProfileById(1L) } returns MemberProfile(1L, "latest-reviewer")
 
@@ -173,7 +173,7 @@ class DefaultReviewServiceTest {
 
     @Test
     fun `리뷰 목록 조회 중 최신 닉네임을 찾지 못하면 실패한다`() {
-        every { catalogApi.assertProductExists(10L) } returns Unit
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every {
             reviewRepository.findByProductId(
                 productId = 10L,

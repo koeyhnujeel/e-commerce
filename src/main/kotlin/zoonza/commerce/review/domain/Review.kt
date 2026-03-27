@@ -1,50 +1,18 @@
 package zoonza.commerce.review.domain
 
-import jakarta.persistence.*
 import java.time.LocalDateTime
 
-@Entity
-@Table(
-    name = "review",
-    uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_review_member_id_product_id",
-            columnNames = ["member_id", "product_id"],
-        ),
-    ],
-)
-class Review private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class Review(
     val id: Long = 0,
-
-    @Column(name = "member_id", nullable = false)
     val memberId: Long,
-
-    @Column(name = "product_id", nullable = false)
     val productId: Long,
-
-    @Column(name = "order_item_id", nullable = false)
     val orderItemId: Long,
-
-    @Column(name = "option_color", nullable = false)
     val optionColor: String,
-
-    @Column(name = "option_size", nullable = false)
     val optionSize: String,
-
-    @Column(nullable = false)
     var rating: Int,
-
-    @Column(nullable = false, columnDefinition = "TEXT")
     var content: String,
-
-    @Column(name = "created_at", nullable = false)
     val createdAt: LocalDateTime,
-
-    @Column(name = "updated_at", nullable = false)
     var updatedAt: LocalDateTime,
-
-    @Column(name = "deleted_at")
     var deletedAt: LocalDateTime? = null,
 ) {
     companion object {

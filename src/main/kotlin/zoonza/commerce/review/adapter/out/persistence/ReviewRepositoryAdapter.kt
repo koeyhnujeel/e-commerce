@@ -16,14 +16,14 @@ class ReviewRepositoryAdapter(
         memberId: Long,
         productId: Long,
     ): Review? {
-        return reviewJpaRepository.findByMemberIdAndProductId(memberId, productId)
+        return reviewJpaRepository.findByMemberIdAndProductId(memberId, productId)?.toDomain()
     }
 
     override fun findActiveByMemberIdAndProductId(
         memberId: Long,
         productId: Long,
     ): Review? {
-        return reviewJpaRepository.findByMemberIdAndProductIdAndDeletedAtIsNull(memberId, productId)
+        return reviewJpaRepository.findByMemberIdAndProductIdAndDeletedAtIsNull(memberId, productId)?.toDomain()
     }
 
     override fun findByProductId(
@@ -40,7 +40,7 @@ class ReviewRepositoryAdapter(
             )
 
         return PageResult(
-            items = reviewPage.content,
+            items = reviewPage.content.map(ReviewJpaEntity::toDomain),
             page = reviewPage.number,
             size = reviewPage.size,
             totalElements = reviewPage.totalElements,
@@ -49,6 +49,6 @@ class ReviewRepositoryAdapter(
     }
 
     override fun save(review: Review): Review {
-        return reviewJpaRepository.save(review)
+        return reviewJpaRepository.save(ReviewJpaEntity.from(review)).toDomain()
     }
 }

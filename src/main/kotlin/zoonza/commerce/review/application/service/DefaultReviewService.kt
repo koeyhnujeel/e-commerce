@@ -148,7 +148,7 @@ class DefaultReviewService(
     }
 
     private fun validateProductExists(productId: Long) {
-        catalogApi.assertProductExists(productId)
+        catalogApi.validateProductExists(productId)
     }
 
     private fun toSummary(

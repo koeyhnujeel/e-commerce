@@ -13,8 +13,10 @@ import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.adapter.out.persistence.category.CategoryJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.category.CategoryJpaRepository
 import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaRepository
+import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaRepository
 import zoonza.commerce.catalog.domain.statistic.ProductStatistic
+import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaEntity
 import zoonza.commerce.like.adapter.out.persistence.MemberLikeJpaRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
@@ -89,7 +91,7 @@ class ProductControllerTest {
             ),
         )
 
-        productStatisticJpaRepository.save(ProductStatistic.create(productId = cheapProduct.id, likeCount = 1L))
+        productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = cheapProduct.id, likeCount = 1L)))
 
         mockMvc
             .get("/api/products") {
@@ -115,12 +117,12 @@ class ProductControllerTest {
         val category = saveCategory(CategoryJpaEntity(name = "상의", depth = 0, sortOrder = 0))
         val likedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
         val unlikedProduct = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 2, price = 29_900, categoryId = category.id))
-        productStatisticJpaRepository.save(ProductStatistic.create(productId = likedProduct.id, likeCount = 2L))
-        productStatisticJpaRepository.save(ProductStatistic.create(productId = unlikedProduct.id, likeCount = 1L))
+        productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = likedProduct.id, likeCount = 2L)))
+        productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = unlikedProduct.id, likeCount = 1L)))
 
-        memberLikeJpaRepository.save(MemberLike.create(memberId = 1L, targetId = likedProduct.id, targetType = LikeTargetType.PRODUCT))
-        memberLikeJpaRepository.save(MemberLike.create(memberId = 2L, targetId = likedProduct.id, targetType = LikeTargetType.PRODUCT))
-        memberLikeJpaRepository.save(MemberLike.create(memberId = 2L, targetId = unlikedProduct.id, targetType = LikeTargetType.PRODUCT))
+        memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 1L, targetId = likedProduct.id, likeTargetType = LikeTargetType.PRODUCT)))
+        memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 2L, targetId = likedProduct.id, likeTargetType = LikeTargetType.PRODUCT)))
+        memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 2L, targetId = unlikedProduct.id, likeTargetType = LikeTargetType.PRODUCT)))
 
         mockMvc
             .get("/api/products") {
@@ -141,7 +143,7 @@ class ProductControllerTest {
     fun `비로그인 사용자는 상품 상세를 조회할 수 있다`() {
         val category = saveCategory(CategoryJpaEntity(name = "셔츠", depth = 0, sortOrder = 0))
         val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
-        productStatisticJpaRepository.save(ProductStatistic.create(productId = product.id, likeCount = 1L))
+        productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = product.id, likeCount = 1L)))
 
         mockMvc
             .get("/api/products/${product.id}")
@@ -164,9 +166,9 @@ class ProductControllerTest {
     fun `로그인 사용자는 상품 상세에서 likedByMe를 확인할 수 있다`() {
         val category = saveCategory(CategoryJpaEntity(name = "바지", depth = 0, sortOrder = 0))
         val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id))
-        productStatisticJpaRepository.save(ProductStatistic.create(productId = product.id, likeCount = 1L))
+        productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = product.id, likeCount = 1L)))
 
-        memberLikeJpaRepository.save(MemberLike.create(memberId = 7L, targetId = product.id, targetType = LikeTargetType.PRODUCT))
+        memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 7L, targetId = product.id, likeTargetType = LikeTargetType.PRODUCT)))
 
         mockMvc
             .get("/api/products/${product.id}") {

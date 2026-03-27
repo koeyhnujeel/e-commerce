@@ -1,11 +1,11 @@
-package zoonza.commerce.like.adapter.out.persistence
+package zoonza.commerce.like.application.port.out
 
 import zoonza.commerce.like.domain.LikeTargetType
 
 interface MemberLikeQueryRepository {
     fun findActiveTargetIdsByMemberIdAndTargetTypeAndTargetIdIn(
         memberId: Long,
-        targetType: LikeTargetType,
+        likeTargetType: LikeTargetType,
         targetIds: Collection<Long>,
     ): List<Long>
 }

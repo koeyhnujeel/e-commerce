@@ -7,11 +7,7 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.application.dto.ProductListSort
-import zoonza.commerce.catalog.application.port.out.ProductDetailQueryResult
-import zoonza.commerce.catalog.application.port.out.ProductImageQueryResult
-import zoonza.commerce.catalog.application.port.out.ProductOptionQueryResult
-import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
-import zoonza.commerce.catalog.application.port.out.ProductSummaryQueryResult
+import zoonza.commerce.catalog.application.port.out.*
 import zoonza.commerce.catalog.domain.category.CategoryRepository
 import zoonza.commerce.catalog.domain.product.*
 import zoonza.commerce.like.LikeApi
