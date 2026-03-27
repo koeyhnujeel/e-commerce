@@ -10,22 +10,25 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
-import zoonza.commerce.like.ProductLiked
-import zoonza.commerce.like.ProductUnliked
+import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.like.domain.LikeErrorCode
 import zoonza.commerce.like.domain.LikeRepository
 import zoonza.commerce.like.domain.LikeTargetType
 import zoonza.commerce.like.domain.MemberLike
 import zoonza.commerce.shared.BusinessException
+import zoonza.commerce.shared.ProductLiked
+import zoonza.commerce.shared.ProductUnliked
 
 class DefaultLikeServiceTest {
+    private val catalogApi = mockk<CatalogApi>()
     private val likeRepository = mockk<LikeRepository>()
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
-    private val likeService = DefaultLikeService(likeRepository, eventPublisher)
+    private val likeService = DefaultLikeService(catalogApi, likeRepository, eventPublisher)
 
     @Test
     fun `신규 좋아요 요청이면 좋아요를 저장한다`() {
         val savedMemberLike = slot<MemberLike>()
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { likeRepository.findByMemberIdAndTargetId(1L, 10L, LikeTargetType.PRODUCT) } returns null
         every { likeRepository.save(capture(savedMemberLike)) } answers { savedMemberLike.captured }
 
@@ -35,6 +38,7 @@ class DefaultLikeServiceTest {
         savedMemberLike.captured.targetId shouldBe 10L
         savedMemberLike.captured.likeTargetType shouldBe LikeTargetType.PRODUCT
         savedMemberLike.captured.deletedAt.shouldBeNull()
+        verify(exactly = 1) { catalogApi.validateProductExists(10L) }
         verify(exactly = 1) { likeRepository.save(any()) }
         verify(exactly = 1) { eventPublisher.publishEvent(ProductLiked(productId = 10L)) }
     }
@@ -43,12 +47,14 @@ class DefaultLikeServiceTest {
     fun `취소된 좋아요가 있으면 복구한다`() {
         val existingMemberLike = MemberLike.create(memberId = 1L, targetId = 10L, likeTargetType = LikeTargetType.PRODUCT)
         existingMemberLike.unlike()
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { likeRepository.findByMemberIdAndTargetId(1L, 10L, LikeTargetType.PRODUCT) } returns existingMemberLike
         every { likeRepository.save(existingMemberLike) } returns existingMemberLike
 
         likeService.likeProduct(memberId = 1L, targetId = 10L)
 
         existingMemberLike.deletedAt.shouldBeNull()
+        verify(exactly = 1) { catalogApi.validateProductExists(10L) }
         verify(exactly = 1) { likeRepository.save(existingMemberLike) }
         verify(exactly = 1) { eventPublisher.publishEvent(ProductLiked(productId = 10L)) }
     }
@@ -56,18 +62,21 @@ class DefaultLikeServiceTest {
     @Test
     fun `좋아요 취소 요청이면 삭제 시각을 기록한다`() {
         val existingMemberLike = MemberLike.create(memberId = 1L, targetId = 10L, likeTargetType = LikeTargetType.PRODUCT)
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { likeRepository.findByMemberIdAndTargetId(1L, 10L, LikeTargetType.PRODUCT) } returns existingMemberLike
         every { likeRepository.save(existingMemberLike) } returns existingMemberLike
 
         likeService.unlikeProduct(memberId = 1L, targetId = 10L)
 
         existingMemberLike.deletedAt.shouldNotBeNull()
+        verify(exactly = 1) { catalogApi.validateProductExists(10L) }
         verify(exactly = 1) { likeRepository.save(existingMemberLike) }
         verify(exactly = 1) { eventPublisher.publishEvent(ProductUnliked(productId = 10L)) }
     }
 
     @Test
     fun `좋아요가 없으면 취소 요청은 예외를 던진다`() {
+        every { catalogApi.validateProductExists(10L) } returns Unit
         every { likeRepository.findByMemberIdAndTargetId(1L, 10L, LikeTargetType.PRODUCT) } returns null
 
         val exception = shouldThrow<BusinessException> {
@@ -75,6 +84,7 @@ class DefaultLikeServiceTest {
         }
 
         exception.errorCode shouldBe LikeErrorCode.LIKE_NOT_FOUND
+        verify(exactly = 1) { catalogApi.validateProductExists(10L) }
         verify(exactly = 0) { likeRepository.save(any()) }
         verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLiked>()) }
         verify(exactly = 0) { eventPublisher.publishEvent(any<ProductUnliked>()) }

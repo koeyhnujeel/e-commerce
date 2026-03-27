@@ -3,8 +3,8 @@ package zoonza.commerce.catalog.application.service
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
-import zoonza.commerce.like.ProductLiked
-import zoonza.commerce.like.ProductUnliked
+import zoonza.commerce.shared.ProductLiked
+import zoonza.commerce.shared.ProductUnliked
 
 class LikeEventHandlerTest {
     private val productStatisticService = mockk<DefaultProductStatisticService>(relaxed = true)

@@ -1,4 +1,4 @@
-package zoonza.commerce.like
+package zoonza.commerce.shared
 
 data class ProductLiked(
     val productId: Long,

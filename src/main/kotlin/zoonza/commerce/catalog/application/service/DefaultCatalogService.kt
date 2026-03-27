@@ -24,12 +24,6 @@ class DefaultCatalogService(
     private val categoryRepository: CategoryRepository,
     private val likeApi: LikeApi,
 ) : CatalogApi, CatalogService {
-    override fun validateProductExists(id: Long) {
-        if (!productRepository.existsById(id)) {
-            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
-        }
-    }
-
     @Transactional(readOnly = true)
     override fun getProductsByCategory(
         memberId: Long?,
@@ -113,6 +107,12 @@ class DefaultCatalogService(
             likedByMe = likedByMe,
             saleStatus = saleStatus,
         )
+    }
+
+    override fun validateProductExists(id: Long) {
+        if (!productRepository.existsById(id)) {
+            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
+        }
     }
 
     override fun findProductOptionSnapshot(productOptionId: Long): ProductOptionSnapshot {
