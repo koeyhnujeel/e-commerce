@@ -11,6 +11,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.springframework.context.ApplicationEventPublisher
 import zoonza.commerce.catalog.CatalogApi
+import zoonza.commerce.like.application.dto.ProductLikeStatus
 import zoonza.commerce.like.domain.LikeErrorCode
 import zoonza.commerce.like.domain.LikeRepository
 import zoonza.commerce.like.domain.LikeTargetType
@@ -88,5 +89,29 @@ class DefaultLikeServiceTest {
         verify(exactly = 0) { likeRepository.save(any()) }
         verify(exactly = 0) { eventPublisher.publishEvent(any<ProductLiked>()) }
         verify(exactly = 0) { eventPublisher.publishEvent(any<ProductUnliked>()) }
+    }
+
+    @Test
+    fun `상품 좋아요 여부 조회는 요청한 상품 순서대로 liked 값을 반환한다`() {
+        every {
+            likeRepository.findLikedProduct(
+                memberId = 1L,
+                targetIds = listOf(20L, 10L),
+                likeTargetType = LikeTargetType.PRODUCT,
+            )
+        } returns listOf(20L)
+
+        val result = likeService.getProductLikeStatuses(
+            memberId = 1L,
+            productIds = listOf(20L, 10L),
+        )
+
+        result shouldBe
+            listOf(
+                ProductLikeStatus(productId = 20L, liked = true),
+                ProductLikeStatus(productId = 10L, liked = false),
+            )
+        verify(exactly = 0) { catalogApi.validateProductExists(any()) }
+        verify(exactly = 0) { likeRepository.findByMemberIdAndTargetId(any(), any(), any()) }
     }
 }
