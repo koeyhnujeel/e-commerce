@@ -1,49 +1,19 @@
 package zoonza.commerce.order.domain
 
-import jakarta.persistence.*
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 
-@Entity
-@Table(name = "order_item")
-class OrderItem private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class OrderItem(
     val id: Long = 0,
-
-    @Column(name = "product_id", nullable = false)
     val productId: Long,
-
-    @Column(name = "product_option_id", nullable = false)
     val productOptionId: Long,
-
-    @Column(name = "product_name_snapshot", nullable = false)
     val productNameSnapshot: String,
-
-    @Column(name = "option_color_snapshot", nullable = false)
     var optionColorSnapshot: String,
-
-    @Column(name = "option_size_snapshot", nullable = false)
     var optionSizeSnapshot: String,
-
-    @Column(nullable = false)
     val quantity: Int,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
     var status: OrderItemStatus,
-
-    @Column(name = "confirmed_at")
     var confirmedAt: LocalDateTime? = null,
-
-    @Embedded
-    @AttributeOverride(
-        name = "amount",
-        column = Column(name = "order_price", nullable = false),
-    )
     val orderPrice: Money,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
     var order: Order? = null,
 ) {
     companion object {

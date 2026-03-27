@@ -50,7 +50,7 @@ class OrderControllerTest {
     fun `인증된 회원은 주문을 생성할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -70,7 +70,7 @@ class OrderControllerTest {
 
         mockMvc
             .post("/api/orders") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -105,7 +105,7 @@ class OrderControllerTest {
     fun `인증된 회원은 자신의 주문 목록을 최신순으로 조회할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -114,7 +114,7 @@ class OrderControllerTest {
             )
         val otherMember =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 2,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -158,7 +158,7 @@ class OrderControllerTest {
 
         mockMvc
             .get("/api/orders") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -172,7 +172,7 @@ class OrderControllerTest {
     fun `인증된 회원은 자신의 주문 상세를 조회할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -200,7 +200,7 @@ class OrderControllerTest {
 
         mockMvc
             .get("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -216,7 +216,7 @@ class OrderControllerTest {
     fun `인증된 회원은 결제 전 주문을 수정할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -254,7 +254,7 @@ class OrderControllerTest {
 
         mockMvc
             .patch("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -287,7 +287,7 @@ class OrderControllerTest {
     fun `결제 완료 주문은 수정할 수 없다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -316,7 +316,7 @@ class OrderControllerTest {
 
         mockMvc
             .patch("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
                 contentType = MediaType.APPLICATION_JSON
                 content =
                     """
@@ -341,7 +341,7 @@ class OrderControllerTest {
     fun `타인 주문 상세는 조회할 수 없다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -350,7 +350,7 @@ class OrderControllerTest {
             )
         val otherMember =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 2,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -378,7 +378,7 @@ class OrderControllerTest {
 
         mockMvc
             .get("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.error.code") { value("NOT_FOUND") }
@@ -389,7 +389,7 @@ class OrderControllerTest {
     fun `인증된 회원은 결제 전 주문을 삭제할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -417,7 +417,7 @@ class OrderControllerTest {
 
         mockMvc
             .delete("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -429,7 +429,7 @@ class OrderControllerTest {
 
         mockMvc
             .get("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isNotFound() }
                 jsonPath("$.error.code") { value("NOT_FOUND") }
@@ -440,7 +440,7 @@ class OrderControllerTest {
     fun `결제 완료 주문은 삭제할 수 없다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -469,7 +469,7 @@ class OrderControllerTest {
 
         mockMvc
             .delete("/api/orders/${order.id}") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isBadRequest() }
                 jsonPath("$.error.code") { value("BAD_REQUEST") }
@@ -481,7 +481,7 @@ class OrderControllerTest {
     fun `인증된 회원은 배송 완료 주문상품을 구매 확정할 수 있다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -510,7 +510,7 @@ class OrderControllerTest {
 
         mockMvc
             .post("/api/orders/items/$orderItemId/purchase-confirmation") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
                 jsonPath("$.success") { value(true) }
@@ -528,7 +528,7 @@ class OrderControllerTest {
     fun `이미 구매 확정된 주문상품은 다시 구매 확정할 수 없다`() {
         val member =
             memberJapRepository.save(
-                MemberFixture.createIndexed(
+                MemberFixture.createIndexedJpa(
                     index = 1,
                     emailPrefix = "order-member",
                     nicknamePrefix = "order-nickname",
@@ -557,14 +557,14 @@ class OrderControllerTest {
 
         mockMvc
             .post("/api/orders/items/$orderItemId/purchase-confirmation") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isOk() }
             }
 
         mockMvc
             .post("/api/orders/items/$orderItemId/purchase-confirmation") {
-                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, member))
+                header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = member.id))
             }.andExpect {
                 status { isBadRequest() }
                 jsonPath("$.error.code") { value("BAD_REQUEST") }

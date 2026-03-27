@@ -23,27 +23,28 @@ class OrderRepositoryAdapter(
 
     override fun findOrders(memberId: Long): List<Order> {
         return orderJpaRepository.findAllByMemberIdAndDeletedAtIsNullOrderByOrderedAtDescIdDesc(memberId)
+            .map(OrderJpaEntity::toDomain)
     }
 
     override fun findOrderByIdAndMemberId(
         orderId: Long,
         memberId: Long,
     ): Order? {
-        return orderJpaRepository.findOrderDetailByIdAndMemberId(orderId, memberId)
+        return orderJpaRepository.findOrderDetailByIdAndMemberId(orderId, memberId)?.toDomain()
     }
 
     override fun findOrderByMemberIdAndOrderItemId(
         memberId: Long,
         orderItemId: Long,
     ): Order? {
-        return orderJpaRepository.findOrderByMemberIdAndOrderItemId(memberId, orderItemId)
+        return orderJpaRepository.findOrderByMemberIdAndOrderItemId(memberId, orderItemId)?.toDomain()
     }
 
     override fun findOrderById(orderId: Long): Order? {
-        return orderJpaRepository.findOrderDetailById(orderId)
+        return orderJpaRepository.findOrderDetailById(orderId)?.toDomain()
     }
 
     override fun save(order: Order): Order {
-        return orderJpaRepository.save(order)
+        return orderJpaRepository.save(OrderJpaEntity.from(order)).toDomain()
     }
 }

@@ -4,10 +4,9 @@ import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import zoonza.commerce.catalog.ProductOptionSnapshot
 import zoonza.commerce.order.ReviewablePurchase
-import zoonza.commerce.order.domain.Order
+import zoonza.commerce.order.adapter.out.persistence.QOrderItemJpaEntity.Companion.orderItemJpaEntity
+import zoonza.commerce.order.adapter.out.persistence.QOrderJpaEntity.Companion.orderJpaEntity
 import zoonza.commerce.order.domain.OrderItemStatus
-import zoonza.commerce.order.domain.QOrder.Companion.order
-import zoonza.commerce.order.domain.QOrderItem.Companion.orderItem
 
 class OrderQueryRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -18,24 +17,24 @@ class OrderQueryRepositoryImpl(
         status: OrderItemStatus,
     ): List<ReviewablePurchase> {
         return queryFactory
-            .select(orderItem.id, orderItem.optionColorSnapshot, orderItem.optionSizeSnapshot)
-            .from(order)
-            .join(order.items, orderItem)
+            .select(orderItemJpaEntity.id, orderItemJpaEntity.optionColorSnapshot, orderItemJpaEntity.optionSizeSnapshot)
+            .from(orderJpaEntity)
+            .join(orderJpaEntity.items, orderItemJpaEntity)
             .where(
-                order.memberId.eq(memberId),
-                order.deletedAt.isNull(),
-                orderItem.productId.eq(productId),
-                orderItem.status.eq(status),
+                orderJpaEntity.memberId.eq(memberId),
+                orderJpaEntity.deletedAt.isNull(),
+                orderItemJpaEntity.productId.eq(productId),
+                orderItemJpaEntity.status.eq(status),
             )
-            .orderBy(orderItem.confirmedAt.desc(), order.id.desc(), orderItem.id.desc())
+            .orderBy(orderItemJpaEntity.confirmedAt.desc(), orderJpaEntity.id.desc(), orderItemJpaEntity.id.desc())
             .fetch()
             .map { tuple ->
                 ReviewablePurchase(
-                    orderItemId = tuple.get(orderItem.id) ?: throw IllegalStateException("주문상품 식별자를 찾을 수 없습니다."),
+                    orderItemId = tuple.get(orderItemJpaEntity.id) ?: throw IllegalStateException("주문상품 식별자를 찾을 수 없습니다."),
                     option = ProductOptionSnapshot(
-                        color = tuple.get(orderItem.optionColorSnapshot)
+                        color = tuple.get(orderItemJpaEntity.optionColorSnapshot)
                             ?: throw IllegalStateException("주문상품 옵션 색상을 찾을 수 없습니다."),
-                        size = tuple.get(orderItem.optionSizeSnapshot)
+                        size = tuple.get(orderItemJpaEntity.optionSizeSnapshot)
                             ?: throw IllegalStateException("주문상품 옵션 사이즈를 찾을 수 없습니다."),
                     ),
                 )
@@ -45,30 +44,30 @@ class OrderQueryRepositoryImpl(
     override fun findOrderByMemberIdAndOrderItemId(
         memberId: Long,
         orderItemId: Long,
-    ): Order? {
+    ): OrderJpaEntity? {
         return fetchSingleOrder(
-            order.memberId.eq(memberId)
-                .and(order.deletedAt.isNull())
-                .and(orderItem.id.eq(orderItemId)),
+            orderJpaEntity.memberId.eq(memberId)
+                .and(orderJpaEntity.deletedAt.isNull())
+                .and(orderItemJpaEntity.id.eq(orderItemId)),
         )
     }
 
     override fun findOrderDetailByIdAndMemberId(
         orderId: Long,
         memberId: Long,
-    ): Order? {
+    ): OrderJpaEntity? {
         return fetchSingleOrder(
-            order.id.eq(orderId)
-                .and(order.memberId.eq(memberId))
-                .and(order.deletedAt.isNull()),
+            orderJpaEntity.id.eq(orderId)
+                .and(orderJpaEntity.memberId.eq(memberId))
+                .and(orderJpaEntity.deletedAt.isNull()),
             leftJoinItems = true,
         )
     }
 
-    override fun findOrderDetailById(orderId: Long): Order? {
+    override fun findOrderDetailById(orderId: Long): OrderJpaEntity? {
         return fetchSingleOrder(
-            order.id.eq(orderId)
-                .and(order.deletedAt.isNull()),
+            orderJpaEntity.id.eq(orderId)
+                .and(orderJpaEntity.deletedAt.isNull()),
             leftJoinItems = true,
         )
     }
@@ -76,21 +75,21 @@ class OrderQueryRepositoryImpl(
     private fun fetchSingleOrder(
         predicate: BooleanExpression,
         leftJoinItems: Boolean = false,
-    ): Order? {
+    ): OrderJpaEntity? {
         val query =
             queryFactory
-                .selectFrom(order)
+                .selectFrom(orderJpaEntity)
                 .distinct()
 
         if (leftJoinItems) {
-            query.leftJoin(order.items, orderItem).fetchJoin()
+            query.leftJoin(orderJpaEntity.items, orderItemJpaEntity).fetchJoin()
         } else {
-            query.join(order.items, orderItem).fetchJoin()
+            query.join(orderJpaEntity.items, orderItemJpaEntity).fetchJoin()
         }
 
         return query
             .where(predicate)
-            .orderBy(orderItem.id.asc())
+            .orderBy(orderItemJpaEntity.id.asc())
             .fetch()
             .firstOrNull()
     }

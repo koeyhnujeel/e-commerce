@@ -1,50 +1,17 @@
 package zoonza.commerce.order.domain
 
-import jakarta.persistence.*
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 
-@Entity
-@Table(
-    name = "customer_order",
-    uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_customer_order_order_number",
-            columnNames = ["order_number"],
-        ),
-    ],
-)
-class Order private constructor(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+class Order(
     val id: Long = 0,
-
-    @Column(name = "member_id", nullable = false)
     val memberId: Long,
-
-    @Column(name = "order_number", nullable = false, length = 64)
     val orderNumber: String,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
     var status: OrderStatus,
-
-    @Embedded
-    @AttributeOverride(
-        name = "amount",
-        column = Column(name = "total_amount", nullable = false),
-    )
     var totalAmount: Money,
-
-    @Column(name = "ordered_at", nullable = false)
     val orderedAt: LocalDateTime,
-
-    @Column(name = "delivered_at")
     var deliveredAt: LocalDateTime? = null,
-
-    @Column(name = "deleted_at")
     var deletedAt: LocalDateTime? = null,
-
-    @OneToMany(mappedBy = "order", cascade = [CascadeType.ALL], orphanRemoval = true)
     val items: MutableList<OrderItem>,
 ) {
     companion object {

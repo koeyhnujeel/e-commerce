@@ -1,7 +1,6 @@
 package zoonza.commerce.order.adapter.out.persistence
 
 import zoonza.commerce.order.ReviewablePurchase
-import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItemStatus
 
 interface OrderQueryRepository {
@@ -14,12 +13,12 @@ interface OrderQueryRepository {
     fun findOrderByMemberIdAndOrderItemId(
         memberId: Long,
         orderItemId: Long,
-    ): Order?
+    ): OrderJpaEntity?
 
     fun findOrderDetailByIdAndMemberId(
         orderId: Long,
         memberId: Long,
-    ): Order?
+    ): OrderJpaEntity?
 
-    fun findOrderDetailById(orderId: Long): Order?
+    fun findOrderDetailById(orderId: Long): OrderJpaEntity?
 }

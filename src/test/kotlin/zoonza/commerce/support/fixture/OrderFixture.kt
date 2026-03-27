@@ -2,6 +2,7 @@ package zoonza.commerce.support.fixture
 
 import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.ProductOptionJpaEntity
+import zoonza.commerce.order.adapter.out.persistence.OrderJpaEntity
 import zoonza.commerce.order.domain.Order
 import zoonza.commerce.order.domain.OrderItem
 import zoonza.commerce.order.domain.OrderStatus
@@ -19,25 +20,27 @@ object OrderFixture {
         quantity: Int = 1,
         productOption: ProductOptionJpaEntity = product.options.first(),
         orderPrice: Money = product.basePrice,
-    ): Order {
-        return Order.create(
-            memberId = memberId,
-            orderNumber = orderNumber,
-            status = status,
-            orderedAt = orderedAt,
-            deliveredAt = deliveredAt,
-            items =
-                listOf(
-                    OrderItem.create(
-                        productId = product.id,
-                        productOptionId = productOption.id,
-                        productNameSnapshot = product.name,
-                        optionColorSnapshot = productOption.color,
-                        optionSizeSnapshot = productOption.size,
-                        quantity = quantity,
-                        orderPrice = orderPrice,
+    ): OrderJpaEntity {
+        return OrderJpaEntity.from(
+            Order.create(
+                memberId = memberId,
+                orderNumber = orderNumber,
+                status = status,
+                orderedAt = orderedAt,
+                deliveredAt = deliveredAt,
+                items =
+                    listOf(
+                        OrderItem.create(
+                            productId = product.id,
+                            productOptionId = productOption.id,
+                            productNameSnapshot = product.name,
+                            optionColorSnapshot = productOption.color,
+                            optionSizeSnapshot = productOption.size,
+                            quantity = quantity,
+                            orderPrice = orderPrice,
+                        ),
                     ),
-                ),
+            ),
         )
     }
 
@@ -49,7 +52,7 @@ object OrderFixture {
         quantity: Int = 1,
         productOption: ProductOptionJpaEntity = product.options.first(),
         orderPrice: Money = product.basePrice,
-    ): Order {
+    ): OrderJpaEntity {
         return create(
             memberId = memberId,
             product = product,
@@ -72,7 +75,7 @@ object OrderFixture {
         quantity: Int = 1,
         productOption: ProductOptionJpaEntity = product.options.first(),
         orderPrice: Money = product.basePrice,
-    ): Order {
+    ): OrderJpaEntity {
         val order =
             createDelivered(
                 memberId = memberId,
@@ -84,13 +87,14 @@ object OrderFixture {
                 orderPrice = orderPrice,
             )
 
-        order.confirmPurchase(
-            orderItemId = order.items.single().id,
+        val orderDomain = order.toDomain()
+        orderDomain.confirmPurchase(
+            orderItemId = orderDomain.items.single().id,
             optionColor = productOption.color,
             optionSize = productOption.size,
             confirmedAt = confirmedAt,
         )
 
-        return order
+        return OrderJpaEntity.from(orderDomain)
     }
 }
