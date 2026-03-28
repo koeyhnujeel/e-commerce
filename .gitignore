@@ -218,6 +218,7 @@ gradle-app.setting
 !gradle-wrapper.jar
 
 # Avoid ignore Gradle wrappper properties
+/portfolio/
 !gradle-wrapper.properties
 
 # Cache of project
