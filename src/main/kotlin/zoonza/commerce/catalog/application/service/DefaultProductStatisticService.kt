@@ -9,7 +9,7 @@ import zoonza.commerce.shared.BusinessException
 
 @Service
 class DefaultProductStatisticService(
-    private val productStatisticRepository: ProductStatisticRepository
+    private val productStatisticRepository: ProductStatisticRepository,
 ) {
     @Transactional
     fun incrementProductLikeCount(productId: Long) {
@@ -27,6 +27,24 @@ class DefaultProductStatisticService(
         stat.decrementLikeCount()
 
         productStatisticRepository.save(stat)
+    }
+
+    @Transactional
+    fun incrementProductLikeCountWithUpdate(productId: Long) {
+        val updatedRowCount = productStatisticRepository.incrementLikeCount(productId)
+
+        if (updatedRowCount == 0) {
+            throw BusinessException(ProductStatisticErrorCode.PRODUCT_STATISTIC_NOT_FOUND)
+        }
+    }
+
+    @Transactional
+    fun decrementProductLikeCountWithUpdate(productId: Long) {
+        val updatedRowCount = productStatisticRepository.decrementLikeCount(productId)
+
+        if (updatedRowCount == 0) {
+            throw BusinessException(ProductStatisticErrorCode.PRODUCT_STATISTIC_NOT_FOUND)
+        }
     }
 
     private fun ProductStatisticRepository.findByProductIdOrThrow(productId: Long): ProductStatistic {

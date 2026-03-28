@@ -2,19 +2,30 @@ package zoonza.commerce.catalog.adapter.out.persistence.statistic
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
+import org.hibernate.annotations.DynamicUpdate
 import zoonza.commerce.catalog.domain.statistic.ProductStatistic
 
 @Entity
+@DynamicUpdate
 @Table(name = "product_statistic")
 class ProductStatisticJpaEntity(
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0,
+
     @Column(name = "product_id", nullable = false)
     val productId: Long = 0,
 
     @Column(name = "like_count", nullable = false)
-    val likeCount: Long = 0,
+    var likeCount: Long = 0,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    var version: Long? = null,
 ) {
     companion object {
         fun from(productStatistic: ProductStatistic): ProductStatisticJpaEntity {
@@ -27,8 +38,13 @@ class ProductStatisticJpaEntity(
 
     fun toDomain(): ProductStatistic {
         return ProductStatistic.create(
-            productId = productId,
-            likeCount = likeCount,
+            id = this.id,
+            productId = this.productId,
+            likeCount = this.likeCount,
         )
+    }
+
+    fun updateFrom(productStatistic: ProductStatistic) {
+        this.likeCount = productStatistic.likeCount
     }
 }

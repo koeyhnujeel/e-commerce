@@ -11,11 +11,11 @@ class LikeEventHandler(
 ) {
     @ApplicationModuleListener
     fun handle(event: ProductLiked) {
-        defaultProductStatisticService.incrementProductLikeCount(event.productId)
+        defaultProductStatisticService.incrementProductLikeCountWithUpdate(event.productId)
     }
 
     @ApplicationModuleListener
     fun handle(event: ProductUnliked) {
-        defaultProductStatisticService.decrementProductLikeCount(event.productId)
+        defaultProductStatisticService.decrementProductLikeCountWithUpdate(event.productId)
     }
 }

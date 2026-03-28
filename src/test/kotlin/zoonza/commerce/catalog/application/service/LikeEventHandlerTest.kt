@@ -14,13 +14,13 @@ class LikeEventHandlerTest {
     fun `상품 좋아요 이벤트를 받으면 좋아요 수를 증가시킨다`() {
         handler.handle(ProductLiked(productId = 10L))
 
-        verify(exactly = 1) { productStatisticService.incrementProductLikeCount(10L) }
+        verify(exactly = 1) { productStatisticService.incrementProductLikeCountWithUpdate(10L) }
     }
 
     @Test
     fun `상품 좋아요 취소 이벤트를 받으면 좋아요 수를 감소시킨다`() {
         handler.handle(ProductUnliked(productId = 10L))
 
-        verify(exactly = 1) { productStatisticService.decrementProductLikeCount(10L) }
+        verify(exactly = 1) { productStatisticService.decrementProductLikeCountWithUpdate(10L) }
     }
 }
