@@ -4,8 +4,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.catalog.CatalogErrorCode
-import zoonza.commerce.catalog.OrderProductSnapshot
-import zoonza.commerce.catalog.ProductOptionSnapshot
 import zoonza.commerce.catalog.application.dto.*
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
@@ -101,34 +99,5 @@ class DefaultCatalogService(
         if (!productRepository.existsById(id)) {
             throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
         }
-    }
-
-    override fun findProductOptionSnapshot(productOptionId: Long): ProductOptionSnapshot {
-        val product = productRepository.findByOptionId(productOptionId)
-            ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
-        val option = product.options.firstOrNull { it.id == productOptionId }
-            ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
-
-        return ProductOptionSnapshot(
-            color = option.color,
-            size = option.size,
-        )
-    }
-
-    override fun findOrderProductSnapshot(
-        productId: Long,
-        productOptionId: Long,
-    ): OrderProductSnapshot {
-        val product = productRepository.findById(productId)
-            ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
-
-        val option = product.options.firstOrNull { it.id == productOptionId }
-            ?: throw BusinessException(CatalogErrorCode.PRODUCT_OPTION_NOT_FOUND)
-
-        return OrderProductSnapshot(
-            productName = product.name,
-            option = ProductOptionSnapshot(color = option.color, size = option.size),
-            unitPrice = product.basePrice + option.additionalPrice,
-        )
     }
 }
