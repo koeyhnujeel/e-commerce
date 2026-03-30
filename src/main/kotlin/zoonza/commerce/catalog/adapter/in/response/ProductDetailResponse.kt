@@ -8,6 +8,7 @@ import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 data class ProductDetailResponse(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val description: String,
     val basePrice: Long,
     val categoryId: Long,
@@ -21,6 +22,7 @@ data class ProductDetailResponse(
             return ProductDetailResponse(
                 productId = product.productId,
                 name = product.name,
+                brandName = product.brandName,
                 description = product.description,
                 basePrice = product.basePrice,
                 categoryId = product.categoryId,

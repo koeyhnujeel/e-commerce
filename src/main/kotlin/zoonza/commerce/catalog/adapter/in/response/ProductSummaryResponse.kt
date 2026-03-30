@@ -6,6 +6,7 @@ import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 data class ProductSummaryResponse(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val primaryImageUrl: String,
     val basePrice: Long,
     val likeCount: Long,
@@ -16,6 +17,7 @@ data class ProductSummaryResponse(
             return ProductSummaryResponse(
                 productId = product.productId,
                 name = product.name,
+                brandName = product.brandName,
                 primaryImageUrl = product.primaryImageUrl,
                 basePrice = product.basePrice,
                 likeCount = product.likeCount,

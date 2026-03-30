@@ -41,6 +41,7 @@ class DefaultCatalogServiceTest {
                 ProductSummaryQueryResult(
                     productId = 20L,
                     name = "상품20",
+                    brandName = "브랜드20",
                     primaryImageUrl = "https://cdn.example.com/product-20-primary.jpg",
                     basePrice = 39_900,
                     likeCount = 5L,
@@ -49,6 +50,7 @@ class DefaultCatalogServiceTest {
                 ProductSummaryQueryResult(
                     productId = 10L,
                     name = "상품10",
+                    brandName = "브랜드10",
                     primaryImageUrl = "https://cdn.example.com/product-10-primary.jpg",
                     basePrice = 19_900,
                     likeCount = 2L,
@@ -70,6 +72,7 @@ class DefaultCatalogServiceTest {
 
         pageQuery.captured shouldBe PageQuery(page = 0, size = 20)
         result.items.map { it.productId } shouldBe listOf(20L, 10L)
+        result.items.map { it.brandName } shouldBe listOf("브랜드20", "브랜드10")
         result.items.map { it.likeCount } shouldBe listOf(5L, 2L)
         result.items.map { it.saleStatus } shouldBe listOf(ProductSaleStatus.AVAILABLE, ProductSaleStatus.AVAILABLE)
     }
@@ -91,6 +94,7 @@ class DefaultCatalogServiceTest {
                 ProductSummaryQueryResult(
                     productId = 10L,
                     name = product.name,
+                    brandName = "브랜드10",
                     primaryImageUrl = product.images.first { it.isPrimary }.imageUrl,
                     basePrice = product.basePrice.amount,
                     likeCount = 3L,
@@ -111,6 +115,7 @@ class DefaultCatalogServiceTest {
         )
 
         result.items.single().productId shouldBe 10L
+        result.items.single().brandName shouldBe "브랜드10"
         verify(exactly = 1) { categoryRepository.findAllDescendantIds(1L) }
     }
 
@@ -119,6 +124,7 @@ class DefaultCatalogServiceTest {
         every { productQueryRepository.findProductDetailsById(10L) } returns ProductDetailQueryResult(
             productId = 10L,
             name = "상품10",
+            brandName = "브랜드10",
             description = "상품 설명10",
             basePrice = 19_900,
             categoryId = 10L,
@@ -156,6 +162,7 @@ class DefaultCatalogServiceTest {
         val result = catalogService.getProductDetails(productId = 10L)
 
         result.productId shouldBe 10L
+        result.brandName shouldBe "브랜드10"
         result.categoryId shouldBe 10L
         result.images.map { it.imageUrl } shouldBe
             listOf(

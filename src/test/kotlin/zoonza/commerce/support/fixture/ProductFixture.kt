@@ -13,6 +13,7 @@ object ProductFixture {
         descriptionPrefix: String = "상품 설명",
         price: Long = 19_900,
         categoryId: Long = 1L,
+        brandId: Long = 1L,
         imagePrefix: String = "product",
         color: String = "BLACK",
         size: String = "M",
@@ -20,7 +21,7 @@ object ProductFixture {
     ): ProductJpaEntity {
         return ProductJpaEntity.from(
             Product(
-                brandId = 1L,
+                brandId = brandId,
                 name = "$namePrefix$index",
                 description = "$descriptionPrefix$index",
                 basePrice = Money(price),
@@ -50,13 +51,14 @@ object ProductFixture {
         index: Int,
         price: Long,
         categoryId: Long,
+        brandId: Long = 1L,
         namePrefix: String = "상품",
         descriptionPrefix: String = "상품 설명",
         imagePrefix: String = "product",
     ): ProductJpaEntity {
         return ProductJpaEntity.from(
             Product(
-                brandId = 1L,
+                brandId = brandId,
                 name = "$namePrefix$index",
                 description = "$descriptionPrefix$index",
                 basePrice = Money(price),

@@ -7,6 +7,7 @@ import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 data class ProductSummaryProjection(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val primaryImageUrl: String,
     val basePrice: Long,
     val likeCount: Long,

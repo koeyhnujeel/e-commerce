@@ -6,6 +6,7 @@ import com.querydsl.core.annotations.QueryProjection
 data class ProductDetailProjection(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val description: String,
     val basePrice: Long,
     val categoryId: Long,

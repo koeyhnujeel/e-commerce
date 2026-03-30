@@ -37,6 +37,7 @@ class DefaultCatalogService(
                 ProductSummary(
                     productId = product.productId,
                     name = product.name,
+                    brandName = product.brandName,
                     primaryImageUrl = product.primaryImageUrl,
                     basePrice = product.basePrice,
                     likeCount = product.likeCount,
@@ -71,6 +72,7 @@ class DefaultCatalogService(
         return ProductDetail(
             productId = product.productId,
             name = product.name,
+            brandName = product.brandName,
             description = product.description,
             basePrice = product.basePrice,
             categoryId = product.categoryId,

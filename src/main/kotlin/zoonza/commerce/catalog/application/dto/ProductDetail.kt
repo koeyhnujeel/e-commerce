@@ -5,6 +5,7 @@ import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 data class ProductDetail(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val description: String,
     val basePrice: Long,
     val categoryId: Long,

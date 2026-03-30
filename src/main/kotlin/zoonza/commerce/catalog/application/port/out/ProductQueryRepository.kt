@@ -18,6 +18,7 @@ interface ProductQueryRepository {
 data class ProductSummaryQueryResult(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val primaryImageUrl: String,
     val basePrice: Long,
     val likeCount: Long,
@@ -27,6 +28,7 @@ data class ProductSummaryQueryResult(
 data class ProductDetailQueryResult(
     val productId: Long,
     val name: String,
+    val brandName: String,
     val description: String,
     val basePrice: Long,
     val categoryId: Long,

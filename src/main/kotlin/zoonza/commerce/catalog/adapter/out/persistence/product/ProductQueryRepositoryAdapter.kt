@@ -5,6 +5,7 @@ import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
+import zoonza.commerce.catalog.adapter.out.persistence.brand.QBrandJpaEntity.Companion.brandJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductImageJpaEntity.Companion.productImageJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductJpaEntity.Companion.productJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductOptionJpaEntity.Companion.productOptionJpaEntity
@@ -30,6 +31,7 @@ class ProductQueryRepositoryAdapter(
                 QProductDetailProjection(
                     productJpaEntity.id,
                     productJpaEntity.name,
+                    brandJpaEntity.name,
                     productJpaEntity.description,
                     productJpaEntity.basePrice.amount,
                     productJpaEntity.categoryId,
@@ -37,6 +39,7 @@ class ProductQueryRepositoryAdapter(
                 ),
             )
             .from(productJpaEntity)
+            .join(brandJpaEntity).on(brandJpaEntity.id.eq(productJpaEntity.brandId))
             .leftJoin(productStatisticJpaEntity).on(productStatisticJpaEntity.productId.eq(productJpaEntity.id))
             .where(productJpaEntity.id.eq(id))
             .fetchOne()
@@ -75,6 +78,7 @@ class ProductQueryRepositoryAdapter(
         return ProductDetailQueryResult(
             productId = productDetail.productId,
             name = productDetail.name,
+            brandName = productDetail.brandName,
             description = productDetail.description,
             basePrice = productDetail.basePrice,
             categoryId = productDetail.categoryId,
@@ -118,6 +122,7 @@ class ProductQueryRepositoryAdapter(
                 QProductSummaryProjection(
                     productJpaEntity.id,
                     productJpaEntity.name,
+                    brandJpaEntity.name,
                     productImageJpaEntity.imageUrl,
                     productJpaEntity.basePrice.amount,
                     productStatisticJpaEntity.likeCount.coalesce(0L),
@@ -125,6 +130,7 @@ class ProductQueryRepositoryAdapter(
                 ),
             )
             .from(productJpaEntity)
+            .join(brandJpaEntity).on(brandJpaEntity.id.eq(productJpaEntity.brandId))
             .join(productJpaEntity.images, productImageJpaEntity)
             .leftJoin(productStatisticJpaEntity).on(productStatisticJpaEntity.productId.eq(productJpaEntity.id))
             .where(
@@ -139,6 +145,7 @@ class ProductQueryRepositoryAdapter(
         val totalElements = queryFactory
             .select(productJpaEntity.count())
             .from(productJpaEntity)
+            .join(brandJpaEntity).on(brandJpaEntity.id.eq(productJpaEntity.brandId))
             .where(categoryIdsIn(categoryIds))
             .fetchOne() ?: 0L
 
@@ -154,6 +161,7 @@ class ProductQueryRepositoryAdapter(
                 ProductSummaryQueryResult(
                     productId = summary.productId,
                     name = summary.name,
+                    brandName = summary.brandName,
                     primaryImageUrl = summary.primaryImageUrl,
                     basePrice = summary.basePrice,
                     likeCount = summary.likeCount,
