@@ -11,7 +11,7 @@ class MemberRepositoryAdapter(
     private val memberJapRepository: MemberJapRepository,
 ) : MemberRepository {
     override fun existsByEmail(email: Email): Boolean {
-        return memberJapRepository.existsByEmailAddress(email.address)
+        return memberJapRepository.existsByEmail(email.address)
     }
 
     override fun existsByPhoneNumber(phoneNumber: String): Boolean {
@@ -23,7 +23,7 @@ class MemberRepositoryAdapter(
     }
 
     override fun findByEmail(email: Email): Member? {
-        return memberJapRepository.findByEmailAddress(email.address)?.toDomain()
+        return memberJapRepository.findByEmail(email.address)?.toDomain()
     }
 
     override fun findById(id: Long): Member? {

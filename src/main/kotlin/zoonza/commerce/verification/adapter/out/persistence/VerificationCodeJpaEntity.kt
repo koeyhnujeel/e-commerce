@@ -19,8 +19,8 @@ class VerificationCodeJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    @Embedded
-    val email: Email = Email("test@example.com"),
+    @Column(name = "email", nullable = false)
+    val email: String = "",
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -41,7 +41,7 @@ class VerificationCodeJpaEntity(
     fun toDomain(): VerificationCode {
         return VerificationCode(
             id = id,
-            email = email,
+            email = Email(email),
             purpose = purpose,
             code = code,
             issuedAt = issuedAt,
@@ -54,7 +54,7 @@ class VerificationCodeJpaEntity(
         fun from(verificationCode: VerificationCode): VerificationCodeJpaEntity {
             return VerificationCodeJpaEntity(
                 id = verificationCode.id,
-                email = verificationCode.email,
+                email = verificationCode.email.address,
                 purpose = verificationCode.purpose,
                 code = verificationCode.code,
                 issuedAt = verificationCode.issuedAt,

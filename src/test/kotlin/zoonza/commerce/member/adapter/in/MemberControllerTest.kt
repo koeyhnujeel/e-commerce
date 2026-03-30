@@ -67,7 +67,7 @@ class MemberControllerTest {
             }
 
         val verification =
-            verificationCodeJpaRepository.findByEmailAddressAndPurpose(
+            verificationCodeJpaRepository.findByEmailAndPurpose(
                 request.email,
                 VerificationPurpose.SIGNUP,
             )
@@ -128,7 +128,7 @@ class MemberControllerTest {
             }
 
         val verification =
-            verificationCodeJpaRepository.findByEmailAddressAndPurpose(
+            verificationCodeJpaRepository.findByEmailAndPurpose(
                 "member@example.com",
                 VerificationPurpose.SIGNUP,
             )
@@ -166,7 +166,7 @@ class MemberControllerTest {
                 jsonPath("$.data.id") { isNumber() }
             }
 
-        val member = memberJapRepository.findByEmailAddress("member@example.com")
+        val member = memberJapRepository.findByEmail("member@example.com")
         member.shouldNotBeNull()
         member.name shouldBe "주문자"
         member.phoneNumber shouldBe "01012345678"

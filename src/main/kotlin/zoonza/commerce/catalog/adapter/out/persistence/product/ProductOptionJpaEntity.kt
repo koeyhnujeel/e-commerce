@@ -3,6 +3,7 @@ package zoonza.commerce.catalog.adapter.out.persistence.product
 import jakarta.persistence.*
 import zoonza.commerce.catalog.domain.product.ProductOption
 import zoonza.commerce.shared.Money
+import java.math.BigDecimal
 
 @Entity
 @Table(
@@ -31,12 +32,8 @@ class ProductOptionJpaEntity(
     @Column(name = "sort_order", nullable = false)
     val sortOrder: Int = 0,
 
-    @Embedded
-    @AttributeOverride(
-        name = "amount",
-        column = Column(name = "additional_price", nullable = false),
-    )
-    val additionalPrice: Money = Money(0),
+    @Column(name = "additional_price", nullable = false, precision = 19, scale = 0)
+    val additionalPrice: BigDecimal = BigDecimal.ZERO,
 ) {
     companion object {
         fun from(option: ProductOption): ProductOptionJpaEntity {
@@ -45,7 +42,7 @@ class ProductOptionJpaEntity(
                 color = option.color,
                 size = option.size,
                 sortOrder = option.sortOder,
-                additionalPrice = option.additionalPrice,
+                additionalPrice = option.additionalPrice.amount,
             )
         }
     }
@@ -56,7 +53,7 @@ class ProductOptionJpaEntity(
             color = color,
             size = size,
             sortOder = sortOrder,
-            additionalPrice = additionalPrice,
+            additionalPrice = Money(additionalPrice),
         )
     }
 }

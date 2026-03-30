@@ -55,7 +55,7 @@ class DefaultMemberServiceTest {
             }
 
         exception.errorCode shouldBe MemberErrorCode.DUPLICATE_EMAIL
-        verify(exactly = 0) { verificationApi.createSignupEmailVerificationCode(any()) }
+        verify(exactly = 0) { verificationApi.createSignupEmailVerificationCode(email) }
     }
 
     @Test

@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import zoonza.commerce.verification.domain.VerificationPurpose
 
 interface VerificationCodeJpaRepository : JpaRepository<VerificationCodeJpaEntity, Long> {
-    fun findByEmailAddressAndPurpose(
+    fun findByEmailAndPurpose(
         email: String,
         purpose: VerificationPurpose,
     ): VerificationCodeJpaEntity?

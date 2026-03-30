@@ -3,6 +3,7 @@ package zoonza.commerce.catalog.adapter.out.persistence.product
 import jakarta.persistence.*
 import zoonza.commerce.catalog.domain.product.Product
 import zoonza.commerce.shared.Money
+import java.math.BigDecimal
 
 @Entity
 @Table(name = "product")
@@ -19,12 +20,8 @@ class ProductJpaEntity(
     @Column(nullable = false, columnDefinition = "TEXT")
     val description: String = "",
 
-    @Embedded
-    @AttributeOverride(
-        name = "amount",
-        column = Column(name = "base_price", nullable = false),
-    )
-    val basePrice: Money = Money(0),
+    @Column(name = "base_price", nullable = false, precision = 19, scale = 0)
+    val basePrice: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "category_id", nullable = false)
     val categoryId: Long = 0,
@@ -46,7 +43,7 @@ class ProductJpaEntity(
                 brandId = product.brandId,
                 name = product.name,
                 description = product.description,
-                basePrice = product.basePrice,
+                basePrice = product.basePrice.amount,
                 categoryId = product.categoryId,
                 images = product.images.map(ProductImageJpaEntity::from).toMutableList(),
                 options = product.options.map(ProductOptionJpaEntity::from).toMutableList(),
@@ -60,7 +57,7 @@ class ProductJpaEntity(
             brandId = brandId,
             name = name,
             description = description,
-            basePrice = basePrice,
+            basePrice = Money(basePrice),
             categoryId = categoryId,
             images = images.map(ProductImageJpaEntity::toDomain).toMutableList(),
             options = options.map(ProductOptionJpaEntity::toDomain).toMutableList(),

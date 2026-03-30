@@ -96,7 +96,7 @@ class DefaultCatalogServiceTest {
                     name = product.name,
                     brandName = "브랜드10",
                     primaryImageUrl = product.images.first { it.isPrimary }.imageUrl,
-                    basePrice = product.basePrice.amount,
+                    basePrice = product.basePrice.amount.longValueExact(),
                     likeCount = 3L,
                     saleStatus = ProductSaleStatus.AVAILABLE,
                 ),

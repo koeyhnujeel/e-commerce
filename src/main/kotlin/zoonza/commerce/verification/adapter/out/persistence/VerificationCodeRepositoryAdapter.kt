@@ -14,7 +14,7 @@ class VerificationCodeRepositoryAdapter(
         email: Email,
         purpose: VerificationPurpose,
     ): VerificationCode? {
-        return verificationCodeJpaRepository.findByEmailAddressAndPurpose(email.address, purpose)?.toDomain()
+        return verificationCodeJpaRepository.findByEmailAndPurpose(email.address, purpose)?.toDomain()
     }
 
     override fun save(verification: VerificationCode): VerificationCode {

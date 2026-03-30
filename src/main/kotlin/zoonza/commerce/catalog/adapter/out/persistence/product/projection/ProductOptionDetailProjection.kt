@@ -1,6 +1,7 @@
 package zoonza.commerce.catalog.adapter.out.persistence.product.projection
 
 import com.querydsl.core.annotations.QueryProjection
+import java.math.BigDecimal
 
 @QueryProjection
 data class ProductOptionDetailProjection(
@@ -8,5 +9,5 @@ data class ProductOptionDetailProjection(
     val color: String,
     val size: String,
     val sortOrder: Int,
-    val additionalPrice: Long,
+    val additionalPrice: BigDecimal,
 )

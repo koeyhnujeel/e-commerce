@@ -33,7 +33,7 @@ class ProductQueryRepositoryAdapter(
                     productJpaEntity.name,
                     brandJpaEntity.name,
                     productJpaEntity.description,
-                    productJpaEntity.basePrice.amount,
+                    productJpaEntity.basePrice,
                     productJpaEntity.categoryId,
                     productStatisticJpaEntity.likeCount.coalesce(0L),
                 ),
@@ -66,7 +66,7 @@ class ProductQueryRepositoryAdapter(
                     productOptionJpaEntity.color,
                     productOptionJpaEntity.size,
                     productOptionJpaEntity.sortOrder,
-                    productOptionJpaEntity.additionalPrice.amount,
+                    productOptionJpaEntity.additionalPrice,
                 ),
             )
             .from(productJpaEntity)
@@ -80,7 +80,7 @@ class ProductQueryRepositoryAdapter(
             name = productDetail.name,
             brandName = productDetail.brandName,
             description = productDetail.description,
-            basePrice = productDetail.basePrice,
+            basePrice = productDetail.basePrice.longValueExact(),
             categoryId = productDetail.categoryId,
             images = images.map { image ->
                 ProductImageQueryResult(
@@ -95,7 +95,7 @@ class ProductQueryRepositoryAdapter(
                     color = option.color,
                     size = option.size,
                     sortOrder = option.sortOrder,
-                    additionalPrice = option.additionalPrice,
+                    additionalPrice = option.additionalPrice.longValueExact(),
                 )
             },
             likeCount = productDetail.likeCount,
@@ -124,7 +124,7 @@ class ProductQueryRepositoryAdapter(
                     productJpaEntity.name,
                     brandJpaEntity.name,
                     productImageJpaEntity.imageUrl,
-                    productJpaEntity.basePrice.amount,
+                    productJpaEntity.basePrice,
                     productStatisticJpaEntity.likeCount.coalesce(0L),
                     Expressions.constant(ProductSaleStatus.AVAILABLE),
                 ),
@@ -163,7 +163,7 @@ class ProductQueryRepositoryAdapter(
                     name = summary.name,
                     brandName = summary.brandName,
                     primaryImageUrl = summary.primaryImageUrl,
-                    basePrice = summary.basePrice,
+                    basePrice = summary.basePrice.longValueExact(),
                     likeCount = summary.likeCount,
                     saleStatus = summary.saleStatus,
                 )
@@ -182,8 +182,8 @@ class ProductQueryRepositoryAdapter(
     private fun orderSpecifiers(sort: ProductListSort): Array<OrderSpecifier<*>> {
         return when (sort) {
             ProductListSort.LATEST -> arrayOf(productJpaEntity.id.desc())
-            ProductListSort.PRICE_ASC -> arrayOf(productJpaEntity.basePrice.amount.asc(), productJpaEntity.id.desc())
-            ProductListSort.PRICE_DESC -> arrayOf(productJpaEntity.basePrice.amount.desc(), productJpaEntity.id.desc())
+            ProductListSort.PRICE_ASC -> arrayOf(productJpaEntity.basePrice.asc(), productJpaEntity.id.desc())
+            ProductListSort.PRICE_DESC -> arrayOf(productJpaEntity.basePrice.desc(), productJpaEntity.id.desc())
         }
     }
 }

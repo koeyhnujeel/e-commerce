@@ -6,6 +6,7 @@ import zoonza.commerce.catalog.domain.product.Product
 import zoonza.commerce.catalog.domain.product.ProductImage
 import zoonza.commerce.catalog.domain.product.ProductOption
 import zoonza.commerce.shared.Money
+import java.math.BigDecimal
 
 class ProductTest {
     @Test
@@ -20,7 +21,7 @@ class ProductTest {
                 "https://cdn.example.com/primary.jpg",
                 "https://cdn.example.com/secondary.jpg",
             )
-        product.options.map { it.additionalPrice.amount } shouldBe listOf(0L, 1_000L)
+        product.options.map { it.additionalPrice.amount } shouldBe listOf(BigDecimal.ZERO, BigDecimal.valueOf(1_000))
     }
 
     @Test
@@ -28,7 +29,7 @@ class ProductTest {
         val option = option(color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L)
 
         option.sortOder shouldBe 1
-        option.additionalPrice.amount shouldBe 1_000L
+        option.additionalPrice.amount shouldBe BigDecimal.valueOf(1_000)
     }
 
     private fun primaryImage(): ProductImage {

@@ -19,8 +19,8 @@ class MemberJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    @Embedded
-    val email: Email = Email("test@example.com"),
+    @Column(name = "email", nullable = false)
+    val email: String = "",
 
     @Column(nullable = false)
     val passwordHash: String = "",
@@ -47,7 +47,7 @@ class MemberJpaEntity(
     fun toDomain(): Member {
         return Member(
             id = id,
-            email = email,
+            email = Email(email),
             passwordHash = passwordHash,
             name = name,
             nickname = nickname,
@@ -62,7 +62,7 @@ class MemberJpaEntity(
         fun from(member: Member): MemberJpaEntity {
             return MemberJpaEntity(
                 id = member.id,
-                email = member.email,
+                email = member.email.address,
                 passwordHash = member.passwordHash,
                 name = member.name,
                 nickname = member.nickname,

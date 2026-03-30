@@ -1,13 +1,9 @@
 package zoonza.commerce.shared
 
-import jakarta.persistence.Column
-import jakarta.persistence.Embeddable
+import kotlin.jvm.JvmInline
 
-@Embeddable
-data class Email(
-    @Column(name = "email", nullable = false)
-    val address: String,
-) {
+@JvmInline
+value class Email(val address: String) {
     init {
         require(EMAIL_PATTERN.matches(address)) {
             "이메일 형식이 올바르지 않습니다."
