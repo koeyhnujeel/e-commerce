@@ -30,67 +30,67 @@ class ProductStatisticConcurrencyTest {
         productStatisticJpaRepository.deleteAllInBatch()
     }
 
-    @Test
-    fun `좋아요 수 증가를 동시에 요청하고 결과를 출력한다`() {
-        val productId = 10L
-        val requestCount = 100
-        productStatisticJpaRepository.save(
-            ProductStatisticJpaEntity.from(
-                ProductStatistic.create(
-                    productId = productId,
-                    likeCount = 0L,
-                ),
-            ),
-        )
-
-        runConcurrently(requestCount) {
-            productStatisticService.incrementProductLikeCount(productId)
-        }
-
-        val actualLikeCount = productStatisticJpaRepository.findByProductId(productId)?.likeCount
-
-        println(
-            """
-            [increment concurrency test]
-            productId=$productId
-            requestCount=$requestCount
-            expectedLikeCount=$requestCount
-            actualLikeCount=$actualLikeCount
-            """.trimIndent(),
-        )
-    }
-
-    @Test
-    fun `좋아요 수 감소를 동시에 요청하고 결과를 출력한다`() {
-        val productId = 20L
-        val initialLikeCount = 100L
-        val requestCount = 100
-        productStatisticJpaRepository.save(
-            ProductStatisticJpaEntity.from(
-                ProductStatistic.create(
-                    productId = productId,
-                    likeCount = initialLikeCount,
-                ),
-            ),
-        )
-
-        runConcurrently(requestCount) {
-            productStatisticService.decrementProductLikeCount(productId)
-        }
-
-        val actualLikeCount = productStatisticJpaRepository.findByProductId(productId)?.likeCount
-
-        println(
-            """
-            [decrement concurrency test]
-            productId=$productId
-            initialLikeCount=$initialLikeCount
-            requestCount=$requestCount
-            expectedLikeCount=${initialLikeCount - requestCount}
-            actualLikeCount=$actualLikeCount
-            """.trimIndent(),
-        )
-    }
+//    @Test
+//    fun `좋아요 수 증가를 동시에 요청하고 결과를 출력한다`() {
+//        val productId = 10L
+//        val requestCount = 100
+//        productStatisticJpaRepository.save(
+//            ProductStatisticJpaEntity.from(
+//                ProductStatistic.create(
+//                    productId = productId,
+//                    likeCount = 0L,
+//                ),
+//            ),
+//        )
+//
+//        runConcurrently(requestCount) {
+//            productStatisticService.incrementProductLikeCount(productId)
+//        }
+//
+//        val actualLikeCount = productStatisticJpaRepository.findByProductId(productId)?.likeCount
+//
+//        println(
+//            """
+//            [increment concurrency test]
+//            productId=$productId
+//            requestCount=$requestCount
+//            expectedLikeCount=$requestCount
+//            actualLikeCount=$actualLikeCount
+//            """.trimIndent(),
+//        )
+//    }
+//
+//    @Test
+//    fun `좋아요 수 감소를 동시에 요청하고 결과를 출력한다`() {
+//        val productId = 20L
+//        val initialLikeCount = 100L
+//        val requestCount = 100
+//        productStatisticJpaRepository.save(
+//            ProductStatisticJpaEntity.from(
+//                ProductStatistic.create(
+//                    productId = productId,
+//                    likeCount = initialLikeCount,
+//                ),
+//            ),
+//        )
+//
+//        runConcurrently(requestCount) {
+//            productStatisticService.decrementProductLikeCount(productId)
+//        }
+//
+//        val actualLikeCount = productStatisticJpaRepository.findByProductId(productId)?.likeCount
+//
+//        println(
+//            """
+//            [decrement concurrency test]
+//            productId=$productId
+//            initialLikeCount=$initialLikeCount
+//            requestCount=$requestCount
+//            expectedLikeCount=${initialLikeCount - requestCount}
+//            actualLikeCount=$actualLikeCount
+//            """.trimIndent(),
+//        )
+//    }
 
     @Test
     fun `update 문으로 좋아요 수 증가를 동시에 요청하고 결과를 출력한다`() {
