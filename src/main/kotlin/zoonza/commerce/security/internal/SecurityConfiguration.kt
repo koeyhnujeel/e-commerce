@@ -27,34 +27,8 @@ class SecurityConfiguration(
                 auth
                     .requestMatchers(
                         HttpMethod.POST,
-                        "/api/orders",
-                        "/api/orders/{orderId}/payments",
-                        "/api/payments/{paymentId}/confirm",
-                        "/api/payments/{paymentId}/cancel",
                         "/api/products/{productId}/likes",
                         "/api/products/{productId}/likes/cancel",
-                        "/api/products/{productId}/reviews",
-                        "/api/orders/items/{orderItemId}/purchase-confirmation",
-                    ).authenticated()
-                    .requestMatchers(
-                        HttpMethod.GET,
-                        "/api/orders",
-                        "/api/orders/{orderId}",
-                        "/api/payments/{paymentId}",
-                        "/api/products/{productId}/reviews/me",
-                    ).authenticated()
-                    .requestMatchers(
-                        HttpMethod.PATCH,
-                        "/api/orders/{orderId}",
-                    ).authenticated()
-                    .requestMatchers(
-                        HttpMethod.PUT,
-                        "/api/products/{productId}/reviews/me",
-                    ).authenticated()
-                    .requestMatchers(
-                        HttpMethod.DELETE,
-                        "/api/orders/{orderId}",
-                        "/api/products/{productId}/reviews/me",
                     ).authenticated()
                     .anyRequest().permitAll()
             }

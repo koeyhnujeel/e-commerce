@@ -11,12 +11,12 @@ class ModulithArchitectureTests {
     }
 
     @Test
-    fun `payment module is part of the modulith`() {
+    fun `catalog and like modules are part of the modulith`() {
         val modules = ApplicationModules.of(CommerceApplication::class.java)
-        val paymentModule = modules.getModuleByName("payment")
-        val orderModule = modules.getModuleByName("order")
+        val catalogModule = modules.getModuleByName("catalog")
+        val likeModule = modules.getModuleByName("like")
 
-        assertThat(paymentModule).isPresent
-        assertThat(orderModule).isPresent
+        assertThat(catalogModule).isPresent
+        assertThat(likeModule).isPresent
     }
 }

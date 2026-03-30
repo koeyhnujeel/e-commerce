@@ -13,9 +13,6 @@ class LayerDependencyArchitectureTests {
         "catalog",
         "like",
         "member",
-        "order",
-        "payment",
-        "review",
         "verification",
     )
 
