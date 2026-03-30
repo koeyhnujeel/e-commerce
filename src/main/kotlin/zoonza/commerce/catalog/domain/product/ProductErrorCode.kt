@@ -1,9 +1,9 @@
-package zoonza.commerce.catalog
+package zoonza.commerce.catalog.domain.product
 
 import zoonza.commerce.shared.ErrorDescriptor
 import zoonza.commerce.shared.ErrorStatus
 
-enum class CatalogErrorCode(
+enum class ProductErrorCode(
     override val status: ErrorStatus,
     override val message: String,
 ) : ErrorDescriptor {

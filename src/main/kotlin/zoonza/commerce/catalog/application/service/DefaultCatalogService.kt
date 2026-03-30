@@ -3,7 +3,7 @@ package zoonza.commerce.catalog.application.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.CatalogApi
-import zoonza.commerce.catalog.CatalogErrorCode
+import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.application.dto.*
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
@@ -54,7 +54,7 @@ class DefaultCatalogService(
         productId: Long,
     ): ProductDetail {
         val product = productQueryRepository.findProductDetailsById(productId)
-            ?: throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
+            ?: throw BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND)
 
         val saleStatus =
             if (product.options.isNotEmpty()) {
@@ -64,7 +64,7 @@ class DefaultCatalogService(
             }
 
         if (saleStatus != ProductSaleStatus.AVAILABLE) {
-            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
+            throw BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND)
         }
 
         return ProductDetail(
@@ -97,7 +97,7 @@ class DefaultCatalogService(
 
     override fun validateProductExists(id: Long) {
         if (!productRepository.existsById(id)) {
-            throw BusinessException(CatalogErrorCode.PRODUCT_NOT_FOUND)
+            throw BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND)
         }
     }
 }
