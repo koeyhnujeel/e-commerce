@@ -14,13 +14,11 @@ import zoonza.commerce.shared.Money
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
 
-class DefaultCatalogServiceTest {
-    private val productRepository = mockk<ProductRepository>()
+class DefaultProductServiceTest {
     private val productQueryRepository = mockk<ProductQueryRepository>()
     private val categoryRepository = mockk<CategoryRepository>()
     private val catalogService =
-        DefaultCatalogService(
-            productRepository = productRepository,
+        DefaultProductService(
             productQueryRepository = productQueryRepository,
             categoryRepository = categoryRepository,
         )

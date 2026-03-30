@@ -2,24 +2,21 @@ package zoonza.commerce.catalog.application.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.application.dto.*
 import zoonza.commerce.catalog.application.port.`in`.CatalogService
 import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
 import zoonza.commerce.catalog.domain.category.CategoryRepository
-import zoonza.commerce.catalog.domain.product.ProductRepository
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResponse
 
 @Service
-class DefaultCatalogService(
-    private val productRepository: ProductRepository,
+class DefaultProductService(
     private val productQueryRepository: ProductQueryRepository,
     private val categoryRepository: CategoryRepository,
-) : CatalogApi, CatalogService {
+) : CatalogService {
     @Transactional(readOnly = true)
     override fun getProductsByCategory(
         page: Int,
@@ -93,11 +90,5 @@ class DefaultCatalogService(
             likeCount = product.likeCount,
             saleStatus = saleStatus,
         )
-    }
-
-    override fun validateProductExists(id: Long) {
-        if (!productRepository.existsById(id)) {
-            throw BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND)
-        }
     }
 }
