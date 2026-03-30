@@ -6,31 +6,31 @@ import org.springframework.web.bind.annotation.*
 import zoonza.commerce.catalog.adapter.`in`.response.ProductDetailResponse
 import zoonza.commerce.catalog.adapter.`in`.response.ProductSummaryResponse
 import zoonza.commerce.catalog.application.dto.ProductListSort
-import zoonza.commerce.catalog.application.port.`in`.CatalogService
+import zoonza.commerce.catalog.application.port.`in`.ProductService
 import zoonza.commerce.support.pagination.PageResponse
 import zoonza.commerce.support.web.ApiResponse
 
 @Validated
 @RestController
-@RequestMapping("/api/products")
 class ProductController(
-    private val catalogService: CatalogService,
+    private val productService: ProductService,
 ) {
-    @GetMapping
-    fun getProductsByCategory(
+    @GetMapping("/api/categories/{categoryId}/products")
+    fun getCategoryProducts(
+        @PathVariable categoryId: Long,
+
         @RequestParam(defaultValue = "1")
         @Positive(message = "페이지 번호는 1 이상이어야 합니다.")
         page: Int,
+
         @RequestParam(defaultValue = "20")
         @Positive(message = "페이지 크기는 1 이상이어야 합니다.")
         size: Int,
-        @RequestParam
-        @Positive(message = "카테고리 ID는 1 이상이어야 합니다.")
-        categoryId: Long,
+
         @RequestParam(defaultValue = "LATEST")
         sort: ProductListSort,
     ): ApiResponse<PageResponse<ProductSummaryResponse>> {
-        val products = catalogService.getProductsByCategory(
+        val products = productService.getCategoryProducts(
             page = page - 1,
             size = size,
             categoryId = categoryId,
@@ -48,11 +48,11 @@ class ProductController(
         )
     }
 
-    @GetMapping("/{productId}")
+    @GetMapping("/api/products/{productId}")
     fun getProductDetails(
         @PathVariable productId: Long,
     ): ApiResponse<ProductDetailResponse> {
-        val product = catalogService.getProductDetails(productId)
+        val product = productService.getProductDetails(productId)
 
         return ApiResponse.success(ProductDetailResponse.from(product))
     }

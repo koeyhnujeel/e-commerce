@@ -105,8 +105,7 @@ class ProductControllerTest {
         productStatisticJpaRepository.save(ProductStatisticJpaEntity.from(ProductStatistic.create(productId = cheapProduct.id, likeCount = 1L)))
 
         mockMvc
-            .get("/api/products") {
-                param("categoryId", savedRootCategory.id.toString())
+            .get("/api/categories/${savedRootCategory.id}/products") {
                 param("sort", "PRICE_DESC")
                 param("page", "1")
                 param("size", "10")
@@ -139,9 +138,8 @@ class ProductControllerTest {
         memberLikeJpaRepository.save(MemberLikeJpaEntity.from(MemberLike.create(memberId = 2L, targetId = unlikedProduct.id, likeTargetType = LikeTargetType.PRODUCT)))
 
         mockMvc
-            .get("/api/products") {
+            .get("/api/categories/${category.id}/products") {
                 header(HttpHeaders.AUTHORIZATION, AuthFixture.authorizationHeader(accessTokenProvider, memberId = 1L))
-                param("categoryId", category.id.toString())
                 param("sort", "LATEST")
             }.andExpect {
                 status { isOk() }
@@ -222,9 +220,7 @@ class ProductControllerTest {
         val product = productJpaRepository.save(ProductFixture.createCatalogProduct(index = 1, price = 19_900, categoryId = category.id, brandId = brand.id))
 
         mockMvc
-            .get("/api/products") {
-                param("categoryId", category.id.toString())
-            }
+            .get("/api/categories/${category.id}/products")
             .andExpect {
                 status { isOk() }
                 jsonPath("$.data.items[0].productId") { value(product.id) }
@@ -234,11 +230,11 @@ class ProductControllerTest {
     }
 
     @Test
-    fun `카테고리 ID 없이 상품 목록을 조회할 수 없다`() {
+    fun `이전 상품 목록 경로로는 조회할 수 없다`() {
         mockMvc
             .get("/api/products")
             .andExpect {
-                status { isBadRequest() }
+                status { isNotFound() }
             }
     }
 

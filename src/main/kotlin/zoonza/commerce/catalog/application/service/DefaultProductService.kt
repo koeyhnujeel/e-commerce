@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.application.dto.*
-import zoonza.commerce.catalog.application.port.`in`.CatalogService
+import zoonza.commerce.catalog.application.port.`in`.ProductService
 import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
 import zoonza.commerce.catalog.domain.category.CategoryRepository
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
@@ -16,9 +16,9 @@ import zoonza.commerce.support.pagination.PageResponse
 class DefaultProductService(
     private val productQueryRepository: ProductQueryRepository,
     private val categoryRepository: CategoryRepository,
-) : CatalogService {
+) : ProductService {
     @Transactional(readOnly = true)
-    override fun getProductsByCategory(
+    override fun getCategoryProducts(
         page: Int,
         size: Int,
         categoryId: Long,

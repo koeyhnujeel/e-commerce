@@ -61,7 +61,7 @@ class DefaultProductServiceTest {
             totalPages = 1,
         )
 
-        val result = catalogService.getProductsByCategory(
+        val result = catalogService.getCategoryProducts(
             page = 0,
             size = 20,
             categoryId = 1L,
@@ -105,7 +105,7 @@ class DefaultProductServiceTest {
             totalPages = 1,
         )
 
-        val result = catalogService.getProductsByCategory(
+        val result = catalogService.getCategoryProducts(
             page = 0,
             size = 20,
             categoryId = 1L,
