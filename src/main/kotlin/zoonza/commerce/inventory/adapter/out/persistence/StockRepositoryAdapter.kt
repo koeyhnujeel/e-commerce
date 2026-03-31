@@ -15,6 +15,14 @@ class StockRepositoryAdapter(
         return stockJpaRepository.findByProductOptionId(productOptionId)?.toDomain()
     }
 
+    override fun findAllByProductOptionIds(productOptionIds: Set<Long>): List<Stock> {
+        if (productOptionIds.isEmpty()) {
+            return emptyList()
+        }
+
+        return stockJpaRepository.findAllByProductOptionIdIn(productOptionIds).map(StockJpaEntity::toDomain)
+    }
+
     override fun save(stock: Stock): Stock {
         val jpaEntity = if (stock.id == 0L) {
             StockJpaEntity.from(stock)

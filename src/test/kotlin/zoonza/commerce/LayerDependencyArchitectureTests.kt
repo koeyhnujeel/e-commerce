@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestFactory
 class LayerDependencyArchitectureTests {
     private val threeLayerModules = listOf(
         "auth",
+        "cart",
         "catalog",
         "inventory",
         "like",

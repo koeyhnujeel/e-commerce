@@ -5,13 +5,13 @@ import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import java.math.BigDecimal
 
 @QueryProjection
-data class ProductDetailProjection(
+data class ProductOptionSummaryProjection(
     val productId: Long,
-    val name: String,
-    val brandName: String,
-    val description: String,
+    val productOptionId: Long,
+    val productName: String,
     val basePrice: BigDecimal,
-    val categoryId: Long,
+    val additionalPrice: BigDecimal,
+    val color: String,
+    val size: String,
     val saleStatus: ProductSaleStatus,
-    val likeCount: Long,
 )

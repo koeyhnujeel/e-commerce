@@ -13,6 +13,7 @@ import zoonza.commerce.catalog.domain.category.Category
 import zoonza.commerce.catalog.domain.category.CategoryErrorCode
 import zoonza.commerce.catalog.domain.category.CategoryRepository
 import zoonza.commerce.catalog.domain.product.Product
+import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.domain.product.ProductImage
 import zoonza.commerce.catalog.domain.product.ProductOption
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
@@ -178,6 +179,7 @@ class DefaultProductServiceTest {
             description = "상품 설명10",
             basePrice = 19_900,
             categoryId = 10L,
+            saleStatus = ProductSaleStatus.AVAILABLE,
             images = listOf(
                 ProductImageQueryResult(
                     imageUrl = "https://cdn.example.com/product-10-primary.jpg",
@@ -223,6 +225,28 @@ class DefaultProductServiceTest {
         result.options.map { it.additionalPrice } shouldBe listOf(0L, 1_000L)
         result.likeCount shouldBe 7L
         result.saleStatus shouldBe ProductSaleStatus.AVAILABLE
+    }
+
+    @Test
+    fun `판매 불가 상품 상세 조회는 예외를 던진다`() {
+        every { productQueryRepository.findProductDetailsById(10L) } returns ProductDetailQueryResult(
+            productId = 10L,
+            name = "상품10",
+            brandName = "브랜드10",
+            description = "상품 설명10",
+            basePrice = 19_900,
+            categoryId = 10L,
+            saleStatus = ProductSaleStatus.UNAVAILABLE,
+            images = emptyList(),
+            options = emptyList(),
+            likeCount = 0L,
+        )
+
+        val exception = shouldThrow<BusinessException> {
+            catalogService.getProductDetails(productId = 10L)
+        }
+
+        exception.errorCode shouldBe ProductErrorCode.PRODUCT_NOT_FOUND
     }
 
     private fun product(

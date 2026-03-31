@@ -34,6 +34,12 @@ class DefaultInventoryService(
             ?: throw BusinessException(InventoryErrorCode.STOCK_NOT_FOUND)
     }
 
+    @Transactional(readOnly = true)
+    override fun getAvailableQuantities(productOptionIds: Set<Long>): Map<Long, Long> {
+        return stockRepository.findAllByProductOptionIds(productOptionIds)
+            .associate { stock -> stock.productOptionId to stock.availableQuantity() }
+    }
+
     @Transactional
     override fun reserve(
         productOptionId: Long,

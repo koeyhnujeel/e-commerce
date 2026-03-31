@@ -1,10 +1,14 @@
 package zoonza.commerce.catalog.domain
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.domain.product.Product
 import zoonza.commerce.catalog.domain.product.ProductImage
 import zoonza.commerce.catalog.domain.product.ProductOption
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
+import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Money
 import java.math.BigDecimal
 
@@ -26,10 +30,39 @@ class ProductTest {
 
     @Test
     fun `상품 옵션은 추가 금액과 정렬 순서를 가진다`() {
-        val option = option(color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L)
+        val option = option(id = 20L, color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L)
 
         option.sortOder shouldBe 1
         option.additionalPrice.amount shouldBe BigDecimal.valueOf(1_000)
+    }
+
+    @Test
+    fun `판매 가능한 상품은 자신이 가진 옵션을 검증할 수 있다`() {
+        val product = product()
+
+        product.validateAvailableOption(productOptionId = 10L)
+    }
+
+    @Test
+    fun `상품에 없는 옵션이면 예외가 발생한다`() {
+        val product = product()
+
+        val exception = shouldThrow<BusinessException> {
+            product.validateAvailableOption(productOptionId = 999L)
+        }
+
+        exception.errorCode shouldBe ProductErrorCode.PRODUCT_OPTION_NOT_FOUND
+    }
+
+    @Test
+    fun `판매 중지 상품이면 구매 불가 예외가 발생한다`() {
+        val product = product(saleStatus = ProductSaleStatus.UNAVAILABLE)
+
+        val exception = shouldThrow<BusinessException> {
+            product.validateAvailableOption(productOptionId = 10L)
+        }
+
+        exception.errorCode shouldBe ProductErrorCode.PRODUCT_UNAVAILABLE
     }
 
     private fun primaryImage(): ProductImage {
@@ -49,12 +82,14 @@ class ProductTest {
     }
 
     private fun option(
+        id: Long,
         color: String,
         size: String,
         sortOrder: Int,
         additionalPrice: Long = 0L,
     ): ProductOption {
         return ProductOption(
+            id = id,
             color = color,
             size = size,
             sortOder = sortOrder,
@@ -62,7 +97,7 @@ class ProductTest {
         )
     }
 
-    private fun product(): Product {
+    private fun product(saleStatus: ProductSaleStatus = ProductSaleStatus.AVAILABLE): Product {
         return Product(
             id = 1L,
             brandId = 1L,
@@ -70,11 +105,12 @@ class ProductTest {
             description = "여름 기본 아이템",
             basePrice = Money(19_900),
             categoryId = 10L,
+            saleStatus = saleStatus,
             images = mutableListOf(primaryImage(), secondaryImage()),
             options =
                 mutableListOf(
-                    option(color = "BLACK", size = "M", sortOrder = 0),
-                    option(color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L),
+                    option(id = 10L, color = "BLACK", size = "M", sortOrder = 0),
+                    option(id = 20L, color = "WHITE", size = "L", sortOrder = 1, additionalPrice = 1_000L),
                 ),
         )
     }

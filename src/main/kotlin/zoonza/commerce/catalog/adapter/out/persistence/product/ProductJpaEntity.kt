@@ -2,6 +2,7 @@ package zoonza.commerce.catalog.adapter.out.persistence.product
 
 import jakarta.persistence.*
 import zoonza.commerce.catalog.domain.product.Product
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.shared.Money
 import java.math.BigDecimal
 
@@ -26,6 +27,10 @@ class ProductJpaEntity(
     @Column(name = "category_id", nullable = false)
     val categoryId: Long = 0,
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sale_status", nullable = false, length = 50)
+    val saleStatus: ProductSaleStatus = ProductSaleStatus.AVAILABLE,
+
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
     @JoinColumn(name = "product_id", nullable = false)
     @OrderBy("sortOrder ASC")
@@ -45,6 +50,7 @@ class ProductJpaEntity(
                 description = product.description,
                 basePrice = product.basePrice.amount,
                 categoryId = product.categoryId,
+                saleStatus = product.saleStatus,
                 images = product.images.map(ProductImageJpaEntity::from).toMutableList(),
                 options = product.options.map(ProductOptionJpaEntity::from).toMutableList(),
             )
@@ -59,6 +65,7 @@ class ProductJpaEntity(
             description = description,
             basePrice = Money(basePrice),
             categoryId = categoryId,
+            saleStatus = saleStatus,
             images = images.map(ProductImageJpaEntity::toDomain).toMutableList(),
             options = options.map(ProductOptionJpaEntity::toDomain).toMutableList(),
         )

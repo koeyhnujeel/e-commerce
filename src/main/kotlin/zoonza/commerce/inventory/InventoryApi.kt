@@ -10,6 +10,8 @@ interface InventoryApi {
 
     fun getStock(productOptionId: Long): StockSnapshot
 
+    fun getAvailableQuantities(productOptionIds: Set<Long>): Map<Long, Long>
+
     fun reserve(
         productOptionId: Long,
         orderNumber: String,

@@ -2,7 +2,6 @@ package zoonza.commerce.catalog.adapter.out.persistence.product
 
 import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
-import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import org.springframework.stereotype.Repository
 import zoonza.commerce.catalog.adapter.out.persistence.brand.QBrandJpaEntity.Companion.brandJpaEntity
@@ -12,6 +11,7 @@ import zoonza.commerce.catalog.adapter.out.persistence.product.QProductOptionJpa
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductImageDetailProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductOptionDetailProjection
+import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductOptionSummaryProjection
 import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductSummaryProjection
 import zoonza.commerce.catalog.adapter.out.persistence.statistic.QProductStatisticJpaEntity.Companion.productStatisticJpaEntity
 import zoonza.commerce.catalog.application.dto.ProductListSort
@@ -35,6 +35,7 @@ class ProductQueryRepositoryAdapter(
                     productJpaEntity.description,
                     productJpaEntity.basePrice,
                     productJpaEntity.categoryId,
+                    productJpaEntity.saleStatus,
                     productStatisticJpaEntity.likeCount.coalesce(0L),
                 ),
             )
@@ -82,6 +83,7 @@ class ProductQueryRepositoryAdapter(
             description = productDetail.description,
             basePrice = productDetail.basePrice.longValueExact(),
             categoryId = productDetail.categoryId,
+            saleStatus = productDetail.saleStatus,
             images = images.map { image ->
                 ProductImageQueryResult(
                     imageUrl = image.imageUrl,
@@ -100,6 +102,46 @@ class ProductQueryRepositoryAdapter(
             },
             likeCount = productDetail.likeCount,
         )
+    }
+
+    override fun findProductOptionSummariesByOptionIds(optionIds: Set<Long>): List<ProductOptionSummaryQueryResult> {
+        if (optionIds.isEmpty()) {
+            return emptyList()
+        }
+
+        return queryFactory
+            .select(
+                QProductOptionSummaryProjection(
+                    productJpaEntity.id,
+                    productOptionJpaEntity.id,
+                    productJpaEntity.name,
+                    productJpaEntity.basePrice,
+                    productOptionJpaEntity.additionalPrice,
+                    productOptionJpaEntity.color,
+                    productOptionJpaEntity.size,
+                    productJpaEntity.saleStatus,
+                ),
+            )
+            .from(productJpaEntity)
+            .join(productJpaEntity.options, productOptionJpaEntity)
+            .where(productOptionJpaEntity.id.`in`(optionIds))
+            .fetch()
+            .let { options ->
+                val representativeImageUrls = representativeImageUrlsByProductIds(options.map { it.productId }.toSet())
+                options.map { option ->
+                    ProductOptionSummaryQueryResult(
+                        productId = option.productId,
+                        productOptionId = option.productOptionId,
+                        productName = option.productName,
+                        primaryImageUrl = representativeImageUrls[option.productId],
+                        basePrice = option.basePrice.longValueExact(),
+                        additionalPrice = option.additionalPrice.longValueExact(),
+                        color = option.color,
+                        size = option.size,
+                        saleStatus = option.saleStatus,
+                    )
+                }
+            }
     }
 
     override fun findPageByCategoryIds(
@@ -126,7 +168,7 @@ class ProductQueryRepositoryAdapter(
                     productImageJpaEntity.imageUrl,
                     productJpaEntity.basePrice,
                     productStatisticJpaEntity.likeCount.coalesce(0L),
-                    Expressions.constant(ProductSaleStatus.AVAILABLE),
+                    productJpaEntity.saleStatus,
                 ),
             )
             .from(productJpaEntity)
@@ -135,6 +177,7 @@ class ProductQueryRepositoryAdapter(
             .leftJoin(productStatisticJpaEntity).on(productStatisticJpaEntity.productId.eq(productJpaEntity.id))
             .where(
                 categoryIdsIn(categoryIds),
+                availableProducts(),
                 productImageJpaEntity.isPrimary.isTrue,
             )
             .orderBy(*orderSpecifiers(sort))
@@ -146,7 +189,7 @@ class ProductQueryRepositoryAdapter(
             .select(productJpaEntity.count())
             .from(productJpaEntity)
             .join(brandJpaEntity).on(brandJpaEntity.id.eq(productJpaEntity.brandId))
-            .where(categoryIdsIn(categoryIds))
+            .where(categoryIdsIn(categoryIds), availableProducts())
             .fetchOne() ?: 0L
 
         val totalPages =
@@ -177,6 +220,32 @@ class ProductQueryRepositoryAdapter(
 
     private fun categoryIdsIn(categoryIds: Set<Long>): BooleanExpression {
         return productJpaEntity.categoryId.`in`(categoryIds)
+    }
+
+    private fun availableProducts(): BooleanExpression {
+        return productJpaEntity.saleStatus.eq(ProductSaleStatus.AVAILABLE)
+    }
+
+    private fun representativeImageUrlsByProductIds(productIds: Set<Long>): Map<Long, String?> {
+        if (productIds.isEmpty()) {
+            return emptyMap()
+        }
+
+        return queryFactory
+            .select(productJpaEntity.id, productImageJpaEntity.imageUrl)
+            .from(productJpaEntity)
+            .leftJoin(productJpaEntity.images, productImageJpaEntity)
+            .where(productJpaEntity.id.`in`(productIds))
+            .orderBy(
+                productJpaEntity.id.asc(),
+                productImageJpaEntity.isPrimary.desc(),
+                productImageJpaEntity.sortOrder.asc(),
+            )
+            .fetch()
+            .groupBy(
+                keySelector = { tuple -> tuple.get(productJpaEntity.id)!! },
+                valueTransform = { tuple -> tuple.get(productImageJpaEntity.imageUrl) },
+            ).mapValues { (_, imageUrls) -> imageUrls.firstOrNull { it != null } }
     }
 
     private fun orderSpecifiers(sort: ProductListSort): Array<OrderSpecifier<*>> {

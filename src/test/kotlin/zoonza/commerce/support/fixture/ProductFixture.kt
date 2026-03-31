@@ -4,6 +4,7 @@ import zoonza.commerce.catalog.adapter.out.persistence.product.ProductJpaEntity
 import zoonza.commerce.catalog.domain.product.Product
 import zoonza.commerce.catalog.domain.product.ProductImage
 import zoonza.commerce.catalog.domain.product.ProductOption
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.shared.Money
 
 object ProductFixture {
@@ -15,9 +16,11 @@ object ProductFixture {
         categoryId: Long = 1L,
         brandId: Long = 1L,
         imagePrefix: String = "product",
+        primaryImage: Boolean = true,
         color: String = "BLACK",
         size: String = "M",
         additionalPrice: Long = 0,
+        saleStatus: ProductSaleStatus = ProductSaleStatus.AVAILABLE,
     ): ProductJpaEntity {
         return ProductJpaEntity.from(
             Product(
@@ -26,11 +29,12 @@ object ProductFixture {
                 description = "$descriptionPrefix$index",
                 basePrice = Money(price),
                 categoryId = categoryId,
+                saleStatus = saleStatus,
                 images =
                     mutableListOf(
                         ProductImage(
                             imageUrl = "https://cdn.example.com/$imagePrefix-$index-primary.jpg",
-                            isPrimary = true,
+                            isPrimary = primaryImage,
                             sortOrder = 0,
                         ),
                     ),
@@ -55,6 +59,7 @@ object ProductFixture {
         namePrefix: String = "상품",
         descriptionPrefix: String = "상품 설명",
         imagePrefix: String = "product",
+        saleStatus: ProductSaleStatus = ProductSaleStatus.AVAILABLE,
     ): ProductJpaEntity {
         return ProductJpaEntity.from(
             Product(
@@ -63,6 +68,7 @@ object ProductFixture {
                 description = "$descriptionPrefix$index",
                 basePrice = Money(price),
                 categoryId = categoryId,
+                saleStatus = saleStatus,
                 images =
                     mutableListOf(
                         ProductImage(

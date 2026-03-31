@@ -8,6 +8,8 @@ import zoonza.commerce.support.pagination.PageResult
 interface ProductQueryRepository {
     fun findProductDetailsById(id: Long): ProductDetailQueryResult?
 
+    fun findProductOptionSummariesByOptionIds(optionIds: Set<Long>): List<ProductOptionSummaryQueryResult>
+
     fun findPageByCategoryIds(
         categoryIds: Set<Long>,
         pageQuery: PageQuery,
@@ -32,6 +34,7 @@ data class ProductDetailQueryResult(
     val description: String,
     val basePrice: Long,
     val categoryId: Long,
+    val saleStatus: ProductSaleStatus,
     val images: List<ProductImageQueryResult>,
     val options: List<ProductOptionQueryResult>,
     val likeCount: Long,
@@ -49,4 +52,16 @@ data class ProductOptionQueryResult(
     val size: String,
     val sortOrder: Int,
     val additionalPrice: Long,
+)
+
+data class ProductOptionSummaryQueryResult(
+    val productId: Long,
+    val productOptionId: Long,
+    val productName: String,
+    val primaryImageUrl: String?,
+    val basePrice: Long,
+    val additionalPrice: Long,
+    val color: String,
+    val size: String,
+    val saleStatus: ProductSaleStatus,
 )

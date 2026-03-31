@@ -59,13 +59,7 @@ class DefaultProductService(
         val product = productQueryRepository.findProductDetailsById(productId)
             ?: throw BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND)
 
-        val saleStatus =
-            if (product.options.isNotEmpty()) {
-                ProductSaleStatus.AVAILABLE
-            } else {
-                ProductSaleStatus.UNAVAILABLE
-            }
-
+        val saleStatus = product.saleStatus
         if (saleStatus != ProductSaleStatus.AVAILABLE) {
             throw BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND)
         }

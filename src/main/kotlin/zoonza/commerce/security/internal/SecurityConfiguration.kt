@@ -30,6 +30,7 @@ class SecurityConfiguration(
                         "/api/products/{productId}/likes",
                         "/api/products/{productId}/likes/cancel",
                     ).authenticated()
+                    .requestMatchers("/api/cart/**").authenticated()
                     .anyRequest().permitAll()
             }
             .addFilterBefore(
