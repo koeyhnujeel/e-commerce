@@ -12,7 +12,10 @@ import zoonza.commerce.catalog.application.port.out.*
 import zoonza.commerce.catalog.domain.category.Category
 import zoonza.commerce.catalog.domain.category.CategoryErrorCode
 import zoonza.commerce.catalog.domain.category.CategoryRepository
-import zoonza.commerce.catalog.domain.product.*
+import zoonza.commerce.catalog.domain.product.Product
+import zoonza.commerce.catalog.domain.product.ProductImage
+import zoonza.commerce.catalog.domain.product.ProductOption
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Money
 import zoonza.commerce.support.pagination.PageQuery

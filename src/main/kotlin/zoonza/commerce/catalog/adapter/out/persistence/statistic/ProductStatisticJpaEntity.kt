@@ -1,12 +1,6 @@
 package zoonza.commerce.catalog.adapter.out.persistence.statistic
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
-import jakarta.persistence.Version
+import jakarta.persistence.*
 import org.hibernate.annotations.DynamicUpdate
 import zoonza.commerce.catalog.domain.statistic.ProductStatistic
 

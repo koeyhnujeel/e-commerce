@@ -1,7 +1,5 @@
 package zoonza.commerce.shared
 
-import kotlin.jvm.JvmInline
-
 @JvmInline
 value class Email(val address: String) {
     init {

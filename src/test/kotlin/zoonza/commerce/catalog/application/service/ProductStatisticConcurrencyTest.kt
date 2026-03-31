@@ -1,8 +1,5 @@
 package zoonza.commerce.catalog.application.service
 
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,6 +11,9 @@ import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisti
 import zoonza.commerce.catalog.adapter.out.persistence.statistic.ProductStatisticJpaRepository
 import zoonza.commerce.catalog.domain.statistic.ProductStatistic
 import zoonza.commerce.support.MySqlTestContainerConfig
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @SpringBootTest
 @ActiveProfiles("test")

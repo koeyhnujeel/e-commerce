@@ -1,7 +1,6 @@
 package zoonza.commerce.shared
 
 import java.math.BigDecimal
-import kotlin.jvm.JvmInline
 
 @JvmInline
 value class Money(val amount: BigDecimal) {
