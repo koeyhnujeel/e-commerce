@@ -1,8 +1,8 @@
 package zoonza.commerce.support.fixture
 
 import zoonza.commerce.member.adapter.out.persistence.MemberJpaEntity
-import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.Member
+import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.Role
 import zoonza.commerce.shared.Email
 import java.time.LocalDateTime

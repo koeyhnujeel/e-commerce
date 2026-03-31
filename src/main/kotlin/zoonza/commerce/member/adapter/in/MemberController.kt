@@ -2,19 +2,8 @@ package zoonza.commerce.member.adapter.`in`
 
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import zoonza.commerce.member.adapter.`in`.request.CreateMemberAddressRequest
-import zoonza.commerce.member.adapter.`in`.request.SendSignupEmailVerificationCodeRequest
-import zoonza.commerce.member.adapter.`in`.request.SignupMemberRequest
-import zoonza.commerce.member.adapter.`in`.request.UpdateMemberAddressRequest
-import zoonza.commerce.member.adapter.`in`.request.VerifySignupEmailVerificationCodeRequest
+import org.springframework.web.bind.annotation.*
+import zoonza.commerce.member.adapter.`in`.request.*
 import zoonza.commerce.member.adapter.`in`.response.CreateMemberAddressResponse
 import zoonza.commerce.member.adapter.`in`.response.MemberAddressResponse
 import zoonza.commerce.member.adapter.`in`.response.SignupMemberResponse

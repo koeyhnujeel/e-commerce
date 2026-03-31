@@ -1,10 +1,6 @@
 package zoonza.commerce.order.application.port.`in`
 
-import zoonza.commerce.order.application.dto.OrderDetailView
-import zoonza.commerce.order.application.dto.OrderSummaryView
-import zoonza.commerce.order.application.dto.PlaceCartOrderCommand
-import zoonza.commerce.order.application.dto.PlaceDirectOrderCommand
-import zoonza.commerce.order.application.dto.PlaceOrderResult
+import zoonza.commerce.order.application.dto.*
 
 interface OrderService {
     fun placeDirectOrder(

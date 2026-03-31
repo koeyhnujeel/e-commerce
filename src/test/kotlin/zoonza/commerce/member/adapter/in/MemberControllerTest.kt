@@ -22,8 +22,8 @@ import zoonza.commerce.member.adapter.`in`.request.SendSignupEmailVerificationCo
 import zoonza.commerce.member.adapter.`in`.request.SignupMemberRequest
 import zoonza.commerce.member.adapter.`in`.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
-import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.application.port.out.NicknameGenerator
+import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.PasswordEncoder
 import zoonza.commerce.notification.application.port.out.EmailSender
 import zoonza.commerce.security.AccessTokenProvider

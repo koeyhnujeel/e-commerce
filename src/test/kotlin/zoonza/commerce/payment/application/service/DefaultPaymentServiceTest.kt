@@ -1,25 +1,12 @@
 package zoonza.commerce.payment.application.service
 
 import io.kotest.matchers.shouldBe
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.runs
-import io.mockk.verify
+import io.mockk.*
 import org.junit.jupiter.api.Test
 import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.PendingPaymentOrder
-import zoonza.commerce.payment.application.port.out.PaymentGatewayCancellation
-import zoonza.commerce.payment.application.port.out.PaymentGatewayConfirmation
-import zoonza.commerce.payment.application.port.out.PaymentGatewayLookup
-import zoonza.commerce.payment.application.port.out.PaymentGatewayPort
-import zoonza.commerce.payment.application.port.out.PaymentRepository
-import zoonza.commerce.payment.domain.Payment
-import zoonza.commerce.payment.domain.PaymentAttempt
-import zoonza.commerce.payment.domain.PaymentAttemptStatus
-import zoonza.commerce.payment.domain.PaymentMethod
-import zoonza.commerce.payment.domain.PaymentProvider
-import zoonza.commerce.payment.domain.PaymentStatus
+import zoonza.commerce.payment.application.port.out.*
+import zoonza.commerce.payment.domain.*
 import zoonza.commerce.shared.Money
 import java.time.LocalDateTime
 

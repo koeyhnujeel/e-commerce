@@ -8,11 +8,7 @@ import zoonza.commerce.catalog.adapter.out.persistence.brand.QBrandJpaEntity.Com
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductImageJpaEntity.Companion.productImageJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductJpaEntity.Companion.productJpaEntity
 import zoonza.commerce.catalog.adapter.out.persistence.product.QProductOptionJpaEntity.Companion.productOptionJpaEntity
-import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductDetailProjection
-import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductImageDetailProjection
-import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductOptionDetailProjection
-import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductOptionSummaryProjection
-import zoonza.commerce.catalog.adapter.out.persistence.product.projection.QProductSummaryProjection
+import zoonza.commerce.catalog.adapter.out.persistence.product.projection.*
 import zoonza.commerce.catalog.adapter.out.persistence.statistic.QProductStatisticJpaEntity.Companion.productStatisticJpaEntity
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.out.*

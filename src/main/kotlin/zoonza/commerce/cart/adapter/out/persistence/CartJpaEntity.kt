@@ -1,16 +1,6 @@
 package zoonza.commerce.cart.adapter.out.persistence
 
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.OneToMany
-import jakarta.persistence.OrderBy
-import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
-import jakarta.persistence.Version
+import jakarta.persistence.*
 import zoonza.commerce.cart.domain.Cart
 import java.time.LocalDateTime
 

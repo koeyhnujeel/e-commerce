@@ -1,7 +1,7 @@
 package zoonza.commerce.cart.application.service
 
-import org.springframework.stereotype.Service
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.cart.CartApi
 import zoonza.commerce.cart.CartOrderItem

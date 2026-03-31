@@ -2,19 +2,15 @@ package zoonza.commerce.member.application.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.member.AuthenticatedMember
-import zoonza.commerce.member.MemberAddressSnapshot
-import zoonza.commerce.member.MemberApi
-import zoonza.commerce.member.MemberErrorCode
-import zoonza.commerce.member.MemberProfile
+import zoonza.commerce.member.*
 import zoonza.commerce.member.application.dto.CreateMemberAddressCommand
 import zoonza.commerce.member.application.dto.SignupCommand
 import zoonza.commerce.member.application.dto.UpdateMemberAddressCommand
 import zoonza.commerce.member.application.port.`in`.MemberService
 import zoonza.commerce.member.application.port.out.MemberRepository
 import zoonza.commerce.member.application.port.out.NicknameGenerator
-import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.Member
+import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.PasswordEncoder
 import zoonza.commerce.shared.AuthErrorCode
 import zoonza.commerce.shared.AuthException

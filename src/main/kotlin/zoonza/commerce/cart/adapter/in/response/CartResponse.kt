@@ -1,7 +1,7 @@
 package zoonza.commerce.cart.adapter.`in`.response
 
-import zoonza.commerce.cart.application.dto.CartItemView
 import zoonza.commerce.cart.application.dto.CartItemUnavailableReason
+import zoonza.commerce.cart.application.dto.CartItemView
 import zoonza.commerce.cart.application.dto.CartSummaryView
 import zoonza.commerce.cart.application.dto.CartView
 

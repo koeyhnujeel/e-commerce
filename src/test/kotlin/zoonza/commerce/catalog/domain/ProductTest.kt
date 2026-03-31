@@ -3,11 +3,7 @@ package zoonza.commerce.catalog.domain
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
-import zoonza.commerce.catalog.domain.product.ProductErrorCode
-import zoonza.commerce.catalog.domain.product.Product
-import zoonza.commerce.catalog.domain.product.ProductImage
-import zoonza.commerce.catalog.domain.product.ProductOption
-import zoonza.commerce.catalog.domain.product.ProductSaleStatus
+import zoonza.commerce.catalog.domain.product.*
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Money
 import java.math.BigDecimal

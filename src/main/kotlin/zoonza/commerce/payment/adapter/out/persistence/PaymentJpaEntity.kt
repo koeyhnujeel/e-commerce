@@ -1,17 +1,6 @@
 package zoonza.commerce.payment.adapter.out.persistence
 
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.OneToMany
-import jakarta.persistence.OrderBy
-import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
+import jakarta.persistence.*
 import zoonza.commerce.payment.domain.Payment
 import zoonza.commerce.payment.domain.PaymentCloseReason
 import zoonza.commerce.payment.domain.PaymentProvider

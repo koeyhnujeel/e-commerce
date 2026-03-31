@@ -6,8 +6,8 @@ import zoonza.commerce.catalog.CatalogApi
 import zoonza.commerce.catalog.ProductOptionSummary
 import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
 import zoonza.commerce.catalog.domain.product.ProductErrorCode
-import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.catalog.domain.product.ProductRepository
+import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.shared.BusinessException
 
 @Component

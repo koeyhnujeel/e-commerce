@@ -1,9 +1,9 @@
 package zoonza.commerce.cart.adapter.out.persistence
 
-import org.springframework.data.repository.findByIdOrNull
-import org.springframework.stereotype.Repository
 import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.stereotype.Repository
 import zoonza.commerce.cart.domain.Cart
 import zoonza.commerce.cart.domain.CartErrorCode
 import zoonza.commerce.cart.domain.CartRepository
