@@ -62,14 +62,14 @@ class ProductControllerTest {
         val savedRootCategory = saveCategory(
             CategoryJpaEntity(
                 name = "상의",
-                parentId = null,
+                rootCategoryId = null,
                 depth = 0,
                 sortOrder = 0,
             ),
         )
         val savedChildCategory = saveCategory(
             CategoryJpaEntity(
-                parentId = savedRootCategory.id,
+                rootCategoryId = savedRootCategory.id,
                 name = "티셔츠",
                 depth = savedRootCategory.depth + 1,
                 sortOrder = 0,
@@ -230,11 +230,44 @@ class ProductControllerTest {
     }
 
     @Test
+    fun `sub 카테고리로 상품 목록을 조회하면 해당 sub 상품만 조회한다`() {
+        val brand = saveBrand(BrandJpaEntity(name = "브랜드E"))
+        val rootCategory = saveCategory(CategoryJpaEntity(name = "상의", depth = 0, sortOrder = 0))
+        val subCategory = saveCategory(CategoryJpaEntity(name = "셔츠", rootCategoryId = rootCategory.id, depth = 1, sortOrder = 0))
+        productJpaRepository.save(
+            ProductFixture.createCatalogProduct(index = 1, price = 29_900, categoryId = rootCategory.id, brandId = brand.id),
+        )
+        val subProduct = productJpaRepository.save(
+            ProductFixture.createCatalogProduct(index = 2, price = 19_900, categoryId = subCategory.id, brandId = brand.id),
+        )
+
+        mockMvc
+            .get("/api/categories/${subCategory.id}/products")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.data.items.length()") { value(1) }
+                jsonPath("$.data.items[0].productId") { value(subProduct.id) }
+                jsonPath("$.data.items[0].brandName") { value("브랜드E") }
+            }
+    }
+
+    @Test
     fun `이전 상품 목록 경로로는 조회할 수 없다`() {
         mockMvc
             .get("/api/products")
             .andExpect {
                 status { isNotFound() }
+            }
+    }
+
+    @Test
+    fun `없는 카테고리의 상품 목록 조회는 404를 반환한다`() {
+        mockMvc
+            .get("/api/categories/999/products")
+            .andExpect {
+                status { isNotFound() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.error.message") { value("카테고리를 찾을 수 없습니다.") }
             }
     }
 

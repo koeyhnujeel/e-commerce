@@ -2,11 +2,12 @@ package zoonza.commerce.catalog.application.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.application.dto.*
 import zoonza.commerce.catalog.application.port.`in`.ProductService
 import zoonza.commerce.catalog.application.port.out.ProductQueryRepository
+import zoonza.commerce.catalog.domain.category.CategoryErrorCode
 import zoonza.commerce.catalog.domain.category.CategoryRepository
+import zoonza.commerce.catalog.domain.product.ProductErrorCode
 import zoonza.commerce.catalog.domain.product.ProductSaleStatus
 import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.support.pagination.PageQuery
@@ -24,7 +25,12 @@ class DefaultProductService(
         categoryId: Long,
         sort: ProductListSort,
     ): PageResponse<ProductSummary> {
-        val categoryIds = categoryRepository.findAllDescendantIds(categoryId)
+        val categoryIds = categoryRepository.findSelfAndSubCategoryIds(categoryId)
+
+        if (categoryIds.isEmpty()) {
+            throw BusinessException(CategoryErrorCode.CATEGORY_NOT_FOUND)
+        }
+
         val productPage = productQueryRepository.findPageByCategoryIds(categoryIds, PageQuery(page, size), sort)
 
         return PageResponse(

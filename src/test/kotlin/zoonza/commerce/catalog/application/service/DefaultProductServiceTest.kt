@@ -1,5 +1,6 @@
 package zoonza.commerce.catalog.application.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -8,8 +9,11 @@ import io.mockk.verify
 import org.junit.jupiter.api.Test
 import zoonza.commerce.catalog.application.dto.ProductListSort
 import zoonza.commerce.catalog.application.port.out.*
+import zoonza.commerce.catalog.domain.category.Category
+import zoonza.commerce.catalog.domain.category.CategoryErrorCode
 import zoonza.commerce.catalog.domain.category.CategoryRepository
 import zoonza.commerce.catalog.domain.product.*
+import zoonza.commerce.shared.BusinessException
 import zoonza.commerce.shared.Money
 import zoonza.commerce.support.pagination.PageQuery
 import zoonza.commerce.support.pagination.PageResult
@@ -26,7 +30,7 @@ class DefaultProductServiceTest {
     @Test
     fun `상품 목록 조회는 정렬과 좋아요 수를 함께 반환한다`() {
         val pageQuery = slot<PageQuery>()
-        every { categoryRepository.findAllDescendantIds(1L) } returns linkedSetOf(1L, 2L)
+        every { categoryRepository.findSelfAndSubCategoryIds(1L) } returns linkedSetOf(1L, 2L)
 
         every {
             productQueryRepository.findPageByCategoryIds(
@@ -79,7 +83,7 @@ class DefaultProductServiceTest {
     fun `상품 목록 조회는 로그인 여부와 무관하게 동일한 결과를 반환한다`() {
         val product = product(id = 10L, price = 19_900, categoryId = 1L)
 
-        every { categoryRepository.findAllDescendantIds(1L) } returns linkedSetOf(1L)
+        every { categoryRepository.findSelfAndSubCategoryIds(1L) } returns linkedSetOf(1L)
 
         every {
             productQueryRepository.findPageByCategoryIds(
@@ -114,7 +118,52 @@ class DefaultProductServiceTest {
 
         result.items.single().productId shouldBe 10L
         result.items.single().brandName shouldBe "브랜드10"
-        verify(exactly = 1) { categoryRepository.findAllDescendantIds(1L) }
+        verify(exactly = 1) { categoryRepository.findSelfAndSubCategoryIds(1L) }
+    }
+
+    @Test
+    fun `없는 카테고리의 상품 목록 조회는 예외를 던진다`() {
+        every { categoryRepository.findSelfAndSubCategoryIds(999L) } returns emptySet()
+
+        val exception = shouldThrow<BusinessException> {
+            catalogService.getCategoryProducts(
+                page = 0,
+                size = 20,
+                categoryId = 999L,
+                sort = ProductListSort.LATEST,
+            )
+        }
+
+        exception.errorCode shouldBe CategoryErrorCode.CATEGORY_NOT_FOUND
+    }
+
+    @Test
+    fun `sub 카테고리의 상품 목록 조회는 자기 자신 상품만 조회한다`() {
+        every { categoryRepository.findSelfAndSubCategoryIds(2L) } returns linkedSetOf(2L)
+
+        every {
+            productQueryRepository.findPageByCategoryIds(
+                categoryIds = linkedSetOf(2L),
+                pageQuery = PageQuery(page = 0, size = 20),
+                sort = ProductListSort.LATEST,
+            )
+        } returns PageResult(
+            items = emptyList(),
+            page = 0,
+            size = 20,
+            totalElements = 0,
+            totalPages = 0,
+        )
+
+        val result = catalogService.getCategoryProducts(
+            page = 0,
+            size = 20,
+            categoryId = 2L,
+            sort = ProductListSort.LATEST,
+        )
+
+        result.items shouldBe emptyList()
+        verify(exactly = 0) { categoryRepository.findById(any()) }
     }
 
     @Test
@@ -213,6 +262,19 @@ class DefaultProductServiceTest {
                         additionalPrice = Money(1_000),
                     ),
                 ),
+        )
+    }
+
+    private fun category(
+        id: Long,
+        parentId: Long?,
+    ): Category {
+        return Category(
+            id = id,
+            name = "카테고리$id",
+            rootCategoryId = parentId,
+            depth = if (parentId == null) 0 else 1,
+            sortOrder = 0,
         )
     }
 }

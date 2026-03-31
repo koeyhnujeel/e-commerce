@@ -8,8 +8,8 @@ import zoonza.commerce.catalog.domain.category.Category
     name = "category",
     uniqueConstraints = [
         UniqueConstraint(
-            name = "uk_category_parent_id_sort_order",
-            columnNames = ["parent_id", "sort_order"],
+            name = "uk_category_rootCategory_id_sort_order",
+            columnNames = ["rootCategory_id", "sort_order"],
         ),
     ],
 )
@@ -20,8 +20,8 @@ class CategoryJpaEntity(
     @Column(nullable = false)
     val name: String = "",
 
-    @Column(name = "parent_id")
-    val parentId: Long? = null,
+    @Column(name = "rootCategory_id")
+    val rootCategoryId: Long? = null,
 
     @Column(nullable = false)
     val depth: Int = 0,
@@ -33,7 +33,7 @@ class CategoryJpaEntity(
         return Category(
             id = id,
             name = name,
-            parentId = parentId,
+            rootCategoryId = rootCategoryId,
             depth = depth,
             sortOrder = sortOrder,
         )
