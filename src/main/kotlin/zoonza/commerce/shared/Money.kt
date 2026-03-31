@@ -29,4 +29,9 @@ value class Money(val amount: BigDecimal) {
         require(multiplier >= 0) { "배수는 0 이상이어야 합니다." }
         return Money(amount.multiply(BigDecimal.valueOf(multiplier.toLong())))
     }
+
+    operator fun times(multiplier: Long): Money {
+        require(multiplier >= 0) { "배수는 0 이상이어야 합니다." }
+        return Money(amount.multiply(BigDecimal.valueOf(multiplier)))
+    }
 }

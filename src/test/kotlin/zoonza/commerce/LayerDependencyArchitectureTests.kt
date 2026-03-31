@@ -15,6 +15,7 @@ class LayerDependencyArchitectureTests {
         "inventory",
         "like",
         "member",
+        "order",
         "verification",
     )
 
