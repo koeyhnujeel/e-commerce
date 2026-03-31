@@ -3,6 +3,8 @@ package zoonza.commerce.cart.application.service
 import org.springframework.stereotype.Service
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.annotation.Transactional
+import zoonza.commerce.cart.CartApi
+import zoonza.commerce.cart.CartOrderItem
 import zoonza.commerce.cart.application.dto.CartItemUnavailableReason
 import zoonza.commerce.cart.application.dto.CartItemView
 import zoonza.commerce.cart.application.dto.CartSummaryView
@@ -21,7 +23,7 @@ class DefaultCartService(
     private val cartRepository: CartRepository,
     private val catalogApi: CatalogApi,
     private val inventoryApi: InventoryApi,
-) : CartService {
+) : CartService, CartApi {
     @Transactional(readOnly = true)
     override fun getMyCart(memberId: Long): CartView {
         val cart = cartRepository.findByMemberId(memberId) ?: return CartView.empty()
@@ -125,6 +127,44 @@ class DefaultCartService(
     override fun clearCart(memberId: Long) {
         val cart = cartRepository.findByMemberId(memberId) ?: return
         cart.clear()
+        cartRepository.save(cart)
+    }
+
+    @Transactional(readOnly = true)
+    override fun getSelectedItems(
+        memberId: Long,
+        productOptionIds: Set<Long>,
+    ): List<CartOrderItem> {
+        require(productOptionIds.isNotEmpty()) { "주문할 장바구니 항목은 최소 1개 이상이어야 합니다." }
+
+        val cart = cartRepository.findByMemberId(memberId)
+            ?: throw BusinessException(CartErrorCode.CART_ITEM_NOT_FOUND)
+        val selectedItems = cart.items.filter { it.productOptionId in productOptionIds }
+
+        if (selectedItems.size != productOptionIds.size) {
+            throw BusinessException(CartErrorCode.CART_ITEM_NOT_FOUND)
+        }
+
+        return selectedItems.map { item ->
+            CartOrderItem(
+                productId = item.productId,
+                productOptionId = item.productOptionId,
+                quantity = item.quantity,
+            )
+        }
+    }
+
+    @Transactional
+    override fun removeItems(
+        memberId: Long,
+        productOptionIds: Set<Long>,
+    ) {
+        if (productOptionIds.isEmpty()) {
+            return
+        }
+
+        val cart = cartRepository.findByMemberId(memberId) ?: return
+        productOptionIds.forEach(cart::removeItem)
         cartRepository.save(cart)
     }
 
