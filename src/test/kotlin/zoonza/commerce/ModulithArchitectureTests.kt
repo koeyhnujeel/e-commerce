@@ -18,11 +18,13 @@ class ModulithArchitectureTests {
         val inventoryModule = modules.getModuleByName("inventory")
         val likeModule = modules.getModuleByName("like")
         val orderModule = modules.getModuleByName("order")
+        val paymentModule = modules.getModuleByName("payment")
 
         assertThat(cartModule).isPresent
         assertThat(catalogModule).isPresent
         assertThat(inventoryModule).isPresent
         assertThat(likeModule).isPresent
         assertThat(orderModule).isPresent
+        assertThat(paymentModule).isPresent
     }
 }

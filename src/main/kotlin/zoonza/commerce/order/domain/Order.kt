@@ -17,6 +17,7 @@ class Order(
     var canceledAt: LocalDateTime? = null,
     var expiredAt: LocalDateTime? = null,
     var paidAt: LocalDateTime? = null,
+    var refundedAt: LocalDateTime? = null,
 ) {
     companion object {
         fun create(
@@ -66,5 +67,12 @@ class Order(
 
         status = OrderStatus.PAID
         this.paidAt = paidAt
+    }
+
+    fun refund(refundedAt: LocalDateTime) {
+        require(status == OrderStatus.PAID) { "환불 처리할 수 없는 주문입니다." }
+
+        status = OrderStatus.REFUNDED
+        this.refundedAt = refundedAt
     }
 }

@@ -19,9 +19,11 @@ jwt:
   refresh-expiration-ms: 1200000
 
 payment:
+  public-base-url: https://api.example.com
+  redirect:
+    success-url: https://example.com/payments/success
+    fail-url: https://example.com/payments/fail
   toss:
     base-url: https://api.tosspayments.com
     client-key: test-client-key
     secret-key: test-secret-key
-    success-url: https://example.com/payments/success
-    fail-url: https://example.com/payments/fail

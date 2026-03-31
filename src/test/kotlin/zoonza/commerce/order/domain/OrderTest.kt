@@ -35,6 +35,19 @@ class OrderTest {
         }
     }
 
+    @Test
+    fun `결제 완료된 주문은 환불 처리할 수 있다`() {
+        val order = createOrder()
+        val paidAt = LocalDateTime.of(2026, 4, 1, 11, 0)
+        val refundedAt = LocalDateTime.of(2026, 4, 1, 12, 0)
+        order.markPaid(paidAt)
+
+        order.refund(refundedAt)
+
+        order.status shouldBe OrderStatus.REFUNDED
+        order.refundedAt shouldBe refundedAt
+    }
+
     private fun createOrder(): Order {
         val orderedAt = LocalDateTime.of(2026, 4, 1, 10, 0)
         return Order.create(

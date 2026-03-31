@@ -70,6 +70,9 @@ class OrderJpaEntity(
     @Column(name = "paid_at")
     var paidAt: LocalDateTime? = null,
 
+    @Column(name = "refunded_at")
+    var refundedAt: LocalDateTime? = null,
+
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
     @JoinColumn(name = "order_id", nullable = false)
     @OrderBy("id ASC")
@@ -90,6 +93,7 @@ class OrderJpaEntity(
                 canceledAt = order.canceledAt,
                 expiredAt = order.expiredAt,
                 paidAt = order.paidAt,
+                refundedAt = order.refundedAt,
                 items = order.items.map(OrderItemJpaEntity::from).toMutableList(),
             )
         }
@@ -110,6 +114,7 @@ class OrderJpaEntity(
             canceledAt = canceledAt,
             expiredAt = expiredAt,
             paidAt = paidAt,
+            refundedAt = refundedAt,
         )
     }
 
@@ -125,6 +130,7 @@ class OrderJpaEntity(
         canceledAt = order.canceledAt
         expiredAt = order.expiredAt
         paidAt = order.paidAt
+        refundedAt = order.refundedAt
         items.clear()
         items.addAll(order.items.map(OrderItemJpaEntity::from))
     }

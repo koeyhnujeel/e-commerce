@@ -11,6 +11,7 @@ import zoonza.commerce.order.OrderApi
 import zoonza.commerce.order.OrderCreated
 import zoonza.commerce.order.OrderErrorCode
 import zoonza.commerce.order.OrderPaid
+import zoonza.commerce.order.OrderRefunded
 import zoonza.commerce.order.PendingPaymentOrder
 import zoonza.commerce.order.application.dto.OrderDetailView
 import zoonza.commerce.order.application.dto.OrderItemView
@@ -239,6 +240,25 @@ class DefaultOrderService(
         }
         orderRepository.save(order)
         eventPublisher.publishEvent(OrderPaid(order.id, order.orderNumber, order.memberId))
+    }
+
+    @Transactional
+    override fun markRefunded(orderId: Long) {
+        val order = orderRepository.findById(orderId)
+            ?: throw BusinessException(OrderErrorCode.ORDER_NOT_FOUND)
+
+        val refundedAt = LocalDateTime.now()
+        try {
+            order.refund(refundedAt)
+        } catch (_: IllegalArgumentException) {
+            throw BusinessException(OrderErrorCode.ORDER_PAYMENT_NOT_ALLOWED)
+        }
+
+        order.items.forEach { item ->
+            inventoryApi.increaseStock(item.productOptionId, item.quantity)
+        }
+        orderRepository.save(order)
+        eventPublisher.publishEvent(OrderRefunded(order.id, order.orderNumber, order.memberId))
     }
 
     private fun saveCreatedOrder(order: Order): PlaceOrderResult {

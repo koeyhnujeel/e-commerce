@@ -23,3 +23,9 @@ data class OrderPaid(
     val orderNumber: String,
     val memberId: Long,
 )
+
+data class OrderRefunded(
+    val orderId: Long,
+    val orderNumber: String,
+    val memberId: Long,
+)

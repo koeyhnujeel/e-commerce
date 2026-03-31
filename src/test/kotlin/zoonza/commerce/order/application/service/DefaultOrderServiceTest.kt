@@ -20,6 +20,7 @@ import zoonza.commerce.member.MemberAddressSnapshot
 import zoonza.commerce.member.MemberApi
 import zoonza.commerce.order.OrderCreated
 import zoonza.commerce.order.OrderPaid
+import zoonza.commerce.order.OrderRefunded
 import zoonza.commerce.order.application.dto.PlaceCartOrderCommand
 import zoonza.commerce.order.application.dto.PlaceDirectOrderCommand
 import zoonza.commerce.order.application.port.out.OrderNumberGenerator
@@ -108,6 +109,23 @@ class DefaultOrderServiceTest {
 
         order.status shouldBe OrderStatus.PAID
         verify(exactly = 1) { eventPublisher.publishEvent(OrderPaid(3L, "ORDER-003", 1L)) }
+    }
+
+    @Test
+    fun `환불 처리 시 재고를 복원한다`() {
+        val order =
+            createPersistedOrder(id = 4L, orderNumber = "ORDER-004").apply {
+                markPaid(LocalDateTime.of(2026, 4, 1, 10, 5))
+            }
+        every { orderRepository.findById(4L) } returns order
+        every { inventoryApi.increaseStock(10L, 2L) } just runs
+        every { orderRepository.save(order) } returns order
+
+        orderService.markRefunded(4L)
+
+        order.status shouldBe OrderStatus.REFUNDED
+        verify(exactly = 1) { inventoryApi.increaseStock(10L, 2L) }
+        verify(exactly = 1) { eventPublisher.publishEvent(OrderRefunded(4L, "ORDER-004", 1L)) }
     }
 
     private fun shippingAddress(): MemberAddressSnapshot {
@@ -204,6 +222,7 @@ class DefaultOrderServiceTest {
             canceledAt = canceledAt,
             expiredAt = expiredAt,
             paidAt = paidAt,
+            refundedAt = refundedAt,
         )
     }
 }

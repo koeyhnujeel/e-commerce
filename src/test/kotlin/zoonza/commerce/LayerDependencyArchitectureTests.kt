@@ -16,6 +16,7 @@ class LayerDependencyArchitectureTests {
         "like",
         "member",
         "order",
+        "payment",
         "verification",
     )
 
