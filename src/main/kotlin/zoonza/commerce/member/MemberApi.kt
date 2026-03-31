@@ -10,4 +10,11 @@ interface MemberApi {
     fun findProfileById(id: Long): MemberProfile
 
     fun findProfilesByIds(ids: Set<Long>): Map<Long, MemberProfile>
+
+    fun findShippingAddress(
+        memberId: Long,
+        addressId: Long,
+    ): MemberAddressSnapshot
+
+    fun findDefaultShippingAddress(memberId: Long): MemberAddressSnapshot
 }

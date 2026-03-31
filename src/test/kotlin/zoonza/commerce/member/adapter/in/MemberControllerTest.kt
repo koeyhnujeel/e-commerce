@@ -14,16 +14,21 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
+import zoonza.commerce.member.adapter.`in`.request.CreateMemberAddressRequest
 import zoonza.commerce.member.adapter.`in`.request.SendSignupEmailVerificationCodeRequest
 import zoonza.commerce.member.adapter.`in`.request.SignupMemberRequest
 import zoonza.commerce.member.adapter.`in`.request.VerifySignupEmailVerificationCodeRequest
 import zoonza.commerce.member.adapter.out.persistence.MemberJapRepository
+import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.application.port.out.NicknameGenerator
 import zoonza.commerce.member.domain.PasswordEncoder
 import zoonza.commerce.notification.application.port.out.EmailSender
+import zoonza.commerce.security.AccessTokenProvider
 import zoonza.commerce.support.MySqlTestContainerConfig
+import zoonza.commerce.support.fixture.AuthFixture
 import zoonza.commerce.support.fixture.MemberFixture
 import zoonza.commerce.support.fixture.VerificationCodeFixture
 import zoonza.commerce.verification.adapter.out.persistence.VerificationCodeJpaEntity
@@ -51,6 +56,9 @@ class MemberControllerTest {
 
     @Autowired
     private lateinit var passwordEncoder: PasswordEncoder
+
+    @Autowired
+    private lateinit var accessTokenProvider: AccessTokenProvider
 
     @Test
     fun `회원가입 이메일 인증 코드 발송 요청에 성공한다`() {
@@ -189,6 +197,105 @@ class MemberControllerTest {
                 status { isBadRequest() }
                 jsonPath("$.success") { value(false) }
                 jsonPath("$.error.code") { value("BAD_REQUEST") }
+            }
+    }
+
+    @Test
+    fun `인증된 회원은 상세 주소 없이 배송지를 등록하고 조회할 수 있다`() {
+        val savedMember =
+            memberJapRepository.save(
+                MemberFixture.createJpa(
+                    email = "address@example.com",
+                    passwordHash = passwordEncoder.encode("Password123!"),
+                    name = "주소회원",
+                    nickname = "address-member",
+                    phoneNumber = "01011112222",
+                ),
+            )
+
+        mockMvc
+            .post("/api/members/me/addresses") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", AuthFixture.authorizationHeader(accessTokenProvider, savedMember.id, savedMember.email))
+                content = objectMapper.writeValueAsString(
+                    CreateMemberAddressRequest(
+                        label = "집",
+                        recipientName = "주소회원",
+                        recipientPhoneNumber = "01011112222",
+                        zipCode = "06236",
+                        baseAddress = "서울시 강남구 테헤란로 1",
+                        detailAddress = "",
+                        isDefault = false,
+                    ),
+                )
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.data.id") { isNumber() }
+            }
+
+        mockMvc
+            .get("/api/members/me/addresses") {
+                header("Authorization", AuthFixture.authorizationHeader(accessTokenProvider, savedMember.id, savedMember.email))
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.data[0].label") { value("집") }
+                jsonPath("$.data[0].baseAddress") { value("서울시 강남구 테헤란로 1") }
+                jsonPath("$.data[0].detailAddress") { value("") }
+                jsonPath("$.data[0].isDefault") { value(true) }
+            }
+    }
+
+    @Test
+    fun `인증된 회원은 기본 배송지를 변경할 수 있다`() {
+        val savedMember =
+            memberJapRepository.save(
+                MemberFixture.createJpa(
+                    email = "change-default@example.com",
+                    passwordHash = passwordEncoder.encode("Password123!"),
+                    name = "기본배송지회원",
+                    nickname = "default-member",
+                    phoneNumber = "01033334444",
+                    addresses =
+                        mutableListOf(
+                            MemberAddress.create(
+                                label = "집",
+                                recipientName = "기본배송지회원",
+                                recipientPhoneNumber = "01033334444",
+                                zipCode = "06236",
+                                baseAddress = "서울시 강남구",
+                                detailAddress = "",
+                                isDefault = true,
+                            ),
+                            MemberAddress.create(
+                                label = "회사",
+                                recipientName = "기본배송지회원",
+                                recipientPhoneNumber = "01033334444",
+                                zipCode = "04524",
+                                baseAddress = "서울시 중구",
+                                detailAddress = "20층",
+                                isDefault = false,
+                            ),
+                        ),
+                ),
+            )
+        val companyAddressId = savedMember.addresses.last().id
+
+        mockMvc
+            .post("/api/members/me/addresses/$companyAddressId/default") {
+                header("Authorization", AuthFixture.authorizationHeader(accessTokenProvider, savedMember.id, savedMember.email))
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+            }
+
+        mockMvc
+            .get("/api/members/me/addresses") {
+                header("Authorization", AuthFixture.authorizationHeader(accessTokenProvider, savedMember.id, savedMember.email))
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.data[0].isDefault") { value(false) }
+                jsonPath("$.data[1].isDefault") { value(true) }
             }
     }
 

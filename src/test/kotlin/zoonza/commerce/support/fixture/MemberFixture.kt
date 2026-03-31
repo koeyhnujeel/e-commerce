@@ -1,6 +1,7 @@
 package zoonza.commerce.support.fixture
 
 import zoonza.commerce.member.adapter.out.persistence.MemberJpaEntity
+import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.Member
 import zoonza.commerce.member.domain.Role
 import zoonza.commerce.shared.Email
@@ -18,6 +19,7 @@ object MemberFixture {
         role: Role = Role.CUSTOMER,
         registeredAt: LocalDateTime = defaultRegisteredAt,
         lastLoginAt: LocalDateTime? = null,
+        addresses: MutableList<MemberAddress> = mutableListOf(),
     ): Member {
         return Member.create(
             email = Email(email),
@@ -28,7 +30,9 @@ object MemberFixture {
             role = role,
             registeredAt = registeredAt,
             lastLoginAt = lastLoginAt,
-        )
+        ).also { member ->
+            addresses.forEach(member::addAddress)
+        }
     }
 
     fun createIndexed(
@@ -61,6 +65,7 @@ object MemberFixture {
         role: Role = Role.CUSTOMER,
         registeredAt: LocalDateTime = defaultRegisteredAt,
         lastLoginAt: LocalDateTime? = null,
+        addresses: MutableList<MemberAddress> = mutableListOf(),
     ): MemberJpaEntity {
         return MemberJpaEntity.from(
             create(
@@ -72,6 +77,7 @@ object MemberFixture {
                 role = role,
                 registeredAt = registeredAt,
                 lastLoginAt = lastLoginAt,
+                addresses = addresses,
             ),
         )
     }

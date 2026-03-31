@@ -3,13 +3,17 @@ package zoonza.commerce.member.application.service
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import zoonza.commerce.member.AuthenticatedMember
+import zoonza.commerce.member.MemberAddressSnapshot
 import zoonza.commerce.member.MemberApi
 import zoonza.commerce.member.MemberErrorCode
 import zoonza.commerce.member.MemberProfile
+import zoonza.commerce.member.application.dto.CreateMemberAddressCommand
 import zoonza.commerce.member.application.dto.SignupCommand
+import zoonza.commerce.member.application.dto.UpdateMemberAddressCommand
 import zoonza.commerce.member.application.port.`in`.MemberService
 import zoonza.commerce.member.application.port.out.MemberRepository
 import zoonza.commerce.member.application.port.out.NicknameGenerator
+import zoonza.commerce.member.domain.MemberAddress
 import zoonza.commerce.member.domain.Member
 import zoonza.commerce.member.domain.PasswordEncoder
 import zoonza.commerce.shared.AuthErrorCode
@@ -64,13 +68,13 @@ class DefaultMemberService(
         verificationApi.assertVerifiedSignupEmail(emailVO)
 
         val member = Member.create(
-                email = emailVO,
-                passwordHash = passwordEncoder.encode(command.password),
-                name = command.name,
-                nickname = generateUniqueNickname(),
-                phoneNumber = command.phoneNumber,
-                registeredAt = LocalDateTime.now(),
-            )
+            email = emailVO,
+            passwordHash = passwordEncoder.encode(command.password),
+            name = command.name,
+            nickname = generateUniqueNickname(),
+            phoneNumber = command.phoneNumber,
+            registeredAt = LocalDateTime.now(),
+        )
 
         return memberRepository.save(member).id
     }
@@ -119,6 +123,103 @@ class DefaultMemberService(
         return profiles
     }
 
+    @Transactional(readOnly = true)
+    override fun getMyAddresses(memberId: Long): List<MemberAddressSnapshot> {
+        return findMemberOrThrow(memberId)
+            .addresses
+            .map(::toAddressSnapshot)
+    }
+
+    @Transactional
+    override fun addAddress(
+        memberId: Long,
+        command: CreateMemberAddressCommand,
+    ): Long {
+        val member = findMemberOrThrow(memberId)
+        member.addAddress(
+            MemberAddress.create(
+                label = command.label,
+                recipientName = command.recipientName,
+                recipientPhoneNumber = command.recipientPhoneNumber,
+                zipCode = command.zipCode,
+                baseAddress = command.baseAddress,
+                detailAddress = command.detailAddress,
+                isDefault = command.isDefault,
+            ),
+        )
+
+        return memberRepository.save(member)
+            .addresses
+            .maxBy { it.id }
+            .id
+    }
+
+    @Transactional
+    override fun updateAddress(
+        memberId: Long,
+        addressId: Long,
+        command: UpdateMemberAddressCommand,
+    ) {
+        val member = findMemberOrThrow(memberId)
+        ensureAddressExists(member, addressId)
+        member.updateAddress(
+            addressId = addressId,
+            label = command.label,
+            recipientName = command.recipientName,
+            recipientPhoneNumber = command.recipientPhoneNumber,
+            zipCode = command.zipCode,
+            baseAddress = command.baseAddress,
+            detailAddress = command.detailAddress,
+            isDefault = command.isDefault,
+        )
+        memberRepository.save(member)
+    }
+
+    @Transactional
+    override fun removeAddress(
+        memberId: Long,
+        addressId: Long,
+    ) {
+        val member = findMemberOrThrow(memberId)
+        ensureAddressExists(member, addressId)
+        member.removeAddress(addressId)
+        memberRepository.save(member)
+    }
+
+    @Transactional
+    override fun changeDefaultAddress(
+        memberId: Long,
+        addressId: Long,
+    ) {
+        val member = findMemberOrThrow(memberId)
+        ensureAddressExists(member, addressId)
+        member.changeDefaultAddress(addressId)
+        memberRepository.save(member)
+    }
+
+    @Transactional(readOnly = true)
+    override fun findShippingAddress(
+        memberId: Long,
+        addressId: Long,
+    ): MemberAddressSnapshot {
+        val member = findMemberOrThrow(memberId)
+        return try {
+            toAddressSnapshot(member.findAddress(addressId))
+        } catch (_: IllegalArgumentException) {
+            throw BusinessException(MemberErrorCode.MEMBER_ADDRESS_NOT_FOUND)
+        }
+    }
+
+    @Transactional(readOnly = true)
+    override fun findDefaultShippingAddress(memberId: Long): MemberAddressSnapshot {
+        val member = findMemberOrThrow(memberId)
+        return try {
+            toAddressSnapshot(member.defaultAddress())
+        } catch (_: IllegalArgumentException) {
+            throw BusinessException(MemberErrorCode.MEMBER_ADDRESS_NOT_FOUND)
+        }
+    }
+
     private fun generateUniqueNickname(): String {
         repeat(MAX_NICKNAME_GENERATION_ATTEMPTS) {
             val nickname = nicknameGenerator.generate()
@@ -129,5 +230,34 @@ class DefaultMemberService(
         }
 
         throw IllegalStateException("중복되지 않는 닉네임을 생성하지 못했습니다.")
+    }
+
+    private fun findMemberOrThrow(memberId: Long): Member {
+        return memberRepository.findById(memberId)
+            ?: throw BusinessException(MemberErrorCode.MEMBER_NOT_FOUND)
+    }
+
+    private fun ensureAddressExists(
+        member: Member,
+        addressId: Long,
+    ) {
+        try {
+            member.findAddress(addressId)
+        } catch (_: IllegalArgumentException) {
+            throw BusinessException(MemberErrorCode.MEMBER_ADDRESS_NOT_FOUND)
+        }
+    }
+
+    private fun toAddressSnapshot(address: MemberAddress): MemberAddressSnapshot {
+        return MemberAddressSnapshot(
+            id = address.id,
+            label = address.label,
+            recipientName = address.recipientName,
+            recipientPhoneNumber = address.recipientPhoneNumber,
+            zipCode = address.zipCode,
+            baseAddress = address.baseAddress,
+            detailAddress = address.detailAddress,
+            isDefault = address.isDefault,
+        )
     }
 }

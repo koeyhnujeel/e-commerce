@@ -43,6 +43,11 @@ class MemberJpaEntity(
 
     @Column
     val lastLoginAt: LocalDateTime? = null,
+
+    @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JoinColumn(name = "member_id", nullable = false)
+    @OrderBy("id ASC")
+    val addresses: MutableList<MemberAddressJpaEntity> = mutableListOf(),
 ) {
     fun toDomain(): Member {
         return Member(
@@ -55,6 +60,7 @@ class MemberJpaEntity(
             role = role,
             registeredAt = registeredAt,
             lastLoginAt = lastLoginAt,
+            addresses = addresses.map(MemberAddressJpaEntity::toDomain).toMutableList(),
         )
     }
 
@@ -70,7 +76,22 @@ class MemberJpaEntity(
                 role = member.role,
                 registeredAt = member.registeredAt,
                 lastLoginAt = member.lastLoginAt,
+                addresses = member.addresses.map(MemberAddressJpaEntity::from).toMutableList(),
             )
+        }
+    }
+
+    fun updateFrom(member: Member) {
+        addresses.removeIf { existing -> member.addresses.none { it.id == existing.id } }
+
+        val existingAddresses = addresses.associateBy { it.id }
+        member.addresses.forEach { address ->
+            val existing = existingAddresses[address.id]
+            if (existing != null) {
+                existing.updateFrom(address)
+            } else {
+                addresses.add(MemberAddressJpaEntity.from(address))
+            }
         }
     }
 }
