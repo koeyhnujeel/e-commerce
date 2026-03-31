@@ -11,6 +11,7 @@ class LayerDependencyArchitectureTests {
     private val threeLayerModules = listOf(
         "auth",
         "catalog",
+        "inventory",
         "like",
         "member",
         "verification",
