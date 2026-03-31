@@ -59,7 +59,7 @@ class StockTest {
                 stock.reserve("ORDER-001", 1L, reservedAt.plusMinutes(1), expiresAt.plusMinutes(1))
             }
 
-        exception.errorCode shouldBe InventoryErrorCode.DUPLICATE_ACTIVE_STOCK_RESERVATION
+        exception.errorCode shouldBe InventoryErrorCode.DUPLICATE_STOCK_RESERVATION
     }
 
     @Test
@@ -130,10 +130,10 @@ class StockTest {
         stock.releaseReservation("ORDER-001", reservedAt.plusMinutes(2))
 
         val exception =
-            shouldThrow<BusinessException> {
+            shouldThrow<IllegalArgumentException> {
                 stock.confirmReservation("ORDER-001", reservedAt.plusMinutes(3))
             }
 
-        exception.errorCode shouldBe InventoryErrorCode.INVALID_STOCK_RESERVATION_STATUS
+        exception.message shouldBe "예약 상태가 아니면 확정할 수 없습니다."
     }
 }

@@ -52,7 +52,7 @@ class Stock(
         requirePositiveQuantity(quantity)
 
         if (reservations.any { it.orderNumber == orderNumber }) {
-            throw BusinessException(InventoryErrorCode.DUPLICATE_ACTIVE_STOCK_RESERVATION)
+            throw BusinessException(InventoryErrorCode.DUPLICATE_STOCK_RESERVATION)
         }
 
         if (availableQuantity() < quantity) {

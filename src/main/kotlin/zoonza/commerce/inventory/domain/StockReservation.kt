@@ -1,6 +1,5 @@
 package zoonza.commerce.inventory.domain
 
-import zoonza.commerce.shared.BusinessException
 import java.time.LocalDateTime
 
 class StockReservation(
@@ -21,14 +20,8 @@ class StockReservation(
             reservedAt: LocalDateTime,
             expiresAt: LocalDateTime,
         ): StockReservation {
-            if (orderNumber.isBlank()) {
-                throw BusinessException(InventoryErrorCode.INVALID_STOCK_RESERVATION_STATUS)
-            }
-
-            if (quantity <= 0) {
-                throw BusinessException(InventoryErrorCode.INVALID_STOCK_QUANTITY)
-            }
-
+            require(orderNumber.isNotBlank()) { "주문번호는 비어 있을 수 없습니다." }
+            require(quantity > 0) { "예약 수량은 1개 이상이어야 합니다." }
             require(expiresAt.isAfter(reservedAt)) { "만료 시각은 예약 시각 이후여야 합니다." }
 
             return StockReservation(
@@ -42,7 +35,7 @@ class StockReservation(
     }
 
     fun confirm(confirmedAt: LocalDateTime) {
-        assertReserved()
+        require(status == StockReservationStatus.RESERVED) { "예약 상태가 아니면 확정할 수 없습니다." }
         require(!confirmedAt.isBefore(reservedAt)) { "확정 시각은 예약 시각 이후여야 합니다." }
         require(!confirmedAt.isAfter(expiresAt)) { "만료된 예약은 확정할 수 없습니다." }
 
@@ -51,7 +44,7 @@ class StockReservation(
     }
 
     fun release(releasedAt: LocalDateTime) {
-        assertReserved()
+        require(status == StockReservationStatus.RESERVED) { "예약 상태가 아니면 해제할 수 없습니다." }
         require(!releasedAt.isBefore(reservedAt)) { "해제 시각은 예약 시각 이후여야 합니다." }
 
         this.status = StockReservationStatus.RELEASED
@@ -59,16 +52,10 @@ class StockReservation(
     }
 
     fun expire(expiredAt: LocalDateTime) {
-        assertReserved()
+        require(status == StockReservationStatus.RESERVED) { "예약 상태가 아니면 만료 처리할 수 없습니다." }
         require(!expiredAt.isBefore(expiresAt)) { "만료 시각은 예약 만료 시간 이후여야 합니다." }
 
         this.status = StockReservationStatus.EXPIRED
         this.expiredAt = expiredAt
-    }
-
-    private fun assertReserved() {
-        if (status != StockReservationStatus.RESERVED) {
-            throw BusinessException(InventoryErrorCode.INVALID_STOCK_RESERVATION_STATUS)
-        }
     }
 }
